@@ -77,14 +77,14 @@ def main(folds: typing.List[int]):
                             conv_activation = torch.nn.ReLU,
                             conv_pooling = torch.nn.MaxPool2d,
                             conv_dropout = 0.4,
-                            batch_norm = True,
+                            batch_norm = torch.nn.BatchNorm2d,
                             kernel_size = 5,
                             padding = None,
 
                             classification_n_neurons = [128],
                             n_targets = n_targets,
                             classification_dropout = 0.4,
-                            classification_norm = False,
+                            classification_norm = None,
                             classification_hidden_activation = torch.nn.ReLU,
                             classification_output_activation = torch.nn.Sigmoid
                     ),

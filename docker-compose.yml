@@ -1,0 +1,15 @@
+version: '3.8'
+
+services:
+  iara:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: iara-dev
+    volumes:
+      - .:/workspace/IARA
+    working_dir: /workspace/IARA
+    # Instala o pacote iara do seu host toda vez que iniciar o container, 
+    # mantendo-o atualizado com as suas edições, e então mantém o container vivo.
+    command: bash -c "pip install -e ./src && tail -f /dev/null"
+    tty: true

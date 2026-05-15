@@ -1,0 +1,16 @@
+torch
+torchaudio
+numpy
+pandas
+scipy
+librosa
+tqdm
+scikit-learn
+psutil
+matplotlib<3.8.0
+tikzplotlib
+Pillow
+overrides
+dill
+jsonpickle
+torchvision
