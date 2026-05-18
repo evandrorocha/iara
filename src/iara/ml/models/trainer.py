@@ -23,6 +23,7 @@ import torch.utils.data as torch_data
 import iara.utils
 import iara.records
 import iara.ml.models.forest as iara_forest
+import iara.ml.models.svm as iara_svm
 import iara.ml.models.base_model as iara_model
 import iara.ml.dataset as iara_dataset
 
@@ -866,6 +867,91 @@ class RandomForestTrainer(BaseTrainer):
                 targets = torch.where(targets == target_id,
                                         torch.tensor(1.0),
                                         torch.tensor(0.0))
+
+            model.fit(samples=samples, targets=targets)
+            model.save(model_filename)
+
+
+class SVMNystroemTrainer(BaseTrainer):
+    """Implementation of the BaseTrainer for training an approximate RBF-SVM.
+
+    Uses the Nyström method to approximate the RBF kernel mapping, followed by
+    a linear SGDClassifier with hinge loss. This combination is mathematically
+    equivalent to an SVM with RBF kernel but scales to large datasets.
+
+    See iara.ml.models.svm.SVMNystroem for detailed documentation.
+    """
+
+    def __init__(self,
+                 training_strategy: ModelTrainingStrategy,
+                 trainer_id: str,
+                 n_targets: int,
+                 n_components: int = 300,
+                 gamma: float = 'scale',
+                 C: float = 1.0) -> None:
+        """Initialize SVMNystroemTrainer.
+
+        Args:
+            training_strategy (ModelTrainingStrategy): Training strategy.
+            trainer_id (str): Unique identifier for this trainer.
+            n_targets (int): Number of output classes.
+            n_components (int): Number of Nyström landmark points (approximation
+                quality). Higher = better approximation, more memory. Default: 300.
+            gamma (float): RBF kernel width parameter. 'scale' = auto. Default: 'scale'.
+            C (float): SVM regularization parameter. Default: 1.0.
+        """
+        super().__init__(training_strategy, trainer_id, n_targets)
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+
+    def fit(self,
+            model_base_dir: str,
+            trn_dataset: iara_dataset.BaseDataset,
+            val_dataset: iara_dataset.BaseDataset) -> None:
+        """Fit the Nyström + SGD SVM model.
+
+        Args:
+            model_base_dir (str): Directory to save the trained model.
+            trn_dataset (iara_dataset.BaseDataset): Training dataset.
+            val_dataset (iara_dataset.BaseDataset): Validation dataset (not used
+                for SVM — no early stopping or hyperparameter selection here).
+        """
+        if self.is_trained(model_base_dir=model_base_dir):
+            return
+
+        os.makedirs(model_base_dir, exist_ok=True)
+
+        if self.training_strategy == ModelTrainingStrategy.MULTICLASS:
+            target_ids = [None]
+        elif self.training_strategy == ModelTrainingStrategy.CLASS_SPECIALIST:
+            target_ids = trn_dataset.get_targets()
+
+        samples = trn_dataset.get_samples()
+
+        if samples is None:
+            raise UnboundLocalError("Training dataset without data")
+
+        for target_id in target_ids:
+            model_filename = self.output_filename(model_base_dir=model_base_dir,
+                                                  target_id=target_id)
+
+            if os.path.exists(model_filename):
+                continue
+
+            model = iara_svm.SVMNystroem(
+                n_components=self.n_components,
+                gamma=self.gamma,
+                C=self.C,
+                n_targets=self.n_targets
+            )
+
+            targets = trn_dataset.get_targets()
+
+            if target_id is not None:
+                targets = torch.where(targets == target_id,
+                                      torch.tensor(1.0),
+                                      torch.tensor(0.0))
 
             model.fit(samples=samples, targets=targets)
             model.save(model_filename)
