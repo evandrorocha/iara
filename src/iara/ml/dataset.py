@@ -28,7 +28,7 @@ class ExperimentDataLoader():
             When a dataset exceeds this limit, the data is loaded partially as needed (Very low).
         N_WORKERS (int): Number of simultaneos threads to process run files and load data.
     """
-    MEMORY_LIMIT = 2 * 1024 * 1024 * 1024  # bytes
+    MEMORY_LIMIT = 8 * 1024 * 1024 * 1024  # bytes
     N_WORKERS = 8
 
     def __init__(self,

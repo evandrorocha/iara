@@ -41,7 +41,7 @@ import iara.processing.analysis as iara_proc
 from iara.default import DEFAULT_DIRECTORIES
 
 
-def main(folds: typing.List[int]):
+def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale'):
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -52,12 +52,17 @@ def main(folds: typing.List[int]):
     # The by_audio evaluation will apply majority vote across windows of each file
     input_type = iara_dataset.InputType.Window()
 
-    # Audio preprocessing pipeline (same as MLP for fair comparison)
+    if analysis_name.lower() == 'lofar':
+        analysis_enum = iara_proc.SpectralAnalysis.LOFAR
+    else:
+        analysis_enum = iara_proc.SpectralAnalysis.LOG_MELGRAM
+
+    # Audio preprocessing pipeline
     dp = iara_manager.AudioFileProcessor(
         data_base_dir=directories.data_dir,
         data_processed_base_dir=directories.process_dir,
         normalization=iara_proc.Normalization.NORM_L2,
-        analysis=iara_proc.SpectralAnalysis.LOG_MELGRAM,
+        analysis=analysis_enum,
         n_pts=1024,
         n_overlap=0,
         decimation_rate=3,
@@ -65,8 +70,16 @@ def main(folds: typing.List[int]):
         integration_interval=0.512
     )
 
+    # Dynamic folder name includes C and gamma if they are non-default
+    name_parts = [f'svm_nystroem_{n_components}', analysis_name]
+    if C != 1.0:
+        name_parts.append(f'C{C}')
+    if gamma != 'scale':
+        name_parts.append(f'g{gamma}')
+    exp_name = "_".join(name_parts)
+
     config = iara_exp.Config(
-        name='svm_nystroem',
+        name=exp_name,
         dataset=iara_default.default_collection(),
         dataset_processor=dp,
         output_base_dir=output_base_dir,
@@ -75,15 +88,14 @@ def main(folds: typing.List[int]):
 
     trainers = []
 
-    # SVM with Nyström approximation (n_components=300, gamma='scale', C=1.0)
-    # This is the main experiment — approximate RBF-SVM on window-level features
+    # SVM with Nyström approximation
     trainers.append(iara_trn.SVMNystroemTrainer(
         training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
-        trainer_id='svm_nystroem_300',
+        trainer_id=exp_name,
         n_targets=config.dataset.target.get_n_targets(),
-        n_components=300,
-        gamma='scale',
-        C=1.0
+        n_components=n_components,
+        gamma=gamma,
+        C=C
     ))
 
     manager = iara_exp.Manager(config, *trainers)
@@ -122,16 +134,55 @@ if __name__ == "__main__":
         help='Folds to execute. Examples: "0" | "0-9" | "0,2,4"'
     )
 
+    parser.add_argument(
+        '-C', '--components',
+        type=int,
+        default=300,
+        help='Number of components for Nystroem kernel approximation. Default: 300'
+    )
+
+    parser.add_argument(
+        '-A', '--analysis',
+        type=str,
+        default='log_melgram',
+        help='Spectral analysis type: log_melgram or lofar. Default: log_melgram'
+    )
+
+    parser.add_argument(
+        '--reg_c',
+        type=float,
+        default=1.0,
+        help='Regularization parameter C. Default: 1.0'
+    )
+
+    parser.add_argument(
+        '--gamma',
+        type=str,
+        default='scale',
+        help='Kernel coefficient gamma. Can be "scale", "auto" or a float. Default: "scale"'
+    )
+
     args = parser.parse_args()
 
     folds_to_execute = iara.utils.str_to_list(args.fold, list(range(1)))
+    n_components = args.components
+    analysis_type = args.analysis
+    reg_c = args.reg_c
+    
+    # Try parsing gamma as float, otherwise keep as string
+    gamma_val = args.gamma
+    try:
+        gamma_val = float(args.gamma)
+    except ValueError:
+        pass
 
     print(f"Running SVM Nyström on folds: {folds_to_execute}")
-    print(f"  n_components=300, gamma='scale', C=1.0")
+    print(f"  n_components={n_components}, gamma={gamma_val}, C={reg_c}")
+    print(f"  analysis={analysis_type}")
     print(f"  InputType: Window (by_audio evaluation via majority vote)")
     print()
 
-    main(folds=folds_to_execute)
+    main(folds=folds_to_execute, n_components=n_components, analysis_name=analysis_type, C=reg_c, gamma=gamma_val)
 
     end_time = time.time()
     elapsed = end_time - start_time
