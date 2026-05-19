@@ -29,6 +29,8 @@ Este documento consolida os resultados do experimento de avaliação do SVM cont
 | **SVM (m=1000) (C=2.0) (norm)** | LOFAR | **53.78% ± 3.76** | **57.62% ± 2.07** | **54.97% ± 3.11** | Nossa Execução (Local) |
 | **SVM (m=1000) (C=2.0) (pca64)** | LOFAR | **61.96% ± 2.22** | **63.16% ± 2.18** | **62.65% ± 1.74** | Nossa Execução (Local) |
 | **SVM (m=1000) (C=2.0) (pca64) (elasticnet)** | LOFAR | **61.73% ± 2.45** | **61.92% ± 1.89** | **62.46% ± 2.19** | Nossa Execução (Local) |
+| **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | LOFAR | **63.10% ± 2.19** | **64.04% ± 1.88** | **64.34% ± 2.23** | Nossa Execução (Local) |
+
 
 
 > [!NOTE]
