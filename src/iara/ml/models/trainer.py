@@ -969,7 +969,9 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                  C: float = 1.0,
                  normalize: bool = False,
                  pca: bool = False,
-                 n_pca_components: int = 64) -> None:
+                 n_pca_components: int = 64,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15) -> None:
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
@@ -977,6 +979,8 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
         self.normalize = normalize
         self.pca = pca
         self.n_pca_components = n_pca_components
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
 
     def fit(self,
             model_base_dir: str,
@@ -1011,7 +1015,9 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                 n_targets=self.n_targets,
                 normalize=self.normalize,
                 pca=self.pca,
-                n_pca_components=self.n_pca_components
+                n_pca_components=self.n_pca_components,
+                penalty=self.penalty,
+                l1_ratio=self.l1_ratio
             )
 
             targets = trn_dataset.get_targets()

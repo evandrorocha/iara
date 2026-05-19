@@ -55,6 +55,8 @@ class SVMNystroem(iara_model.BaseModel):
                  gamma: typing.Union[str, float] = 'scale',
                  C: float = 1.0,
                  n_targets: int = 4,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15,
                  random_state: int = 42):
         """Initialize SVMNystroem model.
 
@@ -69,6 +71,8 @@ class SVMNystroem(iara_model.BaseModel):
                 regularization (larger margin, more misclassifications allowed).
                 Default: 1.0.
             n_targets (int): Number of output classes. Default: 4.
+            penalty (str): Type of regularization penalty for SGDClassifier: 'l2', 'l1', or 'elasticnet'. Default: 'l2'.
+            l1_ratio (float): The Elastic Net mixing parameter (between 0 and 1). Default: 0.15.
             random_state (int): Random seed for reproducibility. Default: 42.
         """
         super().__init__()
@@ -76,6 +80,8 @@ class SVMNystroem(iara_model.BaseModel):
         self.gamma = gamma
         self.C = C
         self.n_targets = n_targets
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
         self.random_state = random_state
 
         self.nystroem = Nystroem(
@@ -89,6 +95,8 @@ class SVMNystroem(iara_model.BaseModel):
         # using alpha=1.0 as placeholder, recalculated in fit()
         self.sgd = SGDClassifier(
             loss='hinge',
+            penalty=penalty,
+            l1_ratio=l1_ratio,
             alpha=1.0,
             class_weight='balanced',
             max_iter=1000,
@@ -191,6 +199,8 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
                  normalize: bool = False,
                  pca: bool = False,
                  n_pca_components: int = 64,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15,
                  random_state: int = 42):
         super().__init__()
         self.n_components = n_components
@@ -200,6 +210,8 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
         self.normalize = normalize
         self.pca = pca
         self.n_pca_components = n_pca_components
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
         self.random_state = random_state
 
         self.scaler = StandardScaler() if normalize else None
@@ -214,6 +226,8 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
 
         self.sgd = SGDClassifier(
             loss='hinge',
+            penalty=penalty,
+            l1_ratio=l1_ratio,
             alpha=1.0,
             class_weight='balanced',
             max_iter=1000,

@@ -41,7 +41,7 @@ import iara.processing.analysis as iara_proc
 from iara.default import DEFAULT_DIRECTORIES
 
 
-def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64):
+def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15):
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -76,6 +76,10 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
         name_parts.append('norm')
     if pca:
         name_parts.append(f'pca{n_pca_components}')
+    if penalty != 'l2':
+        name_parts.append(penalty)
+        if penalty == 'elasticnet':
+            name_parts.append(f'l1r{l1_ratio}')
     if C != 1.0:
         name_parts.append(f'C{C}')
     if gamma != 'scale':
@@ -103,7 +107,9 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             C=C,
             normalize=normalize,
             pca=pca,
-            n_pca_components=n_pca_components
+            n_pca_components=n_pca_components,
+            penalty=penalty,
+            l1_ratio=l1_ratio
         )
     else:
         trainer = iara_trn.SVMNystroemTrainer(
@@ -199,6 +205,21 @@ if __name__ == "__main__":
         help='Number of principal components for PCA when enabled. Default: 64'
     )
 
+    parser.add_argument(
+        '--penalty',
+        type=str,
+        default='l2',
+        choices=['l2', 'l1', 'elasticnet'],
+        help='Regularization penalty for SGDClassifier: l2, l1, elasticnet. Default: l2'
+    )
+
+    parser.add_argument(
+        '--l1_ratio',
+        type=float,
+        default=0.15,
+        help='ElasticNet mixing parameter (between 0 and 1) when penalty=elasticnet. Default: 0.15'
+    )
+
     args = parser.parse_args()
 
     folds_to_execute = iara.utils.str_to_list(args.fold, list(range(1)))
@@ -208,6 +229,8 @@ if __name__ == "__main__":
     normalize_enabled = args.normalize
     pca_enabled = args.pca
     pca_comp = args.pca_components
+    penalty_type = args.penalty
+    l1_ratio_val = args.l1_ratio
     
     # Try parsing gamma as float, otherwise keep as string
     gamma_val = args.gamma
@@ -220,6 +243,7 @@ if __name__ == "__main__":
     print(f"  n_components={n_components}, gamma={gamma_val}, C={reg_c}")
     print(f"  analysis={analysis_type}")
     print(f"  preprocessing: normalize={normalize_enabled}, pca={pca_enabled} (n_components={pca_comp})")
+    print(f"  regularization: penalty={penalty_type}, l1_ratio={l1_ratio_val}")
     print(f"  InputType: Window (by_audio evaluation via majority vote)")
     print()
 
@@ -231,7 +255,9 @@ if __name__ == "__main__":
         gamma=gamma_val,
         normalize=normalize_enabled,
         pca=pca_enabled,
-        n_pca_components=pca_comp
+        n_pca_components=pca_comp,
+        penalty=penalty_type,
+        l1_ratio=l1_ratio_val
     )
 
     end_time = time.time()
