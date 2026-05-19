@@ -15,6 +15,7 @@ Este documento consolida os resultados do experimento de avaliação do SVM cont
 | --- | --- | --- | --- | --- | --- |
 | **SVM (m=300)** | MEL | **59.96% ± 3.38** | **62.34% ± 1.98** | **59.47% ± 3.16** | Nossa Execução (Local) |
 | **SVM (m=1000)** | MEL | **62.96% ± 2.08** | **64.11% ± 1.98** | **62.74% ± 1.87** | Nossa Execução (Local) |
+| **SVM (m=1000) (norm + pca64)** | MEL | **60.83% ± 1.67** | **61.86% ± 1.66** | **60.95% ± 1.31** | Nossa Execução (Local) |
 | **SVM (m=2000)** | MEL | **63.04% ± 2.37** | **64.45% ± 1.93** | **62.93% ± 2.22** | Nossa Execução (Local) |
 | **SVM (m=2000) (C=10)** | MEL | **62.18% ± 3.14** | **63.53% ± 2.50** | **62.67% ± 2.84** | Nossa Execução (Local) |
 | **SVM (m=3000)** | MEL | **63.65% ± 1.99** | **64.77% ± 1.87** | **63.59% ± 1.92** | Nossa Execução (Local) |
