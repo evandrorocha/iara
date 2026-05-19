@@ -41,7 +41,7 @@ import iara.processing.analysis as iara_proc
 from iara.default import DEFAULT_DIRECTORIES
 
 
-def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale'):
+def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64):
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -70,8 +70,12 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
         integration_interval=0.512
     )
 
-    # Dynamic folder name includes C and gamma if they are non-default
+    # Dynamic folder name includes C, gamma and preprocessors if non-default
     name_parts = [f'svm_nystroem_{n_components}', analysis_name]
+    if normalize:
+        name_parts.append('norm')
+    if pca:
+        name_parts.append(f'pca{n_pca_components}')
     if C != 1.0:
         name_parts.append(f'C{C}')
     if gamma != 'scale':
@@ -88,15 +92,29 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
 
     trainers = []
 
-    # SVM with Nyström approximation
-    trainers.append(iara_trn.SVMNystroemTrainer(
-        training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
-        trainer_id=exp_name,
-        n_targets=config.dataset.target.get_n_targets(),
-        n_components=n_components,
-        gamma=gamma,
-        C=C
-    ))
+    # SVM with Nyström approximation (subclass selection for 100% safety)
+    if normalize or pca:
+        trainer = iara_trn.SVMNystroemPreprocessedTrainer(
+            training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
+            trainer_id=exp_name,
+            n_targets=config.dataset.target.get_n_targets(),
+            n_components=n_components,
+            gamma=gamma,
+            C=C,
+            normalize=normalize,
+            pca=pca,
+            n_pca_components=n_pca_components
+        )
+    else:
+        trainer = iara_trn.SVMNystroemTrainer(
+            training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
+            trainer_id=exp_name,
+            n_targets=config.dataset.target.get_n_targets(),
+            n_components=n_components,
+            gamma=gamma,
+            C=C
+        )
+    trainers.append(trainer)
 
     manager = iara_exp.Manager(config, *trainers)
 
@@ -162,12 +180,34 @@ if __name__ == "__main__":
         help='Kernel coefficient gamma. Can be "scale", "auto" or a float. Default: "scale"'
     )
 
+    parser.add_argument(
+        '--normalize',
+        action='store_true',
+        help='Enable StandardScaler feature standardization preprocessing'
+    )
+
+    parser.add_argument(
+        '--pca',
+        action='store_true',
+        help='Enable PCA dimensionality reduction preprocessing'
+    )
+
+    parser.add_argument(
+        '--pca_components',
+        type=int,
+        default=64,
+        help='Number of principal components for PCA when enabled. Default: 64'
+    )
+
     args = parser.parse_args()
 
     folds_to_execute = iara.utils.str_to_list(args.fold, list(range(1)))
     n_components = args.components
     analysis_type = args.analysis
     reg_c = args.reg_c
+    normalize_enabled = args.normalize
+    pca_enabled = args.pca
+    pca_comp = args.pca_components
     
     # Try parsing gamma as float, otherwise keep as string
     gamma_val = args.gamma
@@ -179,10 +219,20 @@ if __name__ == "__main__":
     print(f"Running SVM Nyström on folds: {folds_to_execute}")
     print(f"  n_components={n_components}, gamma={gamma_val}, C={reg_c}")
     print(f"  analysis={analysis_type}")
+    print(f"  preprocessing: normalize={normalize_enabled}, pca={pca_enabled} (n_components={pca_comp})")
     print(f"  InputType: Window (by_audio evaluation via majority vote)")
     print()
 
-    main(folds=folds_to_execute, n_components=n_components, analysis_name=analysis_type, C=reg_c, gamma=gamma_val)
+    main(
+        folds=folds_to_execute,
+        n_components=n_components,
+        analysis_name=analysis_type,
+        C=reg_c,
+        gamma=gamma_val,
+        normalize=normalize_enabled,
+        pca=pca_enabled,
+        n_pca_components=pca_comp
+    )
 
     end_time = time.time()
     elapsed = end_time - start_time

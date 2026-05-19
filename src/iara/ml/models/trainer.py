@@ -955,3 +955,71 @@ class SVMNystroemTrainer(BaseTrainer):
 
             model.fit(samples=samples, targets=targets)
             model.save(model_filename)
+
+
+class SVMNystroemPreprocessedTrainer(BaseTrainer):
+    """Trainer for SVMNystroemPreprocessed, encapsulating optional normalization and PCA."""
+
+    def __init__(self,
+                 training_strategy: ModelTrainingStrategy,
+                 trainer_id: str,
+                 n_targets: int,
+                 n_components: int = 300,
+                 gamma: float = 'scale',
+                 C: float = 1.0,
+                 normalize: bool = False,
+                 pca: bool = False,
+                 n_pca_components: int = 64) -> None:
+        super().__init__(training_strategy, trainer_id, n_targets)
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+        self.normalize = normalize
+        self.pca = pca
+        self.n_pca_components = n_pca_components
+
+    def fit(self,
+            model_base_dir: str,
+            trn_dataset: iara_dataset.BaseDataset,
+            val_dataset: iara_dataset.BaseDataset) -> None:
+        if self.is_trained(model_base_dir=model_base_dir):
+            return
+
+        os.makedirs(model_base_dir, exist_ok=True)
+
+        if self.training_strategy == ModelTrainingStrategy.MULTICLASS:
+            target_ids = [None]
+        elif self.training_strategy == ModelTrainingStrategy.CLASS_SPECIALIST:
+            target_ids = trn_dataset.get_targets()
+
+        samples = trn_dataset.get_samples()
+
+        if samples is None:
+            raise UnboundLocalError("Training dataset without data")
+
+        for target_id in target_ids:
+            model_filename = self.output_filename(model_base_dir=model_base_dir,
+                                                   target_id=target_id)
+
+            if os.path.exists(model_filename):
+                continue
+
+            model = iara_svm.SVMNystroemPreprocessed(
+                n_components=self.n_components,
+                gamma=self.gamma,
+                C=self.C,
+                n_targets=self.n_targets,
+                normalize=self.normalize,
+                pca=self.pca,
+                n_pca_components=self.n_pca_components
+            )
+
+            targets = trn_dataset.get_targets()
+
+            if target_id is not None:
+                targets = torch.where(targets == target_id,
+                                      torch.tensor(1.0),
+                                      torch.tensor(0.0))
+
+            model.fit(samples=samples, targets=targets)
+            model.save(model_filename)
