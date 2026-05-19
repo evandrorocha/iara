@@ -23,6 +23,7 @@ Este documento consolida os resultados do experimento de avaliação do SVM cont
 | **SVM (m=2000) (C=0.1)** | LOFAR | **54.84% ± 1.60** | **59.67% ± 1.28** | **54.64% ± 1.69** | Nossa Execução (Local) |
 | **SVM (m=2000) (C=2.0)** | LOFAR | **60.15% ± 2.74** | **62.45% ± 2.17** | **60.59% ± 2.64** | Nossa Execução (Local) |
 | **SVM (m=2000) (C=2.0) (g=scale*2)** | LOFAR | **59.18% ± 2.70** | **61.95% ± 1.63** | **59.22% ± 2.18** | Nossa Execução (Local) |
+| **SVM (m=4000) (C=2.0)** | LOFAR | **61.70% ± 3.67** | **63.55% ± 2.91** | **62.85% ± 3.33** | Nossa Execução (Local) |
 
 > [!NOTE]
 > *Os valores de RF, MLP e CNN foram extraídos diretamente da Tabela 7 do artigo oficial do IARA. As margens de erro se referem a ±1 desvio padrão no teste de Validação Cruzada de 10 folds.*
