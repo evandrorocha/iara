@@ -117,9 +117,21 @@ class SVMNystroem(iara_model.BaseModel):
         alpha = 1.0 / (self.C * n_samples)
         self.sgd.set_params(alpha=alpha)
 
-        # Calculate gamma if 'scale'
-        if self.gamma == 'scale':
-            gamma = 1.0 / (X.shape[1] * X.var())
+        # Calculate gamma if 'scale' or with a multiplier
+        if isinstance(self.gamma, str) and 'scale' in self.gamma:
+            base_gamma = 1.0 / (X.shape[1] * X.var())
+            if '*' in self.gamma:
+                parts = self.gamma.split('*')
+                multiplier = 1.0
+                for p in parts:
+                    if p != 'scale':
+                        try:
+                            multiplier = float(p)
+                        except ValueError:
+                            pass
+                gamma = base_gamma * multiplier
+            else:
+                gamma = base_gamma
         elif self.gamma is None:
             gamma = 1.0 / X.shape[1]
         else:

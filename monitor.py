@@ -99,7 +99,8 @@ def draw_dashboard():
     
     print("=" * cols)
     print(f"{BOLD}{BLUE}   IARA EXPERIMENT MONITOR - ACTIVE RUN{RESET}".center(cols + 10))
-    print(f"{CYAN}   Experiment: {EXP_NAME}{RESET}".center(cols + 10))
+    exp_name_safe = EXP_NAME.replace('\uf02a', '*').encode('ascii', errors='replace').decode('ascii')
+    print(f"{CYAN}   Experiment: {exp_name_safe}{RESET}".center(cols + 10))
     print("=" * cols)
     print()
     
