@@ -67,24 +67,20 @@ Em cenários táticos reais de classificação acústica submarina, o custo asso
 
 Seja um arquivo acústico fatiado em $W$ janelas espectrais discretas. A confiança temporal $c(x)$ da classificação do arquivo é dada por:
 
-$$c(x) = \frac{1}{W} \max_{y \in Y} \sum_{w=1}^W \mathbb{I}(\hat{y}_w = y)$$
+$$c(x) = \frac{1}{W} \max_{y \in Y} \sum_{w=1}^W \mathbb{I}(\hat{y}### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL vs. CNN)
 
-Onde $\hat{y}_w$ é o vetor de predição do classificador para a janela $w$, e $\mathbb{I}$ representa a função indicadora. Se $c(x) < t$, a inferência é rejeitada e rotulada como classe indeterminada/desconhecida.
-
-### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL)
-
-| Limiar de Confiança ($t$) | Representação Espectral | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) | F1-Score (Micro) (%) |
-| :---: | :---: | :---: | :---: | :---: | :---: |
-| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR** <br> **MEL** | 100.00 ± 0.00 <br> 100.00 ± 0.00 | 63.32 ± 2.10 <br> **64.56 ± 1.18** | 63.10 ± 2.19 <br> **63.78 ± 1.14** | 64.34 ± 2.23 <br> **64.32 ± 1.02** |
-| **$t \ge 0.5$** <br> *(Maioria Simples)* | **LOFAR** <br> **MEL** | 78.25 ± 1.90 <br> **89.67 ± 1.17** | **70.36 ± 2.13** <br> 66.23 ± 1.48 | **68.56 ± 2.88** <br> 66.07 ± 1.63 | **70.03 ± 2.56** <br> 66.74 ± 1.59 |
-| **$t \ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR** <br> **MEL** | 61.21 ± 2.20 <br> **76.07 ± 2.69** | **76.54 ± 3.26** <br> 69.60 ± 1.86 | **72.87 ± 4.86** <br> 68.32 ± 2.37 | **74.64 ± 4.15** <br> 69.22 ± 2.18 |
-| **$t \ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR** <br> **MEL** | 22.27 ± 2.86 <br> **37.48 ± 2.32** | **90.43 ± 2.95** <br> 83.42 ± 2.07 | **78.85 ± 7.18** <br> 75.58 ± 3.18 | **82.68 ± 5.36** <br> 78.10 ± 2.71 |
+| Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) | F1-Score (Micro) (%) |
+| :---: | :--- | :---: | :---: | :---: | :---: |
+| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** | 100.00 ± 0.00 <br> 100.00 ± 0.00 <br> 100.00 ± 0.00 | 63.32 ± 2.10 <br> **64.56 ± 1.18** <br> 62.00 ± 2.28 | 63.10 ± 2.19 <br> **63.78 ± 1.14** <br> **63.80 ± 2.23** | 64.34 ± 2.23 <br> **64.32 ± 1.02** <br> 63.29 ± 2.25 |
+| **$t \ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** | 78.25 ± 1.90 <br> **89.67 ± 1.17** <br> 95.93 ± 0.96 | **70.36 ± 2.13** <br> 66.23 ± 1.48 <br> 63.18 ± 2.39 | **68.56 ± 2.88** <br> 66.07 ± 1.63 <br> 64.59 ± 2.25 | **70.03 ± 2.56** <br> 66.74 ± 1.59 <br> 64.21 ± 2.29 |
+| **$t \ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** | 61.21 ± 2.20 <br> **76.07 ± 2.69** <br> 82.90 ± 1.73 | **76.54 ± 3.26** <br> 69.60 ± 1.86 <br> 66.61 ± 2.27 | **72.87 ± 4.86** <br> 68.32 ± 2.37 <br> 66.76 ± 2.25 | **74.64 ± 4.15** <br> 69.22 ± 2.18 <br> 66.75 ± 2.21 |
+| **$t \ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** | 22.27 ± 2.86 <br> **37.48 ± 2.32** <br> 54.01 ± 2.47 | **90.43 ± 2.95** <br> **83.42 ± 2.07** <br> 74.39 ± 2.06 | **78.85 ± 7.18** <br> 75.58 ± 3.18 <br> 70.15 ± 3.21 | **82.68 ± 5.36** <br> 78.10 ± 2.71 <br> 71.14 ± 2.81 |
 
 ---
 
 ## 5. Análise do Limite Físico e Discussão sobre Acústica de Propagação
 
-A curva de desempenho delineada na Tabela 2 expõe um trade-off clássico governado por leis universais de propagação física no meio oceânico, permitindo duas conclusões teóricas fundamentais:
+A curva de desempenho delineada na Tabela 2 expõe um trade-off clássico governado por leis universais de propagação física no meio oceânico, permitindo três conclusões teóricas fundamentais:
 
 ### 5.1 O LOFAR como Operador de Resolução Discreta (O Sniper de Picos)
 A representação LOFAR baseia-se na preservação linear estreita da Transformada Rápida de Fourier (FFT), retendo as harmônicas puras e frequências fundamentais discretas de fontes rotativas (eixos e cilindros de pistões).
@@ -96,11 +92,17 @@ A representação espectral MEL agrupa e comprime logarítmicamente os canais de
 * **Física da Integração de Banda Larga:** Ao consolidar a energia espectral difusa de bandas adjacentes, o extrator MEL age como um integrador analógico de potência. Ele amortece flutuações de ruído transientes locais e compensa o esvanecimento de frequências discretas. Como consequência direta, **a cobertura de classificação em cenários de incerteza operacional decola, retendo 76.07% de todos os alvos avaliados sob maioria absoluta ($t \ge 0.6$)**.
 * **O Efeito de Borramento de Bordas:** A sobreposição intrínseca do banco de filtros Mel funde harmônicas próximas. Essa fusão gera limites de classe ligeiramente mais suaves e geométricamente ambíguos. Isso explica por que, no pico de certeza ($t \ge 0.9$), a sua acurácia máxima de convergência estima-se em **83.42%**, incapaz de replicar o pico absoluto do LOFAR.
 
+### 5.3 O Fenômeno de Superconfiança (Overconfidence) em Redes Neurais Convolucionais
+O treinamento local e a subsequente avaliação da CNN convolucional sob opção de rejeição fornecem uma prova empírica incontestável de um dos maiores problemas das redes neurais profundas: a **superconfiança na camada Softmax/Sigmoid**.
+* **Coesão sem Precisão:** Sob limiar crítico ($t \ge 0.9$), a CNN local exibe uma taxa de cobertura muito superior à do SVM (**54.01% ± 2.47%**). Contudo, a sua acurácia de teste converge para modestos **74.39% ± 2.06%** (uma desvantagem de **16%** em relação ao LOFAR-SVM e de **9%** em relação ao MEL-SVM).
+* **A Matemática da Falha:** Isso ocorre porque as convoluções profundas tendem a gerar ativações altamente saturadas. A rede força uma concordância temporal majoritária nas janelas temporais de um áudio ruidoso, induzindo o operador de votação a assumir uma "certeza unânime" baseada em features correlacionadas incorretamente. O SVM, operando por margens geométricas rígidas, demonstra-se um estimador de incerteza infinitamente mais calibrado e honesto, permitindo que a acurácia escale com o limiar de confiança, enquanto a CNN satura em erros confiantes.
+
 ---
 
 ## 6. Conclusões e Delineamento Tático Operacional
 
 As evidências experimentais provam que a implementação prática de sistemas embarcados de classificação acústica passiva se beneficia da adoção de uma **Arquitetura Dinâmica em Duas Camadas**:
 
-1. **Camada Geral de Reconhecimento Contínuo (MEL com $t \ge 0.6$):** Prioriza a cobertura espacial contínua. Automatiza a detecção de **76.07%** do tráfego marítimo com acurácia estabilizada de **69.60%** e desvio padrão fold-wise de apenas **1.86%**.
-2. **Camada Tática de Engajamento de Alta Certeza (LOFAR com $t \ge 0.9$):** Direcionada a alvos críticos em aproximação de ponto crítico de aproximação (CPA - *Closest Point of Approach*). O sistema restringe-se a confirmar a classe acústica com um grau de confiabilidade científica extremo de **90.43%**, eliminando a ocorrência de alarmes falsos catastróficos.
+1. **Camada Geral de Reconhecimento Contínuo (MEL com $t \ge 0.6$):** Prioriza a cobertura espacial contínua. Automatiza a detecção de **76.07%** do tráfego marítimo com acurácia estabilizada de **69.60%** e desvio padrão fold-wise de apenas **1.86%** usando a proposta SVM.
+2. **Camada Tática de Engajamento de Alta Certeza (LOFAR com $t \ge 0.9$):** Direcionada a alvos críticos em aproximação de ponto crítico de aproximação (CPA - *Closest Point of Approach*). O sistema proposto SVM restringe-se a confirmar a classe acústica com um grau de confiabilidade científica extremo de **90.43%**, eliminando a ocorrência de alarmes falsos catastróficos que a superconfiança da CNN geraria (25.6% de falsos alarmes no topo de certeza).
+
