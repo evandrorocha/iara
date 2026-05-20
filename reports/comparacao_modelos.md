@@ -47,3 +47,19 @@ O índice **SP** (calculado no código como a média geométrica combinada com a
 
 1. **Desempenho do SVM (m=1000):** O nosso SVM atingiu **62.96% ± 2.08** no índice SP. Isso é estatisticamente idêntico ao **63.52% ± 2.26** da CNN e ao **63.38% ± 1.81** da MLP.
 2. **Robustez Multiclasse:** O fato de o SP do SVM de 1000 componentes estar tão colado no das redes neurais prova que a aproximação de kernel RBF por Nyström conseguiu desenhar hiperplanos de separação muito bem-balanceados no espaço de alta dimensão, evitando que as classes minoritárias (navios raros) fossem engolidas pelo ruído de fundo majoritário.
+
+## ⚖️ Comparação de Filtro de Confiança: LOFAR vs. MEL (Os Dois Campeões)
+
+Abaixo está o embate direto entre o **Melhor Modelo LOFAR** ($m=4000$, PCA64, ElasticNet) e o **Melhor Modelo MEL** ($m=4000$, Puro/Sem PCA, ElasticNet) sob diferentes limiares de concordância de janela ($t$):
+
+| Limiar de Confiança ($t$) | Métrica | Modelo LOFAR Campeão | Modelo MEL Campeão (Supremo) | Vantagem / Dinâmica do Trade-off |
+| :--- | :--- | :---: | :---: | :--- |
+| **Cenário Standard ($t=0$)** | **Acurácia (ACC)** <br> **Índice SP** <br> Cobertura | **63.32% ± 2.10** <br> **63.10% ± 2.19** <br> **100%** | **64.56% ± 1.18** <br> **63.78% ± 1.14** <br> **100%** | **Vitória do MEL:** <br> O MEL sem PCA exibe maior acurácia global e um desvio padrão quase metade do LOFAR (máxima estabilidade nos folds). |
+| **Maioria Simples ($t \ge 0.5$)** | **Acurácia (ACC)** <br> **Índice SP** <br> Cobertura | **70.36% ± 2.13** <br> **68.56% ± 2.88** <br> **78.25% ± 1.90** | **66.23% ± 1.48** <br> **66.07% ± 1.63** <br> **89.67% ± 1.17** | **Trade-off:** <br> O LOFAR ganha em precisão (70.36%), mas o MEL mantém **89.67% de cobertura** (descarta apenas 10% dos áudios). |
+| **Maioria Absoluta ($t \ge 0.6$)** | **Acurácia (ACC)** <br> **Índice SP** <br> Cobertura | **76.54% ± 3.26** <br> **72.87% ± 4.86** <br> **61.21% ± 2.20** | **69.60% ± 1.86** <br> **68.32% ± 2.37** <br> **76.07% ± 2.69** | **Trade-off:** <br> O LOFAR atinge alta precisão militar (76.54%), porém o MEL consegue classificar com segurança **15% a mais de arquivos** (76.07%). |
+| **Certeza Crítica ($t \ge 0.9$)** | **Acurácia (ACC)** <br> **Índice SP** <br> Cobertura | **90.43% ± 2.95** <br> **78.85% ± 7.18** <br> **22.27% ± 2.86** | **83.42% ± 2.07** <br> **75.58% ± 3.18** <br> **37.48% ± 2.32** | **Trade-off:** <br> O LOFAR bate a marca absurda de **90.43% de acurácia** (mas rejeita 78% dos áudios). O MEL entrega excelentes **83.42%** classificando quase o dobro de navios (**37.48%**). |
+
+### 🧠 Análise Físico-Acústica do Embate:
+1. **O LOFAR é Esparso e Focado em Raias (Picos):** Como o LOFAR preserva frequências lineares físicas estreitas, as harmônicas dos motores geram "linhas digitais" extremamente nítidas e estáveis. Quando o modelo adquire alta concordância nessas raias ($t \ge 0.6$ ou $0.9$), a sua acurácia dispara para patamares incríveis (**76% a 90%**). Em contrapartida, por ser uma assinatura esparsa, flutuações de ruído oceânico o fazem descartar mais arquivos (cobertura menor).
+2. **O MEL é Denso e Integrado (Energia):** Como o MEL agrupa o espectro em 256 bandas largas logarítmicas, ele exibe extrema estabilidade e resiliência a ruídos externos, o que resulta em **coberturas muito maiores** em todos os limiares (consegue classificar 76% da base sob $t \ge 0.6$). Contudo, a sobreposição triangular inerente da escala Mel gera bordas de decisão mais suaves, limitando a acurácia máxima a **83.42%** no pico de certeza.
+
