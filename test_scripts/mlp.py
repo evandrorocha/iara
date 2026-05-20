@@ -62,16 +62,15 @@ def main(folds: typing.List[int]):
             input_type = input_type)
 
     trainers = []
-
     trainers.append(iara_trn.OptimizerTrainer(
             training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
             trainer_id = 'mlp',
             n_targets = config.dataset.target.get_n_targets(),
             batch_size = 32,
-            n_epochs = 30,
+            n_epochs = 512,
             patience = 16,
             model_allocator = lambda input_shape, n_targets,
-                hidden_channels = 8,
+                hidden_channels = [32, 16],
                 dropout = 0.2,
                 norm_layer = torch.nn.BatchNorm1d,
                 activation_layer = torch.nn.ReLU,
