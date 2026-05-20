@@ -21,6 +21,8 @@ Este documento consolida os resultados do experimento de avaliação do SVM cont
 | **SVM (m=3000)** | MEL | **63.65% ± 1.99** | **64.77% ± 1.87** | **63.59% ± 1.92** | Nossa Execução (Local) |
 | **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | MEL | **63.82% ± 1.61** | **64.61% ± 1.60** | **64.60% ± 1.54** | Nossa Execução (Local) |
 | **SVM (m=4000) (C=2.0) (elasticnet) (g=0.05)** | MEL | **46.01% ± 4.58** | **52.63% ± 2.19** | **46.86% ± 3.57** | Nossa Execução (Local) |
+| **SVM (m=4000) (C=2.0) (elasticnet)** | MEL | **63.78% ± 1.14** | **64.56% ± 1.18** | **64.32% ± 1.02** | Nossa Execução (Local) |
+
 
 
 | **SVM (m=1000)** | LOFAR | **57.86% ± 3.83** | **60.95% ± 2.89** | **57.86% ± 3.53** | Nossa Execução (Local) |
