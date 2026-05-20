@@ -117,6 +117,7 @@ class Classifier(enum.Enum):
     FOREST = 0
     MLP = 1
     CNN = 2
+    SVM = 3
 
     def __str__(self) -> str:
         return str(self.name).rsplit(".", maxsplit=1)[-1].lower()
@@ -234,6 +235,20 @@ def default_mel_managers(config_name: str,
                             torch.optim.Adam(model.parameters(), weight_decay = weight_decay, lr = lr),
                     loss_allocator = lambda class_weights:
                             torch.nn.CrossEntropyLoss(weight=class_weights, reduction='mean')
+            )
+
+        elif classifier == Classifier.SVM:
+            trainer = iara_trn.SVMNystroemPreprocessedTrainer(
+                training_strategy=training_strategy,
+                trainer_id = 'svm mel',
+                n_targets = config.dataset.target.get_n_targets(),
+                n_components=4000,
+                gamma='scale',
+                C=2.0,
+                normalize=False,
+                pca=False,
+                penalty='elasticnet',
+                l1_ratio=0.15
             )
 
         manager_dict[classifier] = iara_exp.Manager(config, trainer)

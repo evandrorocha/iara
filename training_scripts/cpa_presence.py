@@ -55,8 +55,7 @@ def main(override: bool,
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/{exp_str}/exp_{cpa_test}"
 
-    classifiers = [iara_default.Classifier.FOREST, iara_default.Classifier.MLP, iara_default.Classifier.CNN]
-    # classifiers = [iara_default.Classifier.MLP]
+    classifiers = [iara_default.Classifier.FOREST, iara_default.Classifier.MLP, iara_default.Classifier.CNN, iara_default.Classifier.SVM]
 
     manager_dict_0 = iara_default.default_mel_managers(
                 config_name = f'{str(collections[0])}',
