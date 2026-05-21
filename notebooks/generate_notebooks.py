@@ -48,6 +48,19 @@ cells_1 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
+            "### Parâmetros de Configuração e Treinamento do SVM Nyström:\n",
+            "Para garantir a replicabilidade científica dos experimentos, as seguintes configurações de hiperparâmetros foram empregadas no estimador:\n",
+            "* **Aproximação de Kernel:** Kernel Gaussiano RBF aproximado pelo método de Nyström com $m = 4000$ componentes espectrais.\n",
+            "* **Custo de Regularização ($C$):** $C = 2.0$.\n",
+            "* **Regularização / Penalidade:** ElasticNet com razão $L_1 = 0.15$ (propiciando esparsidade seletiva) e $L_2 = 0.85$.\n",
+            "* **Tratamento de Dimensionalidade (MEL):** PCA desativado (preservação das 256 bandas Mel como entrada direta do estimador).\n",
+            "* **Tratamento de Dimensionalidade (LOFAR):** PCA ativado (projeção linear redutiva prévia para $n_{components} = 64$ para filtragem de ruído oceânico).\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
             "### Tabela 1: Métricas de Desempenho Geral no Conjunto de Teste (Sem Rejeição)\n",
             "\n",
             "| Classificador / Arquitetura | Representação Espectral | Índice SP (%) | Acurácia Global (ACC) (%) | F1-Score (Micro) (%) |\n",
@@ -58,8 +71,8 @@ cells_1 = [
             "| **MLP** | LOFAR | 66.51 ± 1.39 | 67.48 ± 1.24 | 66.72 ± 1.17 |\n",
             "| **CNN** | MEL | 63.52 ± 2.26 | 64.99 ± 2.09 | 63.04 ± 2.02 |\n",
             "| **CNN** | LOFAR | 66.05 ± 1.90 | 67.02 ± 1.78 | 66.29 ± 2.13 |\n",
-            "| **SVM (Ours)** | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** |\n",
-            "| **SVM (Ours)** | LOFAR | **63.10 ± 2.19** | **64.04 ± 1.88** | **64.34 ± 2.23** |\n"
+            "| **SVM** *(m=4000, C=2.0, ElasticNet)* | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** |\n",
+            "| **SVM** *(m=4000, C=2.0, PCA64, ElasticNet)* | LOFAR | **63.10 ± 2.19** | **64.04 ± 1.88** | **64.34 ± 2.23** |\n"
         ]
     },
     {
@@ -104,7 +117,7 @@ cells_1 = [
             "        'RF Mel', 'RF Lofar', \n",
             "        'MLP Mel', 'MLP Lofar', \n",
             "        'CNN Mel', 'CNN Lofar', \n",
-            "        'SVM Mel (Ours)', 'SVM Lofar (Ours)'\n",
+            "        'SVM Mel', 'SVM Lofar'\n",
             "    ],\n",
             "    'Representacao': ['MEL', 'LOFAR', 'MEL', 'LOFAR', 'MEL', 'LOFAR', 'MEL', 'LOFAR'],\n",
             "    'SP': [62.22, 56.92, 63.38, 66.51, 63.52, 66.05, 63.78, 63.10],\n",
@@ -151,7 +164,7 @@ cells_1 = [
             "ax1.set_ylabel('Acurácia Global (%)')\n",
             "ax1.set_title('Acurácia Global (ACC) por Modelo e Extrator')\n",
             "ax1.set_xticks(x)\n",
-            "ax1.set_xticklabels(['RF', 'MLP', 'CNN', 'SVM (Ours)'])\n",
+            "ax1.set_xticklabels(['RF', 'MLP', 'CNN', 'SVM (m=4000)'])\n",
             "ax1.set_ylim(50, 75)\n",
             "ax1.legend()\n",
             "\n",
@@ -164,7 +177,7 @@ cells_1 = [
             "ax2.set_ylabel('Índice SP (%)')\n",
             "ax2.set_title('Índice SP (Sensibilidade Equilibrada) por Modelo')\n",
             "ax2.set_xticks(x)\n",
-            "ax2.set_xticklabels(['RF', 'MLP', 'CNN', 'SVM (Ours)'])\n",
+            "ax2.set_xticklabels(['RF', 'MLP', 'CNN', 'SVM (m=4000)'])\n",
             "ax2.set_ylim(50, 75)\n",
             "ax2.legend()\n",
             "\n",
@@ -177,7 +190,7 @@ cells_1 = [
         "metadata": {},
         "source": [
             "### 3. Discussão Científica e Conclusões:\n",
-            "1. **Convergência de Capacidade:** O modelo proposto **SVM Nyström (Golden MEL)** alcançou **64.56% ± 1.18% de Acurácia**, assemelhando-se estatisticamente à CNN convolucional profunda (**64.99%**), contudo com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$). Desse modo, a estabilidade matemática da formulação convexa é evidenciada.\n",
+            "1. **Convergência de Capacidade:** O modelo proposto **SVM Nyström (MEL)** alcançou **64.56% ± 1.18% de Acurácia**, assemelhando-se estatisticamente à CNN convolucional profunda (**64.99%**), contudo com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$). Desse modo, a estabilidade matemática da formulação convexa é evidenciada.\n",
             "2. **Divergência Crítica do PCA:** Foi verificado que a projeção PCA linear acarreta degradação sobre o extrator MEL (devido à compressão redundante linear sobre eixos logarítmicos pré-integrados). No entanto, o PCA demonstrou-se essencial no LOFAR, atuando como um excelente filtro de ruído caótico tridimensional e propiciando a separabilidade geométrica para o kernel Gaussiano RBF.\n"
         ]
     }
@@ -199,14 +212,27 @@ cells_2 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
+            "### Parâmetros de Configuração e Treinamento do SVM Nyström:\n",
+            "As configurações de hiperparâmetros abaixo foram mantidas constantes durante a validação cruzada:\n",
+            "* **Aproximação de Kernel:** Kernel Gaussiano RBF aproximado pelo método de Nyström com $m = 4000$ componentes espectrais.\n",
+            "* **Custo de Regularização ($C$):** $C = 2.0$.\n",
+            "* **Regularização / Penalidade:** ElasticNet com razão $L_1 = 0.15$ e $L_2 = 0.85$.\n",
+            "* **Tratamento de Dimensionalidade (MEL):** PCA desativado.\n",
+            "* **Tratamento de Dimensionalidade (LOFAR):** PCA ativado ($n_{components} = 64$).\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
             "### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL vs. CNN vs. MLP)\n",
             "\n",
             "| Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) |\n",
             "| :---: | :--- | :---: | :---: | :---: |\n",
-            "| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 <br> 100.00 <br> 100.00 <br> 100.00 | 63.32 <br> 64.56 <br> 65.01 <br> 63.54 | 63.10 <br> 63.78 <br> 63.80 <br> 64.74 |\n",
-            "| **$t \\ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 <br> 89.67 <br> 95.93 <br> 85.60 | 70.36 <br> 66.23 <br> 63.18 <br> 67.41 | 68.56 <br> 66.07 <br> 64.59 <br> 67.34 |\n",
-            "| **$t \\ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 <br> 76.07 <br> 82.90 <br> 70.36 | 76.54 <br> 69.60 <br> 66.61 <br> 71.97 | 72.87 <br> 68.32 <br> 66.76 <br> 70.02 |\n",
-            "| **$t \\ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 <br> 37.48 <br> 54.01 <br> 32.90 | **90.43** <br> 83.42 <br> 74.39 <br> 85.93 | **78.85** <br> 75.58 <br> 70.15 <br> 72.87 |\n"
+            "| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 <br> 100.00 <br> 100.00 <br> 100.00 | 63.32 <br> 64.56 <br> 65.01 <br> 63.54 | 63.10 <br> 63.78 <br> 63.80 <br> 64.74 |\n",
+            "| **$t \\ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 <br> 89.67 <br> 95.93 <br> 85.60 | 70.36 <br> 66.23 <br> 63.18 <br> 67.41 | 68.56 <br> 66.07 <br> 64.59 <br> 67.34 |\n",
+            "| **$t \\ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 <br> 76.07 <br> 82.90 <br> 70.36 | 76.54 <br> 69.60 <br> 66.61 <br> 71.97 | 72.87 <br> 68.32 <br> 66.76 <br> 70.02 |\n",
+            "| **$t \\ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 <br> 37.48 <br> 54.01 <br> 32.90 | **90.43** <br> 83.42 <br> 74.39 <br> 85.93 | **78.85** <br> 75.58 <br> 70.15 <br> 72.87 |\n"
         ]
     },
     {
@@ -269,8 +295,8 @@ cells_2 = [
             "plt.figure(figsize=(10, 7))\n",
             "\n",
             "# Plotagem de cada curva de modelo\n",
-            "plt.plot(df_rej['LOFAR_SVM_Cov'], df_rej['LOFAR_SVM_ACC'], 'o-', label='LOFAR SVM (Ours)', color='#e74c3c', linewidth=2.5, markersize=8)\n",
-            "plt.plot(df_rej['MEL_SVM_Cov'], df_rej['MEL_SVM_ACC'], 's-', label='MEL SVM (Ours)', color='#2ecc71', linewidth=2.0, markersize=8)\n",
+            "plt.plot(df_rej['LOFAR_SVM_Cov'], df_rej['LOFAR_SVM_ACC'], 'o-', label='LOFAR SVM (m=4000)', color='#e74c3c', linewidth=2.5, markersize=8)\n",
+            "plt.plot(df_rej['MEL_SVM_Cov'], df_rej['MEL_SVM_ACC'], 's-', label='MEL SVM (m=4000)', color='#2ecc71', linewidth=2.0, markersize=8)\n",
             "plt.plot(df_rej['CNN_Cov'], df_rej['CNN_ACC'], '^--', label='CNN Mel (Baseline)', color='#3498db', linewidth=2.0, markersize=8)\n",
             "plt.plot(df_rej['MLP_Cov'], df_rej['MLP_ACC'], 'd-.', label='MLP Mel (Baseline)', color='#9b59b6', linewidth=2.0, markersize=8)\n",
             "\n",
@@ -323,6 +349,19 @@ cells_3 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
+            "### Parâmetros de Configuração e Treinamento do SVM Nyström:\n",
+            "As configurações de hiperparâmetros abaixo foram mantidas estáveis durante o treinamento:\n",
+            "* **Aproximação de Kernel:** Kernel Gaussiano RBF aproximado pelo método de Nyström com $m = 4000$ componentes espectrais.\n",
+            "* **Custo de Regularização ($C$):** $C = 2.0$.\n",
+            "* **Regularização / Penalidade:** ElasticNet com razão $L_1 = 0.15$ e $L_2 = 0.85$.\n",
+            "* **Tratamento de Dimensionalidade (MEL):** PCA desativado.\n",
+            "* **Tratamento de Dimensionalidade (LOFAR):** PCA ativado ($n_{components} = 64$).\n"
+        ]
+    },
+    {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
             "### Tabela 3: Desempenho e Generalização no Experimento de CPA Proximity (Tabela 10 do Artigo)\n",
             "\n",
             "| Modelo / Classificador | Treinado em | SP A (%) | ACC A (%) | SP C (%) | ACC C (%) |\n",
@@ -333,10 +372,10 @@ cells_3 = [
             "| **MLP Mel** | Dataset C (Far) | 59.36 ± 4.55 | 59.70 ± 4.47 | 59.46 ± 4.45 | 60.21 ± 4.17 |\n",
             "| **CNN Mel** | Dataset A (Near) | 61.84 ± 3.26 | 62.61 ± 2.85 | 56.58 ± 4.80 | 58.09 ± 4.30 |\n",
             "| **CNN Mel** | Dataset C (Far) | 52.41 ± 7.12 | 53.28 ± 6.63 | 55.37 ± 5.29 | 56.40 ± 4.81 |\n",
-            "| **SVM Mel (Ours)** | Dataset A (Near) | **64.15 ± 2.87** | **65.08 ± 2.91** | **59.24 ± 4.55** | **60.84 ± 3.59** |\n",
-            "| **SVM Mel (Ours)** | Dataset C (Far) | **56.85 ± 4.89** | **57.64 ± 4.33** | **59.13 ± 6.03** | **60.46 ± 5.04** |\n",
-            "| **SVM LOFAR (Ours)**| Dataset A (Near) | **67.24 ± 3.42** | **68.23 ± 2.94** | **55.35 ± 4.45** | **57.26 ± 3.66** |\n",
-            "| **SVM LOFAR (Ours)**| Dataset C (Far)  | **58.52 ± 4.95** | **59.59 ± 4.65** | **55.84 ± 6.00** | **57.38 ± 5.49** |\n"
+            "| **SVM Mel** *(m=4000, C=2.0)* | Dataset A (Near) | **64.15 ± 2.87** | **65.08 ± 2.91** | **59.24 ± 4.55** | **60.84 ± 3.59** |\n",
+            "| **SVM Mel** *(m=4000, C=2.0)* | Dataset C (Far) | **56.85 ± 4.89** | **57.64 ± 4.33** | **59.13 ± 6.03** | **60.46 ± 5.04** |\n",
+            "| **SVM LOFAR** *(m=4000, C=2.0, PCA64)* | Dataset A (Near) | **67.24 ± 3.42** | **68.23 ± 2.94** | **55.35 ± 4.45** | **57.26 ± 3.66** |\n",
+            "| **SVM LOFAR** *(m=4000, C=2.0, PCA64)* | Dataset C (Far)  | **58.52 ± 4.95** | **59.59 ± 4.65** | **55.84 ± 6.00** | **57.38 ± 5.49** |\n"
         ]
     },
     {
@@ -357,7 +396,7 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 1. Definição das Métricas de Generalização Inter-dataset\n",
-            "Los resultados agregados sob validação cruzada para o cruzamento de conjuntos de treino e teste entre A e C são definidos na célula abaixo.\n"
+            "Os resultados agregados sob validação cruzada para o cruzamento de conjuntos de treino e teste entre A e C são definidos na célula abaixo.\n"
         ]
     },
     {
@@ -368,7 +407,7 @@ cells_3 = [
         "source": [
             "cpa_data = {\n",
             "    'Modelo': [\n",
-            "        'Forest Mel', 'MLP Mel', 'CNN Mel', 'SVM Mel (Ours)', 'SVM LOFAR (Ours)'\n",
+            "        'Forest Mel', 'MLP Mel', 'CNN Mel', 'SVM Mel', 'SVM LOFAR'\n",
             "    ],\n",
             "    'Trained_A_ACC_A': [59.24, 67.74, 62.61, 65.08, 68.23],\n",
             "    'Trained_A_ACC_C': [51.87, 61.03, 58.09, 60.84, 57.26],\n",
@@ -418,7 +457,7 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 3. Discussão sobre Generalização e Recorde do SVM LOFAR:\n",
-            "1. **Recorde Geral Estabelecido:** Pelo modelo **SVM LOFAR (Ours)** treinado e testado em A, foi estabelecido o recorde máximo de acurácia de todo o estudo de proximidade do IARA: **68.23%**. Essa marca superou a acurácia obtida pela MLP Mel profunda de banda larga (**67.74%**), comprovando a nitidez geométrica dos picos harmônicos discretas.\n",
+            "1. **Recorde Geral Estabelecido:** Pelo modelo **SVM LOFAR** treinado e testado em A, foi estabelecido o recorde máximo de acurácia de todo o estudo de proximidade do IARA: **68.23%**. Essa marca superou a acurácia obtida pela MLP Mel profunda de banda larga (**67.74%**), comprovando a nitidez geométrica dos picos harmônicos discretas.\n",
             "2. **Estabilidade de Margem:** Verificou-se que, enquanto a MLP Mel sofreu uma queda drástica de acurácia de **6.71%** ao generalizar para C, o **SVM Mel** sofreu um decaimento de apenas **4.24%**, mantendo-se robusto diante da dispersão acústica do meio oceânico.\n",
             "3. **Resiliência frente à CNN:** Em cenários ruidosos de baixa SNR (Trained on C), a generalização da CNN convolucional Mel degradou severamente, atingindo pífios **53.28% de acurácia em A**. Em contrapartida, o **SVM LOFAR** sustentou excelentes **59.59% de acurácia**, superando o baseline deep em **6.31 pontos percentuais**.\n"
         ]
