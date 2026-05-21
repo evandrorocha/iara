@@ -324,7 +324,7 @@ cells_2 = [
         "source": [
             "### 3. Discussão Física do Gráfico:\n",
             "1. **Raias Harmônicas Discretas (LOFAR SVM):** Sob limiar severo ($t \\ge 0.9$), a acurácia recorde de **90.43%** foi alcançada pelo SVM LOFAR. Esse comportamento decorre do expurgo de trechos ruidosos, focando-se a classificação exclusivamente nas assinaturas discretas do maquinário.\n",
-            "2. **O Problema de Superconfiança Convolucional:** Sob o mesmo limiar ($t \\ge 0.9$), a CNN Mel manteve uma cobertura mais elevada (**54.01%**), contudo a sua acurácia de teste saturou in apenas **74.39%**. Demonstra-se que as redes neurais convolucionais profundas sofrem de calibração inadequada das probabilidades de saída, forçando decisões erradas e superconfiantes em trechos com alta atenuação de sinal. O SVM Nyström, estruturado em margens geométricas, exibiu uma calibração estatística consideravelmente mais robusta.\n"
+            "2. **O Problema de Superconfiança Convolucional:** Sob o mesmo limiar ($t \\ge 0.9$), a CNN Mel manteve uma cobertura mais elevada (**54.01%**), contudo a sua acurácia de teste saturou em apenas **74.39%**. Demonstra-se que as redes neurais convolucionais profundas sofrem de calibração inadequada das probabilidades de saída, forçando decisões erradas e superconfiantes em trechos com alta atenuação de sinal. O SVM Nyström, estruturado em margens geométricas, exibiu uma calibração estatística consideravelmente mais robusta.\n"
         ]
     }
 ]
@@ -489,11 +489,10 @@ cells_4 = [
             "| **Exp #3** | MEL (256 bins) | 2000 | 1.0 | Sem PCA | 62.57% | ± 2.05% | Teste intermediário de média escala. |\n",
             "| **Exp #4** | MEL (256 bins) | 3000 | 1.0 | Sem PCA | 63.10% | ± 1.97% | Teste intermediário de alta escala. |\n",
             "| **Exp #5** | MEL (256 bins) | 4000 | 2.0 | Sem PCA | **64.56%** | **± 1.18%** | **Golden MEL**. Estatisticamente equivalente à CNN, com metade da variância. |\n",
-            "| **Exp #6** | LOFAR (Frequência) | 300 | 1.0 | PCA (64 comps) | 58.20% | ± 2.25% | Primeira integração espectral LOFAR. Baixo poder de decisão sem dimensão. |\n",
-            "| **Exp #7** | LOFAR (Frequência) | 1000 | 1.0 | Sem PCA | 59.11% | ± 2.60% | LOFAR intermediário sem filtragem linear de ruído (sinal degradado). |\n",
-            "| **Exp #8** | LOFAR (Frequência) | 1000 | 2.0 | PCA (64 comps) | 61.92% | ± 1.89% | LOFAR com PCA64 ativado (aumento nítido de robustez e acurácia). |\n",
-            "| **Exp #9** | LOFAR (Frequência) | 2000 | 2.0 | PCA (64 comps) | 61.08% | ± 1.80% | LOFAR intermediário em escala 2000. |\n",
-            "| **Exp #10**| LOFAR (Frequência) | 4000 | 2.0 | PCA (64 comps) | **64.04%** | **± 1.88%** | **Golden LOFAR**. Acurácia robusta aliada a recorde no experimento CPA. |\n"
+            "| **Exp #6** | LOFAR (Frequência) | 1000 | 1.0 | Sem PCA | 59.11% | ± 2.60% | Primeira integração espectral LOFAR. Dificuldade severa sem redução (sinal ruidoso). |\n",
+            "| **Exp #7** | LOFAR (Frequência) | 1000 | 2.0 | PCA (64 comps) | 61.92% | ± 1.89% | LOFAR com PCA64 ativado (aumento drástico de robustez e acurácia). |\n",
+            "| **Exp #8** | LOFAR (Frequência) | 2000 | 2.0 | PCA (64 comps) | 61.08% | ± 1.80% | LOFAR intermediário em escala 2000. |\n",
+            "| **Exp #9** | LOFAR (Frequência) | 4000 | 2.0 | PCA (64 comps) | **64.04%** | **± 1.88%** | **Golden LOFAR**. Acurácia robusta aliada a recorde no experimento CPA. |\n"
         ]
     },
     {
@@ -524,10 +523,10 @@ cells_4 = [
         "outputs": [],
         "source": [
             "history = {\n",
-            "    'm': [300, 1000, 2000, 3000, 4000, 300, 1000, 1000, 2000, 4000],\n",
-            "    'Extrator': ['MEL', 'MEL', 'MEL', 'MEL', 'MEL', 'LOFAR', 'LOFAR (Sem PCA)', 'LOFAR (PCA)', 'LOFAR (PCA)', 'LOFAR (PCA)'],\n",
-            "    'ACC': [61.02, 62.21, 62.57, 63.10, 64.56, 58.20, 59.11, 61.92, 61.08, 64.04],\n",
-            "    'std': [1.94, 1.90, 2.05, 1.97, 1.18, 2.25, 2.60, 1.89, 1.80, 1.88]\n",
+            "    'm': [300, 1000, 2000, 3000, 4000, 1000, 1000, 2000, 4000],\n",
+            "    'Extrator': ['MEL', 'MEL', 'MEL', 'MEL', 'MEL', 'LOFAR (Sem PCA)', 'LOFAR (PCA)', 'LOFAR (PCA)', 'LOFAR (PCA)'],\n",
+            "    'ACC': [61.02, 62.21, 62.57, 63.10, 64.56, 59.11, 61.92, 61.08, 64.04],\n",
+            "    'std': [1.94, 1.90, 2.05, 1.97, 1.18, 2.60, 1.89, 1.80, 1.88]\n",
             "}\n",
             "\n",
             "df_hist = pd.DataFrame(history)\n",
@@ -564,9 +563,8 @@ cells_4 = [
             "             color='#34495e', linewidth=2.0, elinewidth=1.5, capsize=5, \n",
             "             label='SVM Nyström + LOFAR + PCA64 (Filtro Linear)', markersize=8)\n",
             "\n",
-            "# Plotagem dos pontos isolados exploratórios (m=300 sem PCA, m=1000 sem PCA)\n",
-            "plt.scatter([300], [58.20], color='#e74c3c', marker='x', s=100, zorder=5, label='LOFAR m=300 (Primeiro Teste)')\n",
-            "plt.scatter([1000], [59.11], color='#c0392b', marker='d', s=100, zorder=5, label='LOFAR m=1000 (Sem PCA)')\n",
+            "# Plotagem do ponto isolado exploratório (m=1000 sem PCA)\n",
+            "plt.scatter([1000], [59.11], color='#c0392b', marker='d', s=120, zorder=5, label='LOFAR m=1000 (Sem PCA de Ruído)')\n",
             "\n",
             "# Anotações de texto explicativas\n",
             "plt.annotate('Golden MEL (64.56%)\\nVariabilidade fold Mínima (±1.18%)', xy=(4000, 64.56), xytext=(1200, 65.5), \n",
@@ -577,7 +575,7 @@ cells_4 = [
             "             arrowprops=dict(facecolor='#2c3e50', shrink=0.08, width=1.5, headwidth=6), \n",
             "             fontsize=10, weight='bold', color='#2c3e50')\n",
             "\n",
-            "plt.annotate('Degradação Crítica\\nSem PCA de Ruído', xy=(1000, 59.11), xytext=(450, 59.5), \n",
+            "plt.annotate('Degradação Crítica\\nSem PCA de Ruído', xy=(1000, 59.11), xytext=(450, 58.0), \n",
             "             arrowprops=dict(facecolor='#c0392b', shrink=0.08, width=1.5, headwidth=6), \n",
             "             fontsize=9, color='#c0392b')\n",
             "\n",
@@ -597,8 +595,8 @@ cells_4 = [
         "metadata": {},
         "source": [
             "### 3. Discussão Científica e Análise das Fases de Sintonia:\n",
-            "1. **O Efeito Revelador do PCA no LOFAR:** O experimento #7 ($m=1000$ LOFAR sem PCA) obteve sofríveis **59.11%** de acurácia. No entanto, ao ativarmos o filtro linear PCA com 64 componentes no experimento #8, a acurácia escalou na hora para **61.92%** (ganho líquido de **+2.81 pontos percentuais**). Isso prova que o PCA no LOFAR atua como um excepcional removedor de ruídos tridimensionais, evidenciando as raias harmônicas discretas.\n",
-            "2. **Dinâmica de Escalonamento da Margem Suave:** Tanto a representação MEL quanto a LOFAR (com PCA) descrevem curvas de aprendizado logarítmicas consistentes à medida que o número de componentes espectrais aproximados ($m$) escala de $300$ a $4000$. O SVM demonstra ser altamente responsivo a esta expansão dimensional no RKHS, permitindo que as margens geométricas encontrem hiperplanos de alta fidelidade e com baixíssimo desvio padrão de teste."
+            "1. **O Efeito Revelador do PCA no LOFAR:** O experimento #6 ($m=1000$ LOFAR sem PCA) obteve sofríveis **59.11%** de acurácia. No entanto, ao ativarmos o filtro linear PCA com 64 componentes no experimento #7, a acurácia escalou na hora para **61.92%** (ganho líquido de **+2.81 pontos percentuais**). Isso prova que o PCA no LOFAR atua como um excepcional removedor de ruídos tridimensionais, evidenciando as raias harmônicas discretas.\n",
+            "2. **Dinâmica de Escalonamento da Margem Suave:** Tanto a representação MEL quanto a LOFAR (com PCA) descrevem curvas de aprendizado logarítmicas consistentes à medida que o número de componentes espectrais aproximados ($m$) escala de $1000$ a $4000$ (para LOFAR) e de $300$ a $4000$ (para MEL). O SVM demonstra ser altamente responsivo a esta expansão dimensional no RKHS, permitindo que as margens geométricas encontrem hiperplanos de alta fidelidade e com baixíssimo desvio padrão de teste."
         ]
     }
 ]
