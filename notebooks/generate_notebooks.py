@@ -41,7 +41,7 @@ cells_1 = [
             "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
             "### Notebook 1: Comparação Geral de Desempenho (Sem Opção de Rejeição)\n",
             "\n",
-            "Este notebook apresenta a análise comparativa global entre os modelos baselines estabelecidos no artigo (*Silva et al., 2025*) e a nossa proposta baseada em **Support Vector Machines (SVM) com Aproximação de Nyström** nas representações espectrais **MEL** e **LOFAR**."
+            "Neste notebook, é apresentada a análise comparativa global entre os modelos baselines estabelecidos no artigo (*Silva et al., 2025*) e a proposta baseada em **Support Vector Machines (SVM) com Aproximação de Nyström** nas representações espectrais **MEL** e **LOFAR**."
         ]
     },
     {
@@ -72,7 +72,7 @@ cells_1 = [
         "metadata": {},
         "source": [
             "### 1. Definição do Conjunto de Dados (Tabela 1 do Artigo + Proposta)\n",
-            "Consolidamos abaixo os resultados obtidos sob o protocolo de **Validação Cruzada 5x2 (10 folds)** com a restrição de *Exclusive Ships on Test*."
+            "Os resultados obtidos sob o protocolo de **Validação Cruzada 5x2 (10 folds)** com a restrição de *Exclusive Ships on Test* são consolidados abaixo."
         ]
     },
     {
@@ -104,7 +104,7 @@ cells_1 = [
         "metadata": {},
         "source": [
             "### 2. Visualização das Métricas Globais (MEL vs LOFAR)\n",
-            "Vamos plotar um gráfico de barras comparando a **Acurácia Global (ACC)** e o **Índice SP (Robustez)** com barras de desvio padrão."
+            "Um gráfico de barras comparando a **Acurácia Global (ACC)** e o **Índice SP (Robustez)** com barras de desvio padrão é plotado a seguir."
         ]
     },
     {
@@ -158,9 +158,9 @@ cells_1 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
-            "### 3. Discussão Científica das Conclusões:\n",
-            "1. **Convergência de Capacidade:** O nosso modelo **SVM Nyström (Golden MEL)** alcançou **64.56% ± 1.18% de Acurácia**, empatando estatisticamente com a CNN convolucional profunda (**64.99%**), mas com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$), provando estabilidade matemática superior.\n",
-            "2. **Divergência Crítica do PCA:** O PCA reduziu o desempenho sobre o extrator MEL (por ser compressão redundante linear sobre escala logarítmica), mas provou-se essencial no LOFAR, onde filtrou o ruído caótico tridimensional do hidrofone, garantindo a separabilidade do kernel Gaussiano."
+            "### 3. Discussão Científica e Conclusões:\n",
+            "1. **Convergência de Capacidade:** O modelo proposto **SVM Nyström (Golden MEL)** alcançou **64.56% ± 1.18% de Acurácia**, assemelhando-se estatisticamente à CNN convolucional profunda (**64.99%**), contudo com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$). Desse modo, a estabilidade matemática da formulação convexa é evidenciada.\n",
+            "2. **Divergência Crítica do PCA:** Foi verificado que a projeção PCA linear acarreta degradação sobre o extrator MEL (devido à compressão redundante linear sobre eixos logarítmicos pré-integrados). No entanto, o PCA demonstrou-se essencial no LOFAR, atuando como um excelente filtro de ruído caótico tridimensional e propiciando a separabilidade geométrica para o kernel Gaussiano RBF."
         ]
     }
 ]
@@ -174,7 +174,7 @@ cells_2 = [
             "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
             "### Notebook 2: Otimização com Opção de Rejeição (Filtro de Confiança)\n",
             "\n",
-            "Este notebook avalia a incorporação de um **operador de decisão com opção de rejeição** baseado em concordância temporal de janelas. Analisamos a curva de trade-off entre a taxa de cobertura (fração de áudios classificados) e as métricas de acurácia/SP à medida que exigimos maior certeza nas decisões."
+            "Neste notebook, é avaliada a incorporação de um **operador de decisão com opção de rejeição** baseado em concordância temporal de janelas. A curva de trade-off entre a taxa de cobertura (fração de áudios classificados) e as métricas de acurácia/SP é analisada à medida que maior certeza é exigida do sistema de sonar."
         ]
     },
     {
@@ -195,7 +195,7 @@ cells_2 = [
         "metadata": {},
         "source": [
             "### 1. Estruturação dos Dados de Rejeição (LOFAR SVM vs MEL SVM vs CNN vs MLP)\n",
-            "Consolidamos as métricas sob os limiares críticos: $t=0$ (sem rejeição), $t \\ge 0.5$ (maioria simples), $t \\ge 0.6$ (maioria absoluta) e $t \\ge 0.9$ (consenso crítico tático)."
+            "As métricas obtidas sob os limiares críticos: $t=0$ (sem rejeição), $t \\ge 0.5$ (maioria simples), $t \\ge 0.6$ (maioria absoluta) e $t \\ge 0.9$ (consenso crítico tático) são detalhadas a seguir."
         ]
     },
     {
@@ -225,7 +225,7 @@ cells_2 = [
         "metadata": {},
         "source": [
             "### 2. Plotagem da Curva de Trade-off Cobertura-Acurácia\n",
-            "Um gráfico clássico de curva de trade-off onde o eixo X representa a Cobertura (%) e o eixo Y representa a Acurácia (%). Os modelos mais robustos se situam no canto superior direito (alta cobertura e alta acurácia)."
+            "A curva representativa do trade-off Cobertura-Acurácia é gerada no gráfico abaixo, em que a taxa de cobertura (%) é disposta no eixo horizontal e a acurácia global (%) no eixo vertical."
         ]
     },
     {
@@ -264,9 +264,9 @@ cells_2 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
-            "### 3. Discussão da Física do Gráfico:\n",
-            "1. **O Sniper de Picos (LOFAR SVM):** Sob limiar severo ($t \\ge 0.9$), o SVM LOFAR atinge impressionantes **90.43% de acurácia** (o recorde geral do projeto). Ele faz isso descartando janelas ruidosas e focando apenas nas harmônicas nítidas do motor.\n",
-            "2. **A Superconfiança da CNN:** Sob $t \\ge 0.9$, a CNN mantém uma cobertura alta (**54.01%**), porém a sua acurácia satura em medíocres **74.39%**. Convoluções profundas geram ativações Softmax saturadas (superconfiantes) que forçam decisões erradas de maioria temporal em sinais ruidosos. O SVM, por trabalhar com margens rígidas, calibra a incerteza de forma muito mais honesta."
+            "### 3. Discussão Física do Gráfico:\n",
+            "1. **Raias Harmônicas Discretas (LOFAR SVM):** Sob limiar severo ($t \\ge 0.9$), a acurácia recorde de **90.43%** foi alcançada pelo SVM LOFAR. Esse comportamento decorre do expurgo de trechos ruidosos, focando-se a classificação exclusivamente nas assinaturas discretas do maquinário.\n",
+            "2. **O Problema de Superconfiança Convolucional:** Sob o mesmo limiar ($t \\ge 0.9$), a CNN Mel manteve uma cobertura mais elevada (**54.01%**), contudo a sua acurácia de teste saturou em apenas **74.39%**. Demonstra-se que as redes neurais convolucionais profundas sofrem de calibração inadequada das probabilidades de saída, forçando decisões erradas e superconfiantes em trechos com alta atenuação de sinal. O SVM Nyström, estruturado em margens geométricas, exibiu uma calibração estatística consideravelmente mais robusta."
         ]
     }
 ]
@@ -280,11 +280,11 @@ cells_3 = [
             "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
             "### Notebook 3: Robustez de Generalização no Ponto Crítico de Aproximação (CPA)\n",
             "\n",
-            "Este notebook avalia a resiliência física dos modelos em duas frentes de distância em relação ao hidrofone:\n",
-            "* **Dataset A (Near CPA):** Alta relação sinal-ruído (SNR), navio passando pertinho do sensor.\n",
-            "* **Dataset C (Far CPA):** Baixa SNR, navio distante sofrendo atenuação severa de alta frequência no mar.\n",
+            "Neste notebook, é avaliada a resiliência física das fronteiras de decisão sob variação da Relação Sinal-Ruído (SNR) induzida pela distância física da embarcação ao hidrofone:\n",
+            "* **Dataset A (Near CPA):** Alta SNR, navio capturado próximo ao sensor.\n",
+            "* **Dataset C (Far CPA):** Baixa SNR, navio distante sob atenuação severa de alta frequência oceânica.\n",
             "\n",
-            "Replicamos a Tabela 10 do artigo de referência, agora incluindo os nossos propostos **SVM Mel** e o recordista **SVM LOFAR**."
+            "A replicação da Tabela 10 do artigo original é efetuada a seguir, incorporando-se as abordagens propostas baseadas em **SVM Mel** e **SVM LOFAR**."
         ]
     },
     {
@@ -305,7 +305,7 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 1. Definição das Métricas de Generalização Inter-dataset\n",
-            "Consolidamos o resultado dos 10 folds para o cruzamento de treino e teste entre os cenários A e C."
+            "Os resultados agregados sob validação cruzada para o cruzamento de conjuntos de treino e teste entre A e C são consolidados na célula abaixo."
         ]
     },
     {
@@ -333,7 +333,7 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 2. Plotagem do Teste de Robustez de Distância (Treinado em A -> Testado em C)\n",
-            "Vamos comparar como a acurácia cai quando o modelo é treinado no limpo (A) e testado no ruído (C)."
+            "A atenuação de acurácia decorrente do teste de generalização (treinamento na alta SNR do Dataset A e teste na baixa SNR do Dataset C) é ilustrada graficamente abaixo."
         ]
     },
     {
@@ -366,9 +366,9 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 3. Discussão sobre Generalização e Recorde do SVM LOFAR:\n",
-            "1. **Recorde Absoluto do Estudo:** O **SVM LOFAR (Ours)** treinado e testado em A obteve o recorde supremo de **68.23% de acurácia**, batendo a MLP Mel de banda larga (**67.74%**). Raias harmônicas nítidas projetadas pelo PCA64 geram eixos de separabilidade Gaussiana geometricamente impecáveis.\n",
-            "2. **Robustez à Atenuação:** Enquanto a MLP Mel despencou **6.71%** ao testar em C, o nosos **SVM Mel** decaiu apenas **4.24%**, mantendo-se estável mesmo diante do severo espalhamento oceânico.\n",
-            "3. **Esmagando a CNN no Ruído:** Sob treinamento degradado (Trained on C), a CNN deep Mel desmoronou para **53.28%** ao testar em A. Em contrapartida, o nosso **SVM LOFAR** manteve excelentes **59.59%** de generalização para A — superando a CNN em **6.31 pontos percentuais**!"
+            "1. **Recorde Geral Estabelecido:** Pelo modelo **SVM LOFAR (Ours)** treinado e testado em A, foi estabelecido o recorde máximo de acurácia de todo o estudo de proximidade do IARA: **68.23%**. Essa marca superou a acurácia obtida pela MLP Mel profunda de banda larga (**67.74%**), comprovando a nitidez geométrica dos picos harmônicos discretas.\n",
+            "2. **Estabilidade de Margem:** Verificou-se que, enquanto a MLP Mel sofreu uma queda drástica de acurácia de **6.71%** ao generalizar para C, o **SVM Mel** sofreu um decaimento de apenas **4.24%**, mantendo-se robusto diante da dispersão acústica do meio oceânico.\n",
+            "3. **Resiliência frente à CNN:** Em cenários ruidosos de baixa SNR (Trained on C), a generalização da CNN convolucional Mel degradou severamente, atingindo pífios **53.28% de acurácia em A**. Em contrapartida, o **SVM LOFAR** sustentou excelentes **59.59% de acurácia**, superando o baseline deep em **6.31 pontos percentuais**."
         ]
     }
 ]
