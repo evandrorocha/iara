@@ -190,7 +190,7 @@ cells_1 = [
         "metadata": {},
         "source": [
             "### 3. Discussão Científica e Conclusões:\n",
-            "1. **Convergência de Capacidade:** O modelo proposto **SVM Nyström (MEL)** alcançou **64.56% ± 1.18% de Acurácia**, assemelhando-se estatisticamente à CNN convolucional profunda (**64.99%**), contudo com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$). Desse modo, a stability matemática da formulação convexa é evidenciada.\n",
+            "1. **Convergência de Capacidade:** O modelo proposto **SVM Nyström (MEL)** alcançou **64.56% ± 1.18% de Acurácia**, assemelhando-se estatisticamente à CNN convolucional profunda (**64.99%**), contudo com **quase metade da variância fold-wise** ($\sigma_{SVM} = 1.18\\%$ vs. $\sigma_{CNN} = 2.09\\%$). Desse modo, a estabilidade matemática da formulação convexa é evidenciada.\n",
             "2. **Divergência Crítica do PCA:** Foi verificado que a projeção PCA linear acarreta degradação sobre o extrator MEL (devido à compressão redundante linear sobre eixos logarítmicos pré-integrados). No entanto, o PCA demonstrou-se essencial no LOFAR, atuando como um excelente filtro de ruído caótico tridimensional e propiciando a separabilidade geométrica para o kernel Gaussiano RBF.\n"
         ]
     }
@@ -229,10 +229,10 @@ cells_2 = [
             "\n",
             "| Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) |\n",
             "| :---: | :--- | :---: | :---: | :---: |\n",
-            "| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 <br> 100.00 <br> 100.00 <br> 100.00 | 63.32 <br> 64.56 <br> 65.01 <br> 63.54 | 63.10 <br> 63.78 <br> 63.80 <br> 64.74 |\n",
-            "| **$t \\ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 <br> 89.67 <br> 95.93 <br> 85.60 | 70.36 <br> 66.23 <br> 63.18 <br> 67.41 | 68.56 <br> 66.07 <br> 64.59 <br> 67.34 |\n",
-            "| **$t \\ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 <br> 76.07 <br> 82.90 <br> 70.36 | 76.54 <br> 69.60 <br> 66.61 <br> 71.97 | 72.87 <br> 68.32 <br> 66.76 <br> 70.02 |\n",
-            "| **$t \\ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 <br> 37.48 <br> 54.01 <br> 32.90 | **90.43** <br> 83.42 <br> 74.39 <br> 85.93 | **78.85** <br> 75.58 <br> 70.15 <br> 72.87 |\n"
+            "| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 ± 0.00 <br> 100.00 ± 0.00 <br> 100.00 ± 0.00 <br> 100.00 ± 0.00 | 63.32 ± 2.10 <br> **64.56 ± 1.18** <br> 65.01 ± 2.05 <br> 63.54 ± 1.93 | 63.10 ± 2.19 <br> **63.78 ± 1.14** <br> 63.80 ± 2.23 <br> 64.74 ± 2.05 |\n",
+            "| **$t \\ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 ± 1.90 <br> **89.67 ± 1.17** <br> 95.93 ± 0.96 <br> 85.60 ± 1.15 | **70.36 ± 2.13** <br> 66.23 ± 1.48 <br> 63.18 ± 2.39 <br> 67.41 ± 1.74 | **68.56 ± 2.88** <br> 66.07 ± 1.63 <br> 64.59 ± 2.25 <br> 67.34 ± 1.70 |\n",
+            "| **$t \\ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 ± 2.20 <br> **76.07 ± 2.69** <br> 82.90 ± 1.73 <br> 70.36 ± 2.47 | **76.54 ± 3.26** <br> 69.60 ± 1.86 <br> 66.61 ± 2.27 <br> 71.97 ± 2.00 | **72.87 ± 4.86** <br> 68.32 ± 2.37 <br> 66.76 ± 2.25 <br> 70.02 ± 2.06 |\n",
+            "| **$t \\ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (SVM - m=4000, C=2.0)** <br> **MEL (SVM - m=4000, C=2.0)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 ± 2.86 <br> **37.48 ± 2.32** <br> 54.01 ± 2.47 <br> 32.90 ± 2.17 | **90.43 ± 2.95** <br> **83.42 ± 2.07** <br> 74.39 ± 2.06 <br> 85.93 ± 2.81 | **78.85 ± 7.18** <br> 75.58 ± 3.18 <br> 70.15 ± 3.21 <br> 72.87 ± 5.09 |\n"
         ]
     },
     {
@@ -323,8 +323,8 @@ cells_2 = [
         "metadata": {},
         "source": [
             "### 3. Discussão Física do Gráfico:\n",
-            "1. **Raias Harmônicas Discretas (LOFAR SVM):** Sob limiar severo ($t \\ge 0.9$), a acurácia recorde de **90.43%** foi alcançada pelo SVM LOFAR. Esse comportamento decorre do expurgo de trechos ruidosos, focando-se a classificação exclusivamente nas assinaturas discretas do maquinário.\n",
-            "2. **O Problema de Superconfiança Convolucional:** Sob o mesmo limiar ($t \\ge 0.9$), a CNN Mel manteve uma cobertura mais elevada (**54.01%**), contudo a sua acurácia de teste saturou em apenas **74.39%**. Demonstra-se que as redes neurais convolucionais profundas sofrem de calibração inadequada das probabilidades de saída, forçando decisões erradas e superconfiantes em trechos com alta atenuação de sinal. O SVM Nyström, estruturado em margens geométricas, exibiu uma calibração estatística consideravelmente mais robusta.\n"
+            "1. **Raias Harmônicas Discretas (LOFAR SVM):** Sob limiar severo ($t \\ge 0.9$), a acurácia recorde de **90.43% ± 2.95%** foi alcançada pelo SVM LOFAR. Esse comportamento decorre do expurgo de trechos ruidosos, focando-se a classificação exclusivamente nas assinaturas discretas do maquinário.\n",
+            "2. **O Problema de Superconfiança Convolucional:** Sob o mesmo limiar ($t \\ge 0.9$), a CNN Mel manteve uma cobertura mais elevada (**54.01% ± 2.47%**), contudo a sua acurácia de teste saturou em apenas **74.39% ± 2.06%**. Demonstra-se que as redes neurais convolucionais profundas sofrem de calibração inadequada das probabilidades de saída, forçando decisões erradas e superconfiantes em trechos com alta atenuação de sinal. O SVM Nyström, estruturado em margens geométricas, exibiu uma calibração estatística consideravelmente mais robusta.\n"
         ]
     }
 ]
@@ -412,7 +412,7 @@ cells_3 = [
             "    'Trained_A_ACC_A': [59.24, 67.74, 62.61, 65.08, 68.23],\n",
             "    'Trained_A_ACC_C': [51.87, 61.03, 58.09, 60.84, 57.26],\n",
             "    'Trained_C_ACC_C': [50.07, 60.21, 56.40, 60.46, 57.38],\n",
-            "    'Trained_C_ACC_A': [51.93, 59.70, 53.28, 57.64, 59.59]\n",
+            "    'Trained_C_ACC_A': [59.59, 59.70, 53.28, 57.64, 59.59]\n",
             "}\n",
             "\n",
             "df_cpa = pd.DataFrame(cpa_data)\n",
@@ -612,8 +612,8 @@ cells_4 = [
         "metadata": {},
         "source": [
             "### 3. Discussão Científica e Análise das Fases de Sintonia:\n",
-            "1. **A Degradação Inversa do PCA no MEL vs LOFAR:** Uma descoberta de extremo valor científico é evidenciada neste notebook. O PCA linear de ruído, fundamental para o **LOFAR** (o qual elevou a acurácia de **59.11%** para **62.08%** em $m=1000$ e de **62.74%** para **64.04%** em $m=4000$), causou **efeito inverso** e degradou a representação do **MEL**. Em $m=4000$, o MEL sem PCA obteve **64.56%**, caindo para **63.90%** com PCA. O mesmo decaimento ocorreu em $m=1000$ (de **62.21%** para **60.14%**). Isso demonstra física-acusticamente que o banco de filtros Mel já atua como uma compressão integradora logarítmica não-linear; logo, uma segunda compressão via PCA acarreta perda de informações críticas de frequência.\n",
-            "2. **Dinâmica de Escalonamento da Margem Suave:** O SVM demonstra uma estabilização formidável da acurácia e estreitamento do desvio padrão à medida que a dimensão $m$ do mapeamento de Nyström se aproxima de $4000$. O estimador obtém uma cobertura de alta fidelidade das fronteiras geométricas complexas das assinaturas acústicas oceânicas."
+            "1. **A Degradação Inversa do PCA no MEL vs LOFAR:** Uma descoberta de extremo valor científico é evidenciada neste notebook. O PCA linear de ruído, fundamental para o **LOFAR** (o qual elevou a acurácia de **59.11%** para **62.08%** em $m=1000$ e de **62.74%** para **64.04%** em $m=4000$), causou **efeito inverso** e degradou a representation do **MEL**. Em $m=4000$, o MEL sem PCA obteve **64.56%**, caindo para **63.90%** com PCA. O mesmo decaimento ocorreu em $m=1000$ (de **62.21%** para **60.14%**). Isso demonstra física-acusticamente que o banco de filtros Mel já atua como uma compressão integradora logarítmica não-linear; logo, uma segunda compressão via PCA acarreta perda de informações críticas de frequência.\n",
+            "2. **Dinâmica de Escalonamento da Margem Suave:** O SVM demonstra uma estabilização formidável da acurácia e estreitamento do desvio padrão à medida que a dimensão $m$ do mapeamento de Nyström se aproxima de $4000$. O estimador obtém uma cobertura de alta frequência das fronteiras geométricas complexas das assinaturas acústicas oceânicas."
         ]
     }
 ]
