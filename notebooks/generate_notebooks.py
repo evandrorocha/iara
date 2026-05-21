@@ -45,6 +45,24 @@ cells_1 = [
         ]
     },
     {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "### Tabela 1: Métricas de Desempenho Geral no Conjunto de Teste (Sem Rejeição)\n",
+            "\n",
+            "| Classificador / Arquitetura | Representação Espectral | Índice SP (%) | Acurácia Global (ACC) (%) | F1-Score (Micro) (%) |\n",
+            "| :--- | :--- | :---: | :---: | :---: |\n",
+            "| **RF** | MEL | 62.22 ± 1.86 | 62.64 ± 1.84 | 63.79 ± 1.73 |\n",
+            "| **RF** | LOFAR | 56.92 ± 1.69 | 58.87 ± 1.68 | 58.00 ± 1.41 |\n",
+            "| **MLP** | MEL | 63.38 ± 1.81 | 64.51 ± 1.75 | 62.89 ± 1.68 |\n",
+            "| **MLP** | LOFAR | 66.51 ± 1.39 | 67.48 ± 1.24 | 66.72 ± 1.17 |\n",
+            "| **CNN** | MEL | 63.52 ± 2.26 | 64.99 ± 2.09 | 63.04 ± 2.02 |\n",
+            "| **CNN** | LOFAR | 66.05 ± 1.90 | 67.02 ± 1.78 | 66.29 ± 2.13 |\n",
+            "| **SVM (Ours)** | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** |\n",
+            "| **SVM (Ours)** | LOFAR | **63.10 ± 2.19** | **64.04 ± 1.88** | **64.34 ± 2.23** |"
+        ]
+    },
+    {
         "cell_type": "code",
         "execution_count": None,
         "metadata": {},
@@ -71,8 +89,8 @@ cells_1 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
-            "### 1. Definição do Conjunto de Dados (Tabela 1 do Artigo + Proposta)\n",
-            "Os resultados obtidos sob o protocolo de **Validação Cruzada 5x2 (10 folds)** com a restrição de *Exclusive Ships on Test* são consolidados abaixo."
+            "### 1. Definição do Conjunto de Dados\n",
+            "Os resultados obtidos sob o protocolo de **Validação Cruzada 5x2 (10 folds)** com a restrição de *Exclusive Ships on Test* são representados programaticamente no pandas DataFrame abaixo."
         ]
     },
     {
@@ -178,6 +196,20 @@ cells_2 = [
         ]
     },
     {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL vs. CNN vs. MLP)\n",
+            "\n",
+            "| Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) |\n",
+            "| :---: | :--- | :---: | :---: | :---: |\n",
+            "| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 <br> 100.00 <br> 100.00 <br> 100.00 | 63.32 <br> 64.56 <br> 65.01 <br> 63.54 | 63.10 <br> 63.78 <br> 63.80 <br> 64.74 |\n",
+            "| **$t \\ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 <br> 89.67 <br> 95.93 <br> 85.60 | 70.36 <br> 66.23 <br> 63.18 <br> 67.41 | 68.56 <br> 66.07 <br> 64.59 <br> 67.34 |\n",
+            "| **$t \\ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 <br> 76.07 <br> 82.90 <br> 70.36 | 76.54 <br> 69.60 <br> 66.61 <br> 71.97 | 72.87 <br> 68.32 <br> 66.76 <br> 70.02 |\n",
+            "| **$t \\ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 <br> 37.48 <br> 54.01 <br> 32.90 | **90.43** <br> 83.42 <br> 74.39 <br> 85.93 | **78.85** <br> 75.58 <br> 70.15 <br> 72.87 |"
+        ]
+    },
+    {
         "cell_type": "code",
         "execution_count": None,
         "metadata": {},
@@ -194,8 +226,8 @@ cells_2 = [
         "cell_type": "markdown",
         "metadata": {},
         "source": [
-            "### 1. Estruturação dos Dados de Rejeição (LOFAR SVM vs MEL SVM vs CNN vs MLP)\n",
-            "As métricas obtidas sob os limiares críticos: $t=0$ (sem rejeição), $t \\ge 0.5$ (maioria simples), $t \\ge 0.6$ (maioria absoluta) e $t \\ge 0.9$ (consenso crítico tático) são detalhadas a seguir."
+            "### 1. Estruturação dos Dados de Rejeição\n",
+            "As métricas obtidas sob os limiares críticos são detalhadas e indexadas no pandas DataFrame a seguir."
         ]
     },
     {
@@ -288,6 +320,26 @@ cells_3 = [
         ]
     },
     {
+        "cell_type": "markdown",
+        "metadata": {},
+        "source": [
+            "### Tabela 3: Desempenho e Generalização no Experimento de CPA Proximity (Tabela 10 do Artigo)\n",
+            "\n",
+            "| Modelo / Classificador | Treinado em | SP A (%) | ACC A (%) | SP C (%) | ACC C (%) |\n",
+            "| :--- | :--- | :---: | :---: | :---: | :---: |\n",
+            "| **Forest Mel** | Dataset A (Near) | 57.05 ± 3.48 | 59.24 ± 3.15 | 48.22 ± 5.61 | 51.87 ± 4.97 |\n",
+            "| **Forest Mel** | Dataset C (Far) | 48.84 ± 4.53 | 51.93 ± 2.88 | 45.00 ± 6.37 | 50.07 ± 4.41 |\n",
+            "| **MLP Mel** | Dataset A (Near) | 67.33 ± 2.67 | 67.74 ± 2.69 | 60.16 ± 5.99 | 61.03 ± 5.18 |\n",
+            "| **MLP Mel** | Dataset C (Far) | 59.36 ± 4.55 | 59.70 ± 4.47 | 59.46 ± 4.45 | 60.21 ± 4.17 |\n",
+            "| **CNN Mel** | Dataset A (Near) | 61.84 ± 3.26 | 62.61 ± 2.85 | 56.58 ± 4.80 | 58.09 ± 4.30 |\n",
+            "| **CNN Mel** | Dataset C (Far) | 52.41 ± 7.12 | 53.28 ± 6.63 | 55.37 ± 5.29 | 56.40 ± 4.81 |\n",
+            "| **SVM Mel (Ours)** | Dataset A (Near) | **64.15 ± 2.87** | **65.08 ± 2.91** | **59.24 ± 4.55** | **60.84 ± 3.59** |\n",
+            "| **SVM Mel (Ours)** | Dataset C (Far) | **56.85 ± 4.89** | **57.64 ± 4.33** | **59.13 ± 6.03** | **60.46 ± 5.04** |\n",
+            "| **SVM LOFAR (Ours)**| Dataset A (Near) | **67.24 ± 3.42** | **68.23 ± 2.94** | **55.35 ± 4.45** | **57.26 ± 3.66** |\n",
+            "| **SVM LOFAR (Ours)**| Dataset C (Far)  | **58.52 ± 4.95** | **59.59 ± 4.65** | **55.84 ± 6.00** | **57.38 ± 5.49** |"
+        ]
+    },
+    {
         "cell_type": "code",
         "execution_count": None,
         "metadata": {},
@@ -305,7 +357,7 @@ cells_3 = [
         "metadata": {},
         "source": [
             "### 1. Definição das Métricas de Generalização Inter-dataset\n",
-            "Os resultados agregados sob validação cruzada para o cruzamento de conjuntos de treino e teste entre A e C são consolidados na célula abaixo."
+            "Los resultados agregados sob validação cruzada para o cruzamento de conjuntos de treino e teste entre A e C são definidos na célula abaixo."
         ]
     },
     {
