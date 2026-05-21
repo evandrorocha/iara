@@ -254,3 +254,45 @@ def default_mel_managers(config_name: str,
         manager_dict[classifier] = iara_exp.Manager(config, trainer)
 
     return manager_dict
+
+
+def default_lofar_managers(config_name: str,
+                           output_base_dir: str,
+                           classifiers: typing.List[Classifier],
+                           collection: iara.records.CustomCollection,
+                           data_processor: iara_manager.AudioFileProcessor,
+                           training_strategy: iara_trn.ModelTrainingStrategy = iara_trn.ModelTrainingStrategy.MULTICLASS):
+
+    manager_dict = {}
+
+    for classifier in classifiers:
+
+        input = classifier.get_input_type()
+
+        config = iara_exp.Config(
+                        name = f'{config_name}_{str(classifier)}_{input.type_str()}',
+                        dataset = collection,
+                        dataset_processor = data_processor,
+                        output_base_dir = output_base_dir,
+                        input_type = input)
+    
+        if classifier == Classifier.SVM:
+            trainer = iara_trn.SVMNystroemPreprocessedTrainer(
+                training_strategy=training_strategy,
+                trainer_id = 'svm lofar',
+                n_targets = config.dataset.target.get_n_targets(),
+                n_components=4000,
+                gamma='scale',
+                C=2.0,
+                normalize=False,
+                pca=True,
+                n_pca_components=64,
+                penalty='elasticnet',
+                l1_ratio=0.15
+            )
+        else:
+            raise NotImplementedError(f"Classifier {classifier} not implemented for LOFAR in default_lofar_managers")
+
+        manager_dict[classifier] = iara_exp.Manager(config, trainer)
+
+    return manager_dict
