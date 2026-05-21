@@ -143,7 +143,7 @@ def default_mel_managers(config_name: str,
         input = classifier.get_input_type()
 
         config = iara_exp.Config(
-                        name = f'{config_name}_{input.type_str()}',
+                        name = f'{config_name}_{str(classifier)}_{input.type_str()}',
                         dataset = collection,
                         dataset_processor = data_processor,
                         output_base_dir = output_base_dir,
