@@ -334,15 +334,15 @@ cells_2 = [
         "metadata": {},
         "source": [
             "### 4. Distribuição de Classes no Filtro Crítico ($t \\ge 0.90$)\n",
-            "Para compreender onde a opção de rejeição é estatisticamente mais assertiva, analisamos a distribuição multiclasse dos áudios aceitos e rejeitados para o **LOFAR SVM** no limiar mais rigoroso ($t \\ge 0.90$).\n",
+            "Para compreender onde a opção de rejeição é estatisticamente mais assertiva, analisamos a distribuição multiclasse dos áudios aceitos e rejeitados para o **LOFAR SVM** no limiar mais rigoroso ($t \\ge 0.90$) mostrando a média e o desvio padrão obtidos na validação cruzada.\n",
             "\n",
-            "| Classe | Áudios Totais | Classificados (Cobertura) | Acertos Reais (Acurácia) |\n",
+            "| Classe | Áudios Totais/Fold | Taxa de Cobertura (%) | Acurácia de Classe (%) |\n",
             "| :--- | :---: | :---: | :---: |\n",
-            "| **LARGE** | 2140 | 578 (27.0%) | 560 (**96.9%**) |\n",
-            "| **BACKGROUND** | 980 | 515 (52.6%) | 494 (**95.9%**) |\n",
-            "| **MEDIUM** | 1490 | 199 (13.4%) | 165 (**82.9%**) |\n",
-            "| **SMALL** | 1780 | 131 (7.4%) | 64 (**48.9%**) |\n",
-            "| **TOTAL** | **6390** | **1423** (**22.3%**) | **1283** (**90.2%**) |\n"
+            "| **LARGE** | 214.0 | 27.01 ± 6.76 | **96.89 ± 1.32** |\n",
+            "| **BACKGROUND** | 98.0 | 52.55 ± 8.23 | **95.99 ± 2.37** |\n",
+            "| **MEDIUM** | 149.0 | 13.36 ± 4.56 | **81.00 ± 10.59** |\n",
+            "| **SMALL** | 178.0 | 7.36 ± 1.84 | **49.74 ± 17.07** |\n",
+            "| **TOTAL GLOBAL** | **639.0** | **22.27 ± 2.86** | **90.43 ± 2.95** |\n"
         ]
     },
     {
@@ -353,15 +353,17 @@ cells_2 = [
         "source": [
             "class_distribution = {\n",
             "    'Classe': ['LARGE', 'BACKGROUND', 'MEDIUM', 'SMALL'],\n",
-            "    'Total_Original': [2140, 980, 1490, 1780],\n",
-            "    'Classificados': [578, 515, 199, 131],\n",
-            "    'Acertos': [560, 494, 165, 64]\n",
+            "    'Originais_Fold': [214.0, 98.0, 149.0, 178.0],\n",
+            "    'Cobertura_Mean': [27.01, 52.55, 13.36, 7.36],\n",
+            "    'Cobertura_Std': [6.76, 8.23, 4.56, 1.84],\n",
+            "    'Acuracia_Mean': [96.89, 95.99, 81.00, 49.74],\n",
+            "    'Acuracia_Std': [1.32, 2.37, 10.59, 17.07]\n",
             "}\n",
             "\n",
             "df_dist = pd.DataFrame(class_distribution)\n",
-            "df_dist['Cobertura (%)'] = (df_dist['Classificados'] / df_dist['Total_Original'] * 100).round(1)\n",
-            "df_dist['Acuracia (%)'] = (df_dist['Acertos'] / df_dist['Classificados'] * 100).round(1)\n",
-            "df_dist"
+            "df_dist['Cobertura (%)'] = df_dist.apply(lambda r: f\"{r['Cobertura_Mean']:.2f} ± {r['Cobertura_Std']:.2f}\", axis=1)\n",
+            "df_dist['Acurácia (%)'] = df_dist.apply(lambda r: f\"{r['Acuracia_Mean']:.2f} ± {r['Acuracia_Std']:.2f}\", axis=1)\n",
+            "df_dist[['Classe', 'Originais_Fold', 'Cobertura (%)', 'Acurácia (%)']]"
         ]
     },
     {
