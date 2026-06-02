@@ -117,6 +117,7 @@ class BaseTrainer():
         self.training_strategy = training_strategy
         self.trainer_id = trainer_id
         self.n_targets = n_targets
+        self.biases = None
 
     def __str__(self) -> str:
         return f'{self.trainer_id}_{str(self.training_strategy)}'
@@ -155,6 +156,12 @@ class BaseTrainer():
         sufix = self.training_strategy.to_str(target_id=target_id)
         if complement is not None:
             sufix = f"{sufix}_{complement}"
+            
+        if extention == 'csv' and hasattr(self, 'biases') and self.biases is not None:
+            if any(b != 0.0 for b in self.biases):
+                bias_str = "_b" + "_".join(f"{b:.4f}".rstrip('0').rstrip('.') for b in self.biases)
+                sufix = f"{sufix}{bias_str}"
+                
         return os.path.join(model_base_dir, f'{str(self.trainer_id)}_{sufix}.{extention}')
 
     @abc.abstractmethod
@@ -233,6 +240,8 @@ class BaseTrainer():
                                         that the model is trained before evaluating.")
 
             model = iara_model.BaseModel.load(filename)
+            if hasattr(self, 'biases') and self.biases is not None:
+                model.biases = self.biases
 
         # elif self.training_strategy == ModelTrainingStrategy.CLASS_SPECIALIST:
         #     models = []
@@ -888,7 +897,8 @@ class SVMNystroemTrainer(BaseTrainer):
                  n_targets: int,
                  n_components: int = 300,
                  gamma: float = 'scale',
-                 C: float = 1.0) -> None:
+                 C: float = 1.0,
+                 biases: typing.Optional[typing.List[float]] = None) -> None:
         """Initialize SVMNystroemTrainer.
 
         Args:
@@ -899,11 +909,13 @@ class SVMNystroemTrainer(BaseTrainer):
                 quality). Higher = better approximation, more memory. Default: 300.
             gamma (float): RBF kernel width parameter. 'scale' = auto. Default: 'scale'.
             C (float): SVM regularization parameter. Default: 1.0.
+            biases (List[float]): Offsets to apply to decision scores for margin shift calibration. Default: None.
         """
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
         self.C = C
+        self.biases = biases
 
     def fit(self,
             model_base_dir: str,
@@ -943,7 +955,8 @@ class SVMNystroemTrainer(BaseTrainer):
                 n_components=self.n_components,
                 gamma=self.gamma,
                 C=self.C,
-                n_targets=self.n_targets
+                n_targets=self.n_targets,
+                biases=self.biases
             )
 
             targets = trn_dataset.get_targets()
@@ -971,7 +984,8 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                  pca: bool = False,
                  n_pca_components: int = 64,
                  penalty: str = 'l2',
-                 l1_ratio: float = 0.15) -> None:
+                 l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None) -> None:
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
@@ -981,6 +995,7 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
         self.n_pca_components = n_pca_components
         self.penalty = penalty
         self.l1_ratio = l1_ratio
+        self.biases = biases
 
     def fit(self,
             model_base_dir: str,
@@ -1017,7 +1032,8 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                 pca=self.pca,
                 n_pca_components=self.n_pca_components,
                 penalty=self.penalty,
-                l1_ratio=self.l1_ratio
+                l1_ratio=self.l1_ratio,
+                biases=self.biases
             )
 
             targets = trn_dataset.get_targets()

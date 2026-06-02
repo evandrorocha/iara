@@ -105,6 +105,7 @@ class SVMNystroemHybrid(iara_model.BaseModel):
                  normalize: bool = True,
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None,
                  random_state: int = 42):
         super().__init__()
         self.n_components = n_components
@@ -116,6 +117,7 @@ class SVMNystroemHybrid(iara_model.BaseModel):
         self.normalize = normalize
         self.penalty = penalty
         self.l1_ratio = l1_ratio
+        self.biases = biases
         self.random_state = random_state
         
         self.pca_trans = PCA(n_components=n_pca_components, random_state=random_state)
@@ -208,7 +210,28 @@ class SVMNystroemHybrid(iara_model.BaseModel):
             X_combined = self.scaler.transform(X_combined)
             
         X_transformed = self.nystroem.transform(X_combined)
-        predictions = self.sgd.predict(X_transformed)
+        
+        scores = self.sgd.decision_function(X_transformed)
+        biases = getattr(self, 'biases', None)
+        if biases is not None:
+            if len(scores.shape) == 1 or scores.shape[1] == 1:
+                # Binary classification
+                bias_val = biases[1] - biases[0]
+                if len(scores.shape) == 1:
+                    scores += bias_val
+                    predictions = (scores > 0).astype(int)
+                else:
+                    scores[:, 0] += bias_val
+                    predictions = (scores[:, 0] > 0).astype(int)
+            else:
+                # Multiclass classification
+                for i, cls in enumerate(self.sgd.classes_):
+                    if cls < len(biases):
+                        scores[:, i] += biases[cls]
+                predictions = np.argmax(scores, axis=1)
+        else:
+            predictions = self.sgd.predict(X_transformed)
+            
         return torch.tensor(predictions, dtype=torch.long)
 
 
@@ -225,7 +248,8 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
                  n_pca_components: int = 64,
                  normalize: bool = True,
                  penalty: str = 'l2',
-                 l1_ratio: float = 0.15) -> None:
+                 l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None) -> None:
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
@@ -235,6 +259,7 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
         self.normalize = normalize
         self.penalty = penalty
         self.l1_ratio = l1_ratio
+        self.biases = biases
 
     def fit(self,
             model_base_dir: str,
@@ -269,7 +294,8 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
                 n_pca_components=self.n_pca_components,
                 normalize=self.normalize,
                 penalty=self.penalty,
-                l1_ratio=self.l1_ratio
+                l1_ratio=self.l1_ratio,
+                biases=self.biases
             )
             
             targets = trn_dataset.get_targets()
@@ -282,7 +308,7 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
             model.save(model_filename)
 
 
-def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15):
+def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15, biases: typing.Optional[typing.List[float]] = None):
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -375,7 +401,8 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             n_pca_components=n_pca_components,
             normalize=normalize,
             penalty=penalty,
-            l1_ratio=l1_ratio
+            l1_ratio=l1_ratio,
+            biases=biases
         )
     elif normalize or pca:
         trainer = iara_trn.SVMNystroemPreprocessedTrainer(
@@ -389,7 +416,8 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             pca=pca,
             n_pca_components=n_pca_components,
             penalty=penalty,
-            l1_ratio=l1_ratio
+            l1_ratio=l1_ratio,
+            biases=biases
         )
     else:
         trainer = iara_trn.SVMNystroemTrainer(
@@ -398,7 +426,8 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             n_targets=config.dataset.target.get_n_targets(),
             n_components=n_components,
             gamma=gamma,
-            C=C
+            C=C,
+            biases=biases
         )
     trainers.append(trainer)
 
@@ -500,6 +529,31 @@ if __name__ == "__main__":
         help='ElasticNet mixing parameter (between 0 and 1) when penalty=elasticnet. Default: 0.15'
     )
 
+    parser.add_argument(
+        '--bias_small',
+        type=float,
+        default=0.0,
+        help='Decision score bias offset for SMALL class. Default: 0.0'
+    )
+    parser.add_argument(
+        '--bias_medium',
+        type=float,
+        default=0.0,
+        help='Decision score bias offset for MEDIUM class. Default: 0.0'
+    )
+    parser.add_argument(
+        '--bias_large',
+        type=float,
+        default=0.0,
+        help='Decision score bias offset for LARGE class. Default: 0.0'
+    )
+    parser.add_argument(
+        '--bias_background',
+        type=float,
+        default=0.0,
+        help='Decision score bias offset for BACKGROUND class. Default: 0.0'
+    )
+
     args = parser.parse_args()
 
     folds_to_execute = iara.utils.str_to_list(args.fold, list(range(1)))
@@ -519,11 +573,19 @@ if __name__ == "__main__":
     except ValueError:
         pass
 
+    biases = [
+        args.bias_small,
+        args.bias_medium,
+        args.bias_large,
+        args.bias_background
+    ]
+
     print(f"Running SVM Nyström on folds: {folds_to_execute}")
     print(f"  n_components={n_components}, gamma={gamma_val}, C={reg_c}")
     print(f"  analysis={analysis_type}")
     print(f"  preprocessing: normalize={normalize_enabled}, pca={pca_enabled} (n_components={pca_comp})")
     print(f"  regularization: penalty={penalty_type}, l1_ratio={l1_ratio_val}")
+    print(f"  biases: SMALL={biases[0]}, MEDIUM={biases[1]}, LARGE={biases[2]}, BACKGROUND={biases[3]}")
     print(f"  InputType: Window (by_audio evaluation via majority vote)")
     print()
 
@@ -537,7 +599,8 @@ if __name__ == "__main__":
         pca=pca_enabled,
         n_pca_components=pca_comp,
         penalty=penalty_type,
-        l1_ratio=l1_ratio_val
+        l1_ratio=l1_ratio_val,
+        biases=biases
     )
 
     end_time = time.time()

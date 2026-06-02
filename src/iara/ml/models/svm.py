@@ -57,6 +57,7 @@ class SVMNystroem(iara_model.BaseModel):
                  n_targets: int = 4,
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None,
                  random_state: int = 42):
         """Initialize SVMNystroem model.
 
@@ -73,6 +74,7 @@ class SVMNystroem(iara_model.BaseModel):
             n_targets (int): Number of output classes. Default: 4.
             penalty (str): Type of regularization penalty for SGDClassifier: 'l2', 'l1', or 'elasticnet'. Default: 'l2'.
             l1_ratio (float): The Elastic Net mixing parameter (between 0 and 1). Default: 0.15.
+            biases (List[float]): Offsets to apply to decision scores for margin shift calibration. Default: None.
             random_state (int): Random seed for reproducibility. Default: 42.
         """
         super().__init__()
@@ -82,6 +84,7 @@ class SVMNystroem(iara_model.BaseModel):
         self.n_targets = n_targets
         self.penalty = penalty
         self.l1_ratio = l1_ratio
+        self.biases = biases
         self.random_state = random_state
 
         self.nystroem = Nystroem(
@@ -172,7 +175,28 @@ class SVMNystroem(iara_model.BaseModel):
 
         X = data.view(data.size(0), -1).cpu().numpy()
         X_transformed = self.nystroem.transform(X)
-        predictions = self.sgd.predict(X_transformed)
+        
+        scores = self.sgd.decision_function(X_transformed)
+        biases = getattr(self, 'biases', None)
+        if biases is not None:
+            if len(scores.shape) == 1 or scores.shape[1] == 1:
+                # Binary classification
+                bias_val = biases[1] - biases[0]
+                if len(scores.shape) == 1:
+                    scores += bias_val
+                    predictions = (scores > 0).astype(int)
+                else:
+                    scores[:, 0] += bias_val
+                    predictions = (scores[:, 0] > 0).astype(int)
+            else:
+                # Multiclass classification
+                for i, cls in enumerate(self.sgd.classes_):
+                    if cls < len(biases):
+                        scores[:, i] += biases[cls]
+                predictions = np.argmax(scores, axis=1)
+        else:
+            predictions = self.sgd.predict(X_transformed)
+            
         return torch.tensor(predictions, dtype=torch.long)
 
 
@@ -201,6 +225,7 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
                  n_pca_components: int = 64,
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None,
                  random_state: int = 42):
         super().__init__()
         self.n_components = n_components
@@ -212,6 +237,7 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
         self.n_pca_components = n_pca_components
         self.penalty = penalty
         self.l1_ratio = l1_ratio
+        self.biases = biases
         self.random_state = random_state
 
         self.scaler = StandardScaler() if normalize else None
@@ -296,5 +322,26 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
             X = self.pca_trans.transform(X)
 
         X_transformed = self.nystroem.transform(X)
-        predictions = self.sgd.predict(X_transformed)
+        
+        scores = self.sgd.decision_function(X_transformed)
+        biases = getattr(self, 'biases', None)
+        if biases is not None:
+            if len(scores.shape) == 1 or scores.shape[1] == 1:
+                # Binary classification
+                bias_val = biases[1] - biases[0]
+                if len(scores.shape) == 1:
+                    scores += bias_val
+                    predictions = (scores > 0).astype(int)
+                else:
+                    scores[:, 0] += bias_val
+                    predictions = (scores[:, 0] > 0).astype(int)
+            else:
+                # Multiclass classification
+                for i, cls in enumerate(self.sgd.classes_):
+                    if cls < len(biases):
+                        scores[:, i] += biases[cls]
+                predictions = np.argmax(scores, axis=1)
+        else:
+            predictions = self.sgd.predict(X_transformed)
+            
         return torch.tensor(predictions, dtype=torch.long)
