@@ -28,6 +28,17 @@ Reference:
 import time
 import typing
 import argparse
+import os
+import pandas as pd
+import numpy as np
+import collections
+import pickle
+import torch
+
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+from sklearn.kernel_approximation import Nystroem
+from sklearn.linear_model import SGDClassifier
 
 import iara.utils
 import iara.ml.dataset as iara_dataset
@@ -37,8 +48,238 @@ import iara.ml.metrics as iara_metrics
 import iara.ml.models.trainer as iara_trn
 import iara.processing.manager as iara_manager
 import iara.processing.analysis as iara_proc
+import iara.ml.models.base_model as iara_model
 
 from iara.default import DEFAULT_DIRECTORIES
+
+
+class HybridAudioFileProcessor(iara_manager.AudioFileProcessor):
+    """Custom processor that loads both MEL and LOFAR features and concatenates them."""
+    def __init__(self, mel_processor, lofar_processor):
+        self.mel_processor = mel_processor
+        self.lofar_processor = lofar_processor
+        
+        # Mimic base class variables
+        self.data_base_dir = mel_processor.data_base_dir
+        self.data_processed_base_dir = mel_processor.data_processed_base_dir
+        self.normalization = mel_processor.normalization
+        self.analysis = "hybrid"
+        self.frequency_limit = None
+        self.integration_overlap = mel_processor.integration_overlap
+        self.integration_interval = mel_processor.integration_interval
+        
+        # Copy resolution parameters to support serialization (_to_dict)
+        self.n_pts = mel_processor.n_pts
+        self.n_overlap = mel_processor.n_overlap
+        self.n_mels = mel_processor.n_mels
+        self.decimation_rate = mel_processor.decimation_rate
+        
+        self._check_dir()
+
+    def _get_hash(self) -> str:
+        return "hybrid_fusion_mel_lofar_v1"
+
+    def get_data(self, file_id: int) -> typing.Tuple[pd.DataFrame, np.ndarray]:
+        df_mel, times = self.mel_processor.get_data(file_id)
+        df_lofar, _ = self.lofar_processor.get_data(file_id)
+        
+        df_mel_renamed = df_mel.copy()
+        df_mel_renamed.columns = [f'mel_{i}' for i in range(df_mel.shape[1])]
+        
+        df_lofar_renamed = df_lofar.copy()
+        df_lofar_renamed.columns = [f'lofar_{i}' for i in range(df_lofar.shape[1])]
+        
+        df_hybrid = pd.concat([df_mel_renamed, df_lofar_renamed], axis=1)
+        return df_hybrid, times
+
+
+class SVMNystroemHybrid(iara_model.BaseModel):
+    """Approximate RBF-SVM that applies PCA only to the LOFAR portion of concatenated features."""
+    def __init__(self,
+                 n_components: int = 300,
+                 gamma: typing.Union[str, float] = 'scale',
+                 C: float = 1.0,
+                 n_targets: int = 4,
+                 n_mel_features: int = 256,
+                 n_pca_components: int = 64,
+                 normalize: bool = True,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15,
+                 random_state: int = 42):
+        super().__init__()
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+        self.n_targets = n_targets
+        self.n_mel_features = n_mel_features
+        self.n_pca_components = n_pca_components
+        self.normalize = normalize
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
+        self.random_state = random_state
+        
+        self.pca_trans = PCA(n_components=n_pca_components, random_state=random_state)
+        self.scaler = StandardScaler() if normalize else None
+        
+        self.nystroem = Nystroem(
+            kernel='rbf',
+            gamma=None,
+            n_components=n_components,
+            random_state=random_state
+        )
+        
+        self.sgd = SGDClassifier(
+            loss='hinge',
+            penalty=penalty,
+            l1_ratio=l1_ratio,
+            alpha=1.0,
+            class_weight='balanced',
+            max_iter=1000,
+            tol=1e-3,
+            random_state=random_state,
+            n_jobs=1
+        )
+        
+        self.is_fitted = False
+
+    def fit(self, samples: torch.Tensor, targets: torch.Tensor) -> None:
+        X = samples.view(samples.size(0), -1).cpu().numpy()
+        y = targets.cpu().numpy().astype(int)
+        
+        n_samples = X.shape[0]
+        alpha = 1.0 / (self.C * n_samples)
+        self.sgd.set_params(alpha=alpha)
+        
+        # Split MEL and LOFAR portions
+        X_mel = X[:, :self.n_mel_features]
+        X_lofar = X[:, self.n_mel_features:]
+        
+        # Apply PCA strictly to LOFAR
+        X_lofar_pca = self.pca_trans.fit_transform(X_lofar)
+        
+        # Concatenate back
+        X_combined = np.hstack([X_mel, X_lofar_pca])
+        
+        # Apply normalization to the fused representation
+        if self.normalize:
+            X_combined = self.scaler.fit_transform(X_combined)
+            
+        # Calculate gamma on RBF inputs
+        if isinstance(self.gamma, str) and 'scale' in self.gamma:
+            base_gamma = 1.0 / (X_combined.shape[1] * X_combined.var())
+            if '*' in self.gamma:
+                parts = self.gamma.split('*')
+                multiplier = 1.0
+                for p in parts:
+                    if p != 'scale':
+                        try:
+                            multiplier = float(p)
+                        except ValueError:
+                            pass
+                gamma = base_gamma * multiplier
+            else:
+                gamma = base_gamma
+        elif self.gamma is None:
+            gamma = 1.0 / X_combined.shape[1]
+        else:
+            gamma = self.gamma
+            
+        self.nystroem.set_params(gamma=gamma)
+        
+        # Transform using Nyström
+        X_transformed = self.nystroem.fit_transform(X_combined)
+        
+        # Train SGD linear SVM
+        self.sgd.fit(X_transformed, y)
+        self.is_fitted = True
+
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before calling forward().")
+            
+        X = data.view(data.size(0), -1).cpu().numpy()
+        X_mel = X[:, :self.n_mel_features]
+        X_lofar = X[:, self.n_mel_features:]
+        
+        X_lofar_pca = self.pca_trans.transform(X_lofar)
+        X_combined = np.hstack([X_mel, X_lofar_pca])
+        
+        if self.normalize:
+            X_combined = self.scaler.transform(X_combined)
+            
+        X_transformed = self.nystroem.transform(X_combined)
+        predictions = self.sgd.predict(X_transformed)
+        return torch.tensor(predictions, dtype=torch.long)
+
+
+class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
+    """Trainer class for SVMNystroemHybrid compatible with Manager framework."""
+    def __init__(self,
+                 training_strategy: iara_trn.ModelTrainingStrategy,
+                 trainer_id: str,
+                 n_targets: int,
+                 n_components: int = 300,
+                 gamma: typing.Union[str, float] = 'scale',
+                 C: float = 1.0,
+                 n_mel_features: int = 256,
+                 n_pca_components: int = 64,
+                 normalize: bool = True,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15) -> None:
+        super().__init__(training_strategy, trainer_id, n_targets)
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+        self.n_mel_features = n_mel_features
+        self.n_pca_components = n_pca_components
+        self.normalize = normalize
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
+
+    def fit(self,
+            model_base_dir: str,
+            trn_dataset: iara_dataset.BaseDataset,
+            val_dataset: iara_dataset.BaseDataset) -> None:
+        if self.is_trained(model_base_dir=model_base_dir):
+            return
+            
+        os.makedirs(model_base_dir, exist_ok=True)
+        
+        if self.training_strategy == iara_trn.ModelTrainingStrategy.MULTICLASS:
+            target_ids = [None]
+        elif self.training_strategy == iara_trn.ModelTrainingStrategy.CLASS_SPECIALIST:
+            target_ids = trn_dataset.get_targets()
+            
+        samples = trn_dataset.get_samples()
+        if samples is None:
+            raise ValueError("Training dataset without data")
+            
+        for target_id in target_ids:
+            model_filename = self.output_filename(model_base_dir=model_base_dir,
+                                                   target_id=target_id)
+            if os.path.exists(model_filename):
+                continue
+                
+            model = SVMNystroemHybrid(
+                n_components=self.n_components,
+                gamma=self.gamma,
+                C=self.C,
+                n_targets=self.n_targets,
+                n_mel_features=self.n_mel_features,
+                n_pca_components=self.n_pca_components,
+                normalize=self.normalize,
+                penalty=self.penalty,
+                l1_ratio=self.l1_ratio
+            )
+            
+            targets = trn_dataset.get_targets()
+            if target_id is not None:
+                targets = torch.where(targets == target_id,
+                                      torch.tensor(1.0),
+                                      torch.tensor(0.0))
+                                      
+            model.fit(samples=samples, targets=targets)
+            model.save(model_filename)
 
 
 def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15):
@@ -52,29 +293,54 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
     # The by_audio evaluation will apply majority vote across windows of each file
     input_type = iara_dataset.InputType.Window()
 
-    if analysis_name.lower() == 'lofar':
-        analysis_enum = iara_proc.SpectralAnalysis.LOFAR
-    else:
-        analysis_enum = iara_proc.SpectralAnalysis.LOG_MELGRAM
-
     # Audio preprocessing pipeline
-    dp = iara_manager.AudioFileProcessor(
-        data_base_dir=directories.data_dir,
-        data_processed_base_dir=directories.process_dir,
-        normalization=iara_proc.Normalization.NORM_L2,
-        analysis=analysis_enum,
-        n_pts=1024,
-        n_overlap=0,
-        decimation_rate=3,
-        n_mels=256,
-        integration_interval=0.512
-    )
+    if analysis_name.lower() == 'hybrid':
+        dp_mel = iara_manager.AudioFileProcessor(
+            data_base_dir=directories.data_dir,
+            data_processed_base_dir=directories.process_dir,
+            normalization=iara_proc.Normalization.NORM_L2,
+            analysis=iara_proc.SpectralAnalysis.LOG_MELGRAM,
+            n_pts=1024,
+            n_overlap=0,
+            decimation_rate=3,
+            n_mels=256,
+            integration_interval=0.512
+        )
+        dp_lofar = iara_manager.AudioFileProcessor(
+            data_base_dir=directories.data_dir,
+            data_processed_base_dir=directories.process_dir,
+            normalization=iara_proc.Normalization.NORM_L2,
+            analysis=iara_proc.SpectralAnalysis.LOFAR,
+            n_pts=1024,
+            n_overlap=0,
+            decimation_rate=3,
+            n_mels=256,
+            integration_interval=0.512
+        )
+        dp = HybridAudioFileProcessor(dp_mel, dp_lofar)
+    else:
+        if analysis_name.lower() == 'lofar':
+            analysis_enum = iara_proc.SpectralAnalysis.LOFAR
+        else:
+            analysis_enum = iara_proc.SpectralAnalysis.LOG_MELGRAM
+
+        dp = iara_manager.AudioFileProcessor(
+            data_base_dir=directories.data_dir,
+            data_processed_base_dir=directories.process_dir,
+            normalization=iara_proc.Normalization.NORM_L2,
+            analysis=analysis_enum,
+            n_pts=1024,
+            n_overlap=0,
+            decimation_rate=3,
+            n_mels=256,
+            integration_interval=0.512
+        )
 
     # Dynamic folder name includes C, gamma and preprocessors if non-default
     name_parts = [f'svm_nystroem_{n_components}', analysis_name]
     if normalize:
         name_parts.append('norm')
-    if pca:
+    if pca and analysis_name.lower() != 'hybrid':
         name_parts.append(f'pca{n_pca_components}')
     if penalty != 'l2':
         name_parts.append(penalty)
@@ -97,7 +363,21 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
     trainers = []
 
     # SVM with Nyström approximation (subclass selection for 100% safety)
-    if normalize or pca:
+    if analysis_name.lower() == 'hybrid':
+        trainer = SVMNystroemHybridTrainer(
+            training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
+            trainer_id=exp_name,
+            n_targets=config.dataset.target.get_n_targets(),
+            n_components=n_components,
+            gamma=gamma,
+            C=C,
+            n_mel_features=256,
+            n_pca_components=n_pca_components,
+            normalize=normalize,
+            penalty=penalty,
+            l1_ratio=l1_ratio
+        )
+    elif normalize or pca:
         trainer = iara_trn.SVMNystroemPreprocessedTrainer(
             training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
             trainer_id=exp_name,
