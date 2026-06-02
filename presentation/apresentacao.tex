@@ -1,0 +1,648 @@
+\documentclass{beamer}
+
+\usetheme{default}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usetikzlibrary{positioning}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amssymb}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{frametitle}[default][center]
+
+\mode<presentation>{
+\usetheme{Dresden}
+\usecolortheme{seagull}
+}
+
+\setbeamertemplate{headline}{}
+
+\definecolor{peeblue}{RGB}{1,123,165}
+\setbeamercolor*{palette primary}{fg=black,bg=peeblue!80}
+\setbeamercolor*{palette secondary}{fg=black,bg=peeblue!80!gray!80}
+\setbeamercolor*{palette tertiary}{fg=black,bg=peeblue!100}
+\setbeamercolor*{palette quaternary}{fg=black,bg=peeblue!110}
+
+\usebackgroundtemplate
+{%
+    \begin{picture}(210,40)(-5,2)
+    \includegraphics[width=0.07\paperwidth,keepaspectratio]{imgs/pee-logo-short.png}
+    \end{picture}%
+}
+
+\title{Classificação Acústica Submarina Passiva no Dataset IARA}
+\subtitle{Benchmarking do SVM Nyström e Otimização via Opção de Rejeição}
+\author{Evandro Rocha}
+\date{Junho de 2026}
+
+\institute
+{
+  Universidade Federal do Rio de Janeiro\\
+  UFRJ/COPPE/PEE
+}
+
+\begin{document}
+
+{
+\usebackgroundtemplate{
+    \begin{picture}(210,55)(-5,0)
+    \includegraphics[height=0.14\paperwidth,keepaspectratio]{imgs/pee-logo.png}
+    \end{picture}%
+    \begin{picture}(210,55)(-28,2)
+    \includegraphics[height=0.14\paperwidth,keepaspectratio]{imgs/coppe-logo.pdf}
+    \end{picture}
+}
+\begin{frame}
+  \bigskip\bigskip\bigskip\bigskip
+  \titlepage
+\end{frame}
+}
+
+\begin{frame}{Agenda}
+  \begin{enumerate}
+      \item \hyperref[sec:intro]{Introdução e Contexto (Dataset IARA)}
+      \item \hyperref[sec:baselines]{O Artigo de Referência e Baselines}
+      \item \hyperref[sec:method]{Método Proposto (SVM Nyström)}
+      \item \hyperref[sec:results_global]{Resultados Gerais de Desempenho}
+      \item \hyperref[sec:rejection]{Classificação Seletiva (Opção de Rejeição)}
+      \item \hyperref[sec:class_analysis]{Análise por Alvo e Limitações do SMALL}
+      \item \hyperref[sec:cpa]{Generalização Física em Distância (CPA)}
+      \item \hyperref[sec:evolution]{Trajetória de Escalonamento}
+      \item \hyperref[sec:concl]{Conclusões e Mitigações Futuras}
+  \end{enumerate}
+\end{frame}
+
+%===========================================
+% 1. INTRODUÇÃO E CONTEXTO
+%===========================================
+\section{Introdução}
+\begin{frame}
+    \centering
+    \huge Introdução e Contexto
+    \label{sec:intro}
+\end{frame}
+
+\begin{frame}{Classificação Acústica Submarina (UATR)}
+    \small
+    \begin{block}{Desafio de Sonar Passivo}
+        Identificar embarcações baseando-se unicamente nas suas assinaturas acústicas irradiadas através da água. Uma tarefa altamente crítica para monitoramento de tráfego, soberania nacional e preservação ambiental.
+    \end{block}
+    
+    \vspace{0.1cm}
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Dificuldades Intrínsecas:}
+        \begin{itemize}
+            \item \textbf{Atenuação do Meio}: Variabilidade do canal acústico (temperatura, salinidade, densidade).
+            \item \textbf{Interferência de Fronteiras}: Efeitos multipath (reflexão em fundo e superfície) e obstáculos.
+            \item \textbf{Ruído de Fundo}: Fontes biológicas, ondas do mar e vento mascarando os alvos.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Limitação da Literatura Geral:}
+        \begin{itemize}
+            \item Uso predominante de dados fechados/privados que inviabilizam a reprodutibilidade.
+            \item Modelos aplicados a datasets pequenos, sem validação cruzada rigorosa baseada em isolamento de navios específicos.
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{O Dataset de Referência IARA}
+    \small
+    \begin{block}{Santos Basin Soundscape Monitoring Project (PMPAS-BS)}
+        Criado pela PETROBRAS em conformidade com as exigências ambientais do licenciamento federal do IBAMA. Trata-se de uma base aberta de extrema riqueza científica.
+    \end{block}
+    
+    \begin{columns}
+        \column{0.55\textwidth}
+        \footnotesize
+        \textbf{Riqueza de Volume e Diversidade:}
+        \begin{itemize}
+            \item \textbf{129 h 34 min} de gravações acústicas (~50 GB).
+            \item \textbf{1.825 áudios} contínuos de 2 a 5 minutos.
+            \item \textbf{ShipsEar} possui apenas 3h 9min.
+            \item \textbf{DeepShip} abrange 47h 4min.
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \footnotesize
+        \textbf{Duas Plataformas de Captura:}
+        \begin{itemize}
+            \item \textbf{Gliders}: Monitoramento oceânico móvel (descida até 1000m depth, taxa de 125 kHz).
+            \item \textbf{Observatório Submarino (UO)}: Fixado em regiões costeiras de tráfego a 19-28m de profundidade (taxa de 48 kHz).
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+%===========================================
+% 2. O ARTIGO DE REFERÊNCIA E BASELINES
+%===========================================
+\section{Artigo de Referência e Baselines}
+\begin{frame}
+    \centering
+    \huge O Artigo de Referência e Baselines
+    \label{sec:baselines}
+\end{frame}
+
+\begin{frame}{Artigo de Origem: Silva et al. (IEEE Access, 2025)}
+    \small
+    \begin{block}{A Literatura Científica que Estabelece os Baselines}
+        \textbf{Título}: \textit{``IARA: An Underwater Acoustic Database''}\\
+        \textbf{Autores}: F. O. B. da Silva et al. (UFRJ/LPS, LNCC, IPqM - Marinha do Brasil, Petrobras).\\
+        \textbf{Publicação}: \textit{IEEE Access}, Vol. 13, Julho de 2025.
+    \end{block}
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Três Arquiteturas de Baselines:}
+        \begin{itemize}
+            \item \textbf{Random Forest (RF)}: Classificação baseada em florestas decisórias de baixa variabilidade.
+            \item \textbf{MLP}: Redes feedforward totalmente conectadas profundas.
+            \item \textbf{CNN}: Redes convolucionais processando imagens espectrais 2D (time-frequency).
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Extrações Espectrais Utilizadas:}
+        \begin{itemize}
+            \item \textbf{MEL}: Mel-Spectrogram (256 bins), focado no mapeamento da audição humana.
+            \item \textbf{LOFAR}: Normalização TPSW para destacar assinaturas discretas de maquinaria (raias harmônicas).
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Processamento de Sinais: Extratores MEL e LOFAR}
+    \small
+    \begin{columns}
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Banco de Filtros MEL (Log-Melgram):}
+        \begin{itemize}
+            \item \textbf{Dimensão}: 256 bandas (bins) em escala logarítmica.
+            \item \textbf{Foco}: Representa o envelope espectral de banda larga e ruído difuso de cavitação.
+            \item \textbf{Configuração}: Janelamento de $0.512$s ($N_{pts}=1024$), sem sobreposição, decimação por $3$.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{LOFAR Espectral (TPSW):}
+        \begin{itemize}
+            \item \textbf{Dimensão}: 1024 bins lineares (banda estreita).
+            \item \textbf{Foco}: Raias harmônicas discretas de máquinas rotativas.
+            \item \textbf{TPSW} (\textit{Two-Pass Split Window}): Normalização espectral adaptativa para atenuar o ruído contínuo de fundo oceânico.
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.2cm}
+    \footnotesize
+    \begin{block}{Normalização das Variáveis}
+        Para mitigar flutuações de ganho do hidrofone, distância do alvo e perdas de propagação do meio acústico, aplica-se a normalização **L2** ao nível de frame em ambos os extratores espectrais.
+    \end{block}
+\end{frame}
+
+\begin{frame}{Metodologia de Re-processamento e Dados}
+    \scriptsize
+    \begin{itemize}
+        \item \textbf{Verificação de Intrusos (Zonas de Exclusão):}
+        \begin{itemize}
+            \scriptsize
+            \item Cruzamento de dados de GPS e rastreamento AIS define regiões de exclusão temporal.
+            \item Capturas contaminadas por múltiplas embarcações na proximidade do hidrofone são expurgadas.
+            \item Parâmetro \texttt{include\_others = False} assegura que o áudio corresponde unicamente ao navio vigiado.
+        \end{itemize}
+        
+        \vspace{0.1cm}
+        \item \textbf{Seleção e Estrutura das Entradas (Inputs):}
+        \begin{itemize}
+            \scriptsize
+            \item \textbf{Classificadores 1D} (Random Forest, MLP, SVM): Alimentados por vetores de janelas discretas de $0.512$s (\texttt{InputType.Window()}).
+            \item \textbf{Classificador 2D} (CNN Convolucional): Imagem temporal composta por $32$ janelas consecutivas com 50\% de sobreposição (\texttt{InputType.Image()}).
+        \end{itemize}
+        
+        \vspace{0.1cm}
+        \item \textbf{Divisão de Conjuntos (Treino, Validação e Teste):}
+        \begin{itemize}
+            \scriptsize
+            \item \textbf{Rigor Temático}: Protocolo $5 \times 2$cv (10 folds) restrito ao nível de **ID de Navio Físico** (*Exclusive Ships on Test*) para evitar vazamento temporal.
+            \item \textbf{Parâmetro de Validação}: MLP e CNN separam uma fração do treino para validação interna (\textit{early stopping} com paciência de 8 épocas). O SVM dispensa conjunto de validação durante o fit.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Categorias de Alvos e Rigor Experimental}
+    \scriptsize
+    \begin{columns}
+        \column{0.55\textwidth}
+        \textbf{Definição das 4 Classes Baseada em Tamanho [41]:}
+        \begin{itemize}
+            \item \textbf{SMALL}: Embarcações de baixo calado (comprimento físico $< 50$ m).
+            \item \textbf{MEDIUM}: Embarcações de porte médio ($50$ m a $100$ m).
+            \item \textbf{LARGE}: Navios de grande porte ($> 100$ m) -- forte ruído de cavitação e motores.
+            \item \textbf{BACKGROUND}: Ruído de fundo oceânico ambiental (exclusão absoluta de embarcações por radar/AIS).
+        \end{itemize}
+        
+        \column{0.45\textwidth}
+        \textbf{Rigor de Validação Cruzada 5x2:}
+        \begin{itemize}
+            \item Protocolo de \textbf{Validação Cruzada 5x2} (10 folds totais).
+            \item \textbf{Exclusive Ships on Test}: Restrição rigorosa garantindo que amostras acústicas de um navio no treino jamais vazem para o conjunto de teste.
+            \item \textbf{Sum-Product Index (SP)}: Figura de mérito principal equilibrada para lidar com desbalanceamento.
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.2cm}
+    \tiny
+    \begin{block}{Melhor Resultado Original das Baselines do Artigo}
+        O melhor baseline no artigo de Silva et al. foi a \textbf{MLP LOFAR}, alcançando acurácia global de \textbf{$67.48\% \pm 1.24\%$} e SP de \textbf{$66.51\% \pm 1.39\%$}.
+    \end{block}
+\end{frame}
+
+%===========================================
+% 3. MÉTODO PROPOSTO
+%===========================================
+\section{Método Proposto}
+\begin{frame}
+    \centering
+    \huge Método Proposto: SVM Nyström
+    \label{sec:method}
+\end{frame}
+
+\begin{frame}{Motivação: O SVM em Sonar Passivo}
+    \small
+    \begin{block}{O Clássico de Referência na Literatura}
+        O SVM é amplamente consolidado como um baseline robusto em classificação acústica de alvos submarinos (UATR), sendo empregado em bases de dados consagradas como \textbf{ShipsEar} (Santos-Domínguez, 2016) e \textbf{DeepShip} (Irfan, 2021).
+    \end{block}
+    
+    \vspace{0.1cm}
+    
+    \begin{columns}
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{Lacuna na Literatura:}
+        \begin{itemize}
+            \item \textbf{Dados Limitados}: Trabalhos anteriores validam o SVM em bases de pequeno porte (de 3h a 47h) e com trânsitos restritos.
+            \item \textbf{Custo Computacional}: O crescimento do custo RBF $O(N^3)$ limitava o teste em bases massivas.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \footnotesize
+        \textbf{A Fronteira do Dataset IARA:}
+        \begin{itemize}
+            \item \textbf{Base de Grande Escala}: O IARA é uma das maiores bases públicas mundiais (\textbf{129h+} de dados, tráfego real).
+            \item \textbf{Questão de Pesquisa}: Como o SVM tradicional se comporta sob este novo patamar de volume e complexidade de dados?
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+
+\begin{frame}{SVM com Aproximação de Nyström}
+    \footnotesize
+    \begin{block}{O Gargalo do SVM RBF Clássico}
+        O SVM padrão com kernel RBF exige calcular e armazenar a matriz de kernel $N \times N$, com complexidade espacial $O(N^2)$.
+        \begin{itemize}
+            \scriptsize
+            \item \textbf{O que é $N$ no IARA}: $N \approx 500.000$ janelas espectrais no treino ($853$ arquivos $\times$ $586$ janelas/arquivo).
+            \item \textbf{Custo do SVM RBF Clássico}: Matriz $N \times N$ exige \textbf{$1,0$ Terabyte de RAM} (inviável localmente).
+        \end{itemize}
+    \end{block}
+    
+    \scriptsize
+    \begin{itemize}
+        \item \textbf{Aproximação de Nyström (Baixo Rank)}: Seleciona $m = 4000$ amostras de referência (landmarks) do treino para mapear implicitamente cada amostra no espaço linear $\mathbb{R}^m$.
+        \item \textbf{Matriz de Kernel Nyström ($m \times m$)}: Mede apenas $4000 \times 4000$ de float32 $\approx$ \textbf{$64$ Megabytes de RAM} (inversão matemática instantânea).
+        \item \textbf{Base Projetada de Treinamento ($N \times m$)}: Matriz $500K \times 4000$ de float32 $\approx$ \textbf{$8,0$ Gigabytes de RAM} (viabiliza o treino em hardware convencional com overhead total $\approx 10$ GB).
+        \item \textbf{Complexidade de Tempo}: Reduz de $O(N^3)$ para $O(N \cdot m^2)$, permitindo o treinamento linear em lotes através de classificador SGD.
+        \item \textbf{Tamanho do Modelo Final}: Armazena apenas o vetor de pesos linear das classes ($4 \times 4000$ floats $\approx$ \textbf{$< 100$ KB}).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Representações Espectrais e a Dinâmica do PCA}
+    \scriptsize
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Banco de Filtros MEL (256 bins):}
+        \begin{itemize}
+            \item Entrada direta de 256 bandas sem redução.
+            \item \textbf{Por que sem PCA?} A representação Mel-Spectrogram já é uma compressão logarítmica integradora não-linear. Aplicar PCA linear gera perda severa de informações das bandas espectrais.
+            \item Confirmado em testes: MEL com PCA degradou o desempenho.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \textbf{LOFAR Espectral (TPSW):}
+        \begin{itemize}
+            \item Entrada comprimida previamente via PCA linear ($n_{components}=64$).
+            \item \textbf{Por que com PCA?} O espectrograma LOFAR cru é extremamente caótico e ruidoso. O PCA atua como um excelente filtro de ruído tridimensional de fundo marinho, evidenciando as raias discretas e melhorando a separabilidade linear.
+        \end{itemize}
+    \end{columns}
+    
+    \vspace{0.3cm}
+    \begin{alertblock}{Descoberta Científica Relevante}
+        Verificou-se uma dinâmica inversa do PCA: essencial para LOFAR (limpeza de ruído), mas prejudicial para MEL (supressão de features anatômicas já integradas de forma não-linear).
+    \end{alertblock}
+\end{frame}
+
+%===========================================
+% 4. RESULTADOS DE DESEMPENHO GERAL
+%===========================================
+\section{Resultados Gerais}
+\begin{frame}
+    \centering
+    \huge Resultados Gerais
+    \label{sec:results_global}
+\end{frame}
+
+\begin{frame}{Benchmarking Global de Teste (Sem Rejeição)}
+    \begin{table}
+        \small
+        \begin{tabular}{lcccc}
+            \toprule
+            \textbf{Modelo / Classificador} & \textbf{Espectro} & \textbf{Índice SP (\%)} & \textbf{Acurácia Global (\%)} \\
+            \midrule
+            RF & MEL & 62.22 $\pm$ 1.86 & 62.64 $\pm$ 1.84 \\
+            RF & LOFAR & 56.92 $\pm$ 1.69 & 58.87 $\pm$ 1.68 \\
+            MLP (Baseline Artigo) & MEL & 63.38 $\pm$ 1.81 & 64.51 $\pm$ 1.75 \\
+            \textbf{MLP (Baseline Artigo)} & \textbf{LOFAR} & \textbf{66.51 $\pm$ 1.39} & \textbf{67.48 $\pm$ 1.24} \\
+            CNN & MEL & 63.52 $\pm$ 2.26 & 64.99 $\pm$ 2.09 \\
+            CNN & LOFAR & 66.05 $\pm$ 1.90 & 67.02 $\pm$ 1.78 \\
+            \midrule
+            \textbf{SVM Proposto (m=4000)} & \textbf{MEL} & \textbf{63.78 $\pm$ 1.14} & \textbf{64.56 $\pm$ 1.18} \\
+            \textbf{SVM Proposto (m=4000)} & \textbf{LOFAR} & \textbf{63.10 $\pm$ 2.19} & \textbf{64.04 $\pm$ 1.88} \\
+            \bottomrule
+        \end{tabular}
+        \caption{Resultados gerais sob Validação Cruzada 5x2 no IARA.}
+    \end{table}
+    
+    \vspace{-0.1cm}
+    \footnotesize
+    \textbf{Destaque}: O \textbf{SVM Mel} proposto alcançou desempenho estatisticamente equivalente à CNN Mel profunda, porém com \textbf{metade de sua variância fold-wise} ($\sigma_{SVM} = 1.18\%$ vs. $\sigma_{CNN} = 2.09\%$), comprovando a estabilidade da fronteira geométrica convexa.
+\end{frame}
+
+%===========================================
+% 5. CLASSIFICAÇÃO SELETIVA (REJEIÇÃO)
+%===========================================
+\section{Classificação Seletiva}
+\begin{frame}
+    \centering
+    \huge Classificação Seletiva (Opção de Rejeição)
+    \label{sec:rejection}
+\end{frame}
+
+\begin{frame}{Calibração Geométrica vs. Superconfiança da CNN}
+    \small
+    \begin{block}{O que é a Opção de Rejeição?}
+        Proposta de consenso temporal baseada no acúmulo de janelas consecutivas de classificação (de 0.512s). Um áudio completo só é rotulado se o limiar de concordância de votos $t$ for alcançado. Caso contrário, o sistema prudentemente se recusa a classificar (rejeita).
+    \end{block}
+    
+    \vspace{0.15cm}
+    \footnotesize
+    \begin{columns}
+        \column{0.5\textwidth}
+        \textbf{Superconfiança da CNN Convolucional:}
+        \begin{itemize}
+            \item Sob alta severidade de ruído ($t \ge 0.9$), a CNN Mel mantem cobertura de \textbf{54.01\%}, mas sua acurácia satura em apenas \textbf{74.39\%}.
+            \item Revela calibração fraca das probabilidades de saída, tomando decisões erradas de forma superconfiante.
+        \end{itemize}
+        
+        \column{0.5\textwidth}
+        \textbf{Calibração Estatística do SVM:}
+        \begin{itemize}
+            \item Ao delimitar margens rígidas de separabilidade espectral, o SVM Nyström exibe calibração de confiança notável.
+            \item Rejeita trechos sob atenuação severa de SNR e atinge precisões excepcionais nos áudios aceitos.
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Curva de Trade-off Cobertura-Acurácia}
+    \begin{table}
+        \tiny
+        \begin{tabular}{llccc}
+            \toprule
+            \textbf{Limiar de Votos ($t$)} & \textbf{Representação / Modelo} & \textbf{Taxa de Cobertura (\%)} & \textbf{Acurácia de Teste (\%)} & \textbf{Índice SP (\%)} \\
+            \midrule
+            \textbf{t = 0} (Sem Rejeição) & \textbf{MEL (SVM - Proposto)} & 100.00 $\pm$ 0.00 & \textbf{64.56 $\pm$ 1.18} & \textbf{63.78 $\pm$ 1.14} \\
+            & LOFAR (SVM - Proposto) & 100.00 $\pm$ 0.00 & 63.32 $\pm$ 2.10 & 63.10 $\pm$ 2.19 \\
+            \midrule
+            \textbf{$t \ge 0.5$} (Maioria) & \textbf{LOFAR (SVM - Proposto)} & 78.25 $\pm$ 1.90 & \textbf{70.36 $\pm$ 2.13} & \textbf{68.56 $\pm$ 2.88} \\
+            & MEL (SVM - Proposto) & 89.67 $\pm$ 1.17 & 66.23 $\pm$ 1.48 & 66.07 $\pm$ 1.63 \\
+            \midrule
+            \textbf{$t \ge 0.7$} (Forte) & \textbf{LOFAR (SVM - Proposto)} & 47.12 $\pm$ 3.23 & \textbf{82.39 $\pm$ 3.22} & \textbf{77.25 $\pm$ 5.70} \\
+            & MEL (SVM - Proposto) & 63.40 $\pm$ 2.91 & 73.60 $\pm$ 2.22 & 70.79 $\pm$ 3.35 \\
+            \midrule
+            \textbf{$t \ge 0.8$} (Seguro) & \textbf{LOFAR (SVM - Proposto)} & 35.04 $\pm$ 3.35 & \textbf{86.75 $\pm$ 2.81} & \textbf{79.79 $\pm$ 5.89} \\
+            & MEL (SVM - Proposto) & 51.28 $\pm$ 2.94 & 77.70 $\pm$ 2.35 & 73.10 $\pm$ 3.43 \\
+            \midrule
+            \textbf{$t \ge 0.9$} (Crítico) & \textbf{LOFAR (SVM - Proposto)} & 22.27 $\pm$ 2.86 & \textbf{90.43 $\pm$ 2.95} & \textbf{78.85 $\pm$ 7.18} \\
+            & MEL (SVM - Proposto) & 37.48 $\pm$ 2.32 & 83.42 $\pm$ 2.07 & 75.58 $\pm$ 3.18 \\
+            \bottomrule
+        \end{tabular}
+        \caption{Curva empírica de trade-off sob consenso temporal.}
+    \end{table}
+    
+    \vspace{-0.1cm}
+    \footnotesize
+    \textbf{Conclusão do Trade-off}: No limiar de segurança máxima ($t \ge 0.90$), o \textbf{SVM LOFAR} estabelece a acurácia recorde de \textbf{90.43\% $\pm$ 2.95\%}, operando com cobertura de 22.27\% dos dados (assertividade máxima).
+\end{frame}
+
+%===========================================
+% 6. ANÁLISE POR ALVO E LIMITAÇÕES DO SMALL
+%===========================================
+\section{Análise por Alvo e Limitações}
+\begin{frame}
+    \centering
+    \huge Análise por Alvo e Gargalo do SMALL
+    \label{sec:class_analysis}
+\end{frame}
+
+\begin{frame}{Distribuição de Classes no Filtro Crítico ($t \ge 0.90$)}
+    \begin{table}
+        \small
+        \begin{tabular}{lccc}
+            \toprule
+            \textbf{Classe de Alvo} & \textbf{Áudios Totais / Fold} & \textbf{Taxa de Cobertura (\%)} & \textbf{Acurácia (\%)} \\
+            \midrule
+            \textbf{LARGE} & 214.0 & 27.01 $\pm$ 6.76 & \textbf{96.89 $\pm$ 1.32} \\
+            \textbf{BACKGROUND} & 98.0 & 52.55 $\pm$ 8.23 & \textbf{95.99 $\pm$ 2.37} \\
+            \textbf{MEDIUM} & 149.0 & 13.36 $\pm$ 4.56 & \textbf{81.00 $\pm$ 10.59} \\
+            \textbf{SMALL} & 178.0 & 7.36 $\pm$ 1.84 & \textbf{49.74 $\pm$ 17.07} \\
+            \midrule
+            \textbf{GLOBAL} & \textbf{639.0} & \textbf{22.27 $\pm$ 2.86} & \textbf{90.43 $\pm$ 2.95} \\
+            \bottomrule
+        \end{tabular}
+        \caption{Métricas por classe com SVM LOFAR ($t \ge 0.90$).}
+    \end{table}
+    
+    \vspace{-0.1cm}
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{LARGE e BACKGROUND}: Acurácia espetacular superior a \textbf{95\%}.
+        \item \textbf{MEDIUM}: Aproveitamento seguro e equilibrado com \textbf{81.00\%} de acerto.
+        \item \textbf{SMALL}: Gargalo severo com acurácia pífia de \textbf{49.74\%} e baixíssima cobertura.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{A Limitação Física do Alvo SMALL}
+    \small
+    \begin{block}{Entendimento Físico-Acústico do Problema}
+        Embarcações de pequeno porte (SMALL) produzem assinaturas de baixíssima potência e carecem das clássicas raias harmônicas discretas abaixo de 1000Hz (que compõem a maior parte das energias do LOFAR).
+    \end{block}
+    
+    \vspace{0.15cm}
+    \footnotesize
+    \textbf{Fatores de Degradação:}
+    \begin{itemize}
+        \item \textbf{Ruído Difuso de Banda Larga}: A assinatura acústica assemelha-se ao mar aberto e vento, gerando forte confusão espectral com a classe \textbf{BACKGROUND} (alta entropia de Shannon).
+        \item \textbf{A Sabedoria Geométrica da Rejeição}: A opção de rejeição temporal atua descartando sabiamente \textbf{92.64\%} de todas as janelas acústicas do SMALL. Isso evita sobrecarregar o operador de sonar com falsas classificações e alarmes inconsistentes.
+    \end{itemize}
+\end{frame}
+
+%===========================================
+% 7. GENERALIZAÇÃO FÍSICA EM DISTÂNCIA (CPA)
+%===========================================
+\section{Generalização CPA}
+\begin{frame}
+    \centering
+    \huge Generalização CPA (Proximidade)
+    \label{sec:cpa}
+\end{frame}
+
+\begin{frame}{Robustez ao CPA Proximity (Distância do Alvo)}
+    \scriptsize
+    \begin{block}{Generalização entre Níveis de SNR}
+        Avaliação da capacidade do modelo de lidar com atenuação extrema de sinal decorrente da distância ao hidrofone:
+        \begin{itemize}
+            \item \textbf{Dataset A (Near CPA)}: Alta SNR (distância $< 250$ metros).
+            \item \textbf{Dataset C (Far CPA)}: Baixa SNR (distância entre $250$ e $500$ metros).
+        \end{itemize}
+    \end{block}
+    
+    \begin{table}
+        \tiny
+        \begin{tabular}{llcccc}
+            \toprule
+            \textbf{Classificador} & \textbf{Treinado em} & \textbf{SP A (\%)} & \textbf{ACC A (\%)} & \textbf{SP C (\%)} & \textbf{ACC C (\%)} \\
+            \midrule
+            MLP Mel & Dataset A (Near) & 67.33 $\pm$ 2.67 & 67.74 $\pm$ 2.69 & 60.16 $\pm$ 5.99 & 61.03 $\pm$ 5.18 \\
+            CNN Mel & Dataset A (Near) & 61.84 $\pm$ 3.26 & 62.61 $\pm$ 2.85 & 56.58 $\pm$ 4.80 & 58.09 $\pm$ 4.30 \\
+            \textbf{SVM Mel (m=4000)} & \textbf{Dataset A (Near)} & \textbf{64.15 $\pm$ 2.87} & \textbf{65.08 $\pm$ 2.91} & \textbf{59.24 $\pm$ 4.55} & \textbf{60.84 $\pm$ 3.59} \\
+            \textbf{SVM LOFAR (m=4000)} & \textbf{Dataset A (Near)} & \textbf{67.24 $\pm$ 3.42} & \textbf{68.23 $\pm$ 2.94} & \textbf{55.35 $\pm$ 4.45} & \textbf{57.26 $\pm$ 3.66} \\
+            \midrule
+            MLP Mel & Dataset C (Far) & 59.36 $\pm$ 4.55 & 59.70 $\pm$ 4.47 & 59.46 $\pm$ 4.45 & 60.21 $\pm$ 4.17 \\
+            \textbf{SVM LOFAR (m=4000)} & \textbf{Dataset C (Far)} & \textbf{58.52 $\pm$ 4.95} & \textbf{59.59 $\pm$ 4.65} & \textbf{55.84 $\pm$ 6.00} & \textbf{57.38 $\pm$ 5.49} \\
+            \bottomrule
+        \end{tabular}
+        \caption{Recomposição da Tabela 10 de Silva et al. (2025) com os modelos SVM.}
+    \end{table}
+    
+    \vspace{-0.1cm}
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Recorde Absoluto}: O \textbf{SVM LOFAR} estabelece o melhor resultado de acurácia global do estudo de CPA no Dataset A: \textbf{68.23\%}.
+        \item \textbf{Estabilidade}: Na transição de A $\to$ C, o SVM Mel exibe queda de apenas \textbf{4.24\%}, enquanto a MLP perde \textbf{6.71\%}.
+    \end{itemize}
+\end{frame}
+
+%===========================================
+% 8. TRAJETÓRIA DE ESCALONAMENTO
+%===========================================
+\section{Trajetória de Escalonamento}
+\begin{frame}
+    \centering
+    \huge Trajetória de Escalonamento (Hiperparâmetros)
+    \label{sec:evolution}
+\end{frame}
+
+\begin{frame}{Sintonia de Kernel e Complexidade ($m$)}
+    \small
+    \begin{block}{A Relação entre Componentes de Nyström ($m$) e Desempenho}
+        O escalonamento logarítmico de $m = 300$ até $m = 4000$ revela a evolução da modelagem matemática das fronteiras de decisão complexas das classes acústicas.
+    \end{block}
+    
+    \vspace{0.15cm}
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Fase Inicial ($m = 300$)}: Acurácia modesta de $61.02\% \pm 1.94\%$ (MEL). O espaço projetado carece de representação para as frequências não-lineares.
+        \item \textbf{Fase Intermediária ($m = 1000$ a $3000$)}: Aumento contínuo da representatividade. O modelo captura transições espectrais importantes de motores.
+        \item \textbf{Golden Scale ($m = 4000$)}:
+        \begin{itemize}
+            \footnotesize
+            \item \textbf{Golden MEL}: $64.56\% \pm 1.18\%$ (sem PCA) -- estabilidade com variância reduzida.
+            \item \textbf{Golden LOFAR}: $64.04\% \pm 1.88\%$ (com PCA64) -- excepcional para generalização e filtragem temporal.
+        \end{itemize}
+    \end{itemize}
+\end{frame}
+
+%===========================================
+% 9. CONCLUSÕES E MITIGAÇÕES FUTURAS
+%===========================================
+\section{Conclusões}
+\begin{frame}
+    \centering
+    \huge Conclusões e Próximos Passos
+    \label{sec:concl}
+\end{frame}
+
+\begin{frame}{Conclusões e Recomendações}
+    \small
+    \begin{block}{Síntese do Trabalho Científico}
+        O modelo proposto de \textbf{SVM com Aproximação de Nyström} provou ser um estimador robusto e estável para sonar passivo, superando as baselines profundas em cenários de alta variabilidade e apresentando excelente calibração.
+    \end{block}
+    
+    \vspace{0.1cm}
+    \footnotesize
+    \textbf{Direcionamentos Principais:}
+    \begin{itemize}
+        \item \textbf{Rejeição Temporal}: Essencial para viabilidade prática. Eleva a precisão global para \textbf{90.43\%} na maioria simples dos áudios aceitos.
+        \item \textbf{Dualidade do PCA}: Deve ser empregado estritamente sob representações brutas de alta frequência (LOFAR) e desativado em extratores já integrados de forma logarítmica (MEL).
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Mitigações Futuras para o Alvo SMALL}
+    \small
+    Para superar a limitação física do alvo SMALL frente ao BACKGROUND, propõem-se 4 estratégias fundamentais de pesquisa:
+    
+    \vspace{0.2cm}
+    \footnotesize
+    \begin{enumerate}
+        \item \textbf{Fusão Espectral Híbrida}: Concatenar a banda discretizada do LOFAR ($< 1000$ Hz) com a escala Mel de alta frequência ($1.5$ kHz a $10$ kHz), onde pequenos alvos produzem maior energia de cavitação.
+        \item \textbf{Redução de Ruído Adaptativa}: Implementar filtragem de Wiener adaptativa ou subtração espectral antes da classificação das janelas.
+        \item \textbf{Classificação Cascata Hierárquica}:
+        \begin{itemize}
+            \scriptsize
+            \item \textit{Etapa 1}: Segmentar ruído de fundo (BACKGROUND vs. NAVIOS).
+            \item \textit{Etapa 2}: Separar de forma binária SMALL vs. MEDIUM/LARGE.
+        \end{itemize}
+        \item \textbf{Aprendizado de Representação por Contraste (Contrastive Learning)}: Forçar geometricamente a separação dos vetores de SMALL e BACKGROUND no espaço latente.
+    \end{enumerate}
+\end{frame}
+
+\begin{frame}{Referências}
+    \tiny
+    \begin{thebibliography}{99}
+        \bibitem{silva2025}
+        Silva, F. O. B. da, Fernandes, J. C. V., Soares Filho, W., Souza Filho, J. B. O. e, Spengler, A. \& Moura Júnior, N. N. (2025). IARA: An Underwater Acoustic Database. \textit{IEEE Access}, Vol. 13, doi: 10.1109/ACCESS.2025.3585467.
+        
+        \bibitem{shipsear}
+        Santos-Domínguez, D., Torres-Guijarro, S., Cardenal-Martín, J. \& Pena-Gimenez, A. (2016). ShipsEar: An underwater vessel noise database. \textit{Applied Acoustics}, 113, 64-69.
+        
+        \bibitem{deepship}
+        Irfan, M., Jiang, Z., Ali, S., et al. (2021). DeepShip: An underwater acoustic threshold-based database for ship classification. \textit{Scientific Reports}, 11, 23005.
+        
+        \bibitem{nystrom}
+        Williams, C. K. I. \& Seeger, M. (2001). Using the Nyström method to speed up algorithms on kernel matrices. \textit{Advances in Neural Information Processing Systems (NeurIPS)}.
+        
+        \bibitem{chow1970}
+        Chow, C. (1970). On optimum recognition error and reject tradeoff. \textit{IEEE Transactions on Information Theory}, 16(1), 41-46.
+    \end{thebibliography}
+\end{frame}
+
+\end{document}

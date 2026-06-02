@@ -43,6 +43,10 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **SVM (m=4000) (C=2.0)** | LOFAR | 61.70 ± 3.67 | 63.55 ± 2.91 | 62.85 ± 3.33 | Proposto (Nyström Puro) |
 | **SVM (m=1000) (C=2.0) (pca64)** | LOFAR | 61.96 ± 2.22 | 63.16 ± 2.18 | 62.65 ± 1.74 | Proposto (PCA Redutivo) |
 | **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | LOFAR | **63.10 ± 2.19** | **64.04 ± 1.88** | **64.34 ± 2.23** | **Proposto (Campeão LOFAR)** |
+| *---* | *---* | *---* | *---* | *---* | *---* |
+| **SVM (m=4000) (C=2.0) (elasticnet)** | HYBRID | 64.67 ± 2.24 | 65.31 ± 1.90 | 65.83 ± 2.43 | Proposto (Híbrido) |
+| **SVM (m=4000) (C=0.5) (elasticnet)** | HYBRID | **65.16 ± 1.67** | **65.77 ± 1.55** | **65.75 ± 1.51** | **Proposto (Campeão Híbrido)** |
+
 
 > [!NOTE]
 > *As incertezas denotam o desvio padrão fold-wise derivado da validação cruzada 5x2. Os resultados das baselines (RF, MLP, CNN) foram extraídos diretamente da literatura de origem (Silva et al., 2025).*
