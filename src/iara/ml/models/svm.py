@@ -58,6 +58,7 @@ class SVMNystroem(iara_model.BaseModel):
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
                  biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced',
                  random_state: int = 42):
         """Initialize SVMNystroem model.
 
@@ -75,6 +76,7 @@ class SVMNystroem(iara_model.BaseModel):
             penalty (str): Type of regularization penalty for SGDClassifier: 'l2', 'l1', or 'elasticnet'. Default: 'l2'.
             l1_ratio (float): The Elastic Net mixing parameter (between 0 and 1). Default: 0.15.
             biases (List[float]): Offsets to apply to decision scores for margin shift calibration. Default: None.
+            class_weight (Union[str, dict, None]): Weights associated with classes. Default: 'balanced'.
             random_state (int): Random seed for reproducibility. Default: 42.
         """
         super().__init__()
@@ -85,6 +87,7 @@ class SVMNystroem(iara_model.BaseModel):
         self.penalty = penalty
         self.l1_ratio = l1_ratio
         self.biases = biases
+        self.class_weight = class_weight
         self.random_state = random_state
 
         self.nystroem = Nystroem(
@@ -101,7 +104,7 @@ class SVMNystroem(iara_model.BaseModel):
             penalty=penalty,
             l1_ratio=l1_ratio,
             alpha=1.0,
-            class_weight='balanced',
+            class_weight=class_weight,
             max_iter=1000,
             tol=1e-3,
             random_state=random_state,
@@ -226,6 +229,7 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
                  biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced',
                  random_state: int = 42):
         super().__init__()
         self.n_components = n_components
@@ -238,6 +242,7 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
         self.penalty = penalty
         self.l1_ratio = l1_ratio
         self.biases = biases
+        self.class_weight = class_weight
         self.random_state = random_state
 
         self.scaler = StandardScaler() if normalize else None
@@ -255,7 +260,7 @@ class SVMNystroemPreprocessed(iara_model.BaseModel):
             penalty=penalty,
             l1_ratio=l1_ratio,
             alpha=1.0,
-            class_weight='balanced',
+            class_weight=class_weight,
             max_iter=1000,
             tol=1e-3,
             random_state=random_state,

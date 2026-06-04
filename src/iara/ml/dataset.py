@@ -268,15 +268,16 @@ class AudioDataset(BaseDataset):
     def get_targets(self) -> torch.tensor:
 
         if self.target_tensor is None:
-
-            self.target_tensor = torch.tensor([], dtype=torch.float32)
-
+            target_lists = []
             for file_id in self.file_ids:
                 target = self.loader.target_map[file_id]
                 size = self.loader.size_map[file_id]
-
-                self.target_tensor = torch.cat([self.target_tensor,
-                                        torch.tensor([target] * size, dtype=torch.int32)])
+                target_lists.append(torch.tensor([target] * size, dtype=torch.int32))
+            
+            if target_lists:
+                self.target_tensor = torch.cat(target_lists)
+            else:
+                self.target_tensor = torch.tensor([], dtype=torch.float32)
 
         return self.target_tensor
 
@@ -284,11 +285,14 @@ class AudioDataset(BaseDataset):
     def get_samples(self) -> torch.tensor:
 
         if self.sample_tensor is None:
-
-            self.sample_tensor = torch.tensor([], dtype=torch.float32)
-
+            tensors = []
             for file_id in self.file_ids:
-                self.sample_tensor = torch.cat([self.sample_tensor, self.loader.get_all(file_id)])
+                tensors.append(self.loader.get_all(file_id))
+            
+            if tensors:
+                self.sample_tensor = torch.cat(tensors, dim=0)
+            else:
+                self.sample_tensor = torch.tensor([], dtype=torch.float32)
 
         return self.sample_tensor
 

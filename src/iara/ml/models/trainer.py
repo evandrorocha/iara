@@ -321,18 +321,24 @@ class BaseTrainer():
 
             file_ids = []
             all_targets = []
-            all_predictions = []
-
+            
+            limit_ids = dataset.limit_ids if hasattr(dataset, 'limit_ids') else dataset.original_dataset.limit_ids
+            file_ids_list = dataset.file_ids if hasattr(dataset, 'file_ids') else dataset.original_dataset.file_ids
+            
             for file_id in dataset.get_file_ids():
-                samples, target = dataset.get_file_samples(file_id=file_id)
+                base_file_index = file_ids_list.index(file_id)
+                n_samples = limit_ids[base_file_index+1] - limit_ids[base_file_index]
+                target = dataset.loader.target_map[file_id] if hasattr(dataset, 'loader') else dataset.original_dataset.loader.target_map[file_id]
+                file_ids.extend([file_id] * n_samples)
+                all_targets.extend([int(target)] * n_samples)
 
-                predictions = self.predict(model=model, samples=samples)
-
-                file_ids.extend([file_id] * len(samples))
-                all_targets.extend([int(target)] * len(samples))
-                all_predictions.extend(predictions.tolist())
-
-            all_predictions = np.array(all_predictions)
+            samples = dataset.get_samples()
+            predictions = self.predict(model=model, samples=samples)
+            
+            if torch.is_tensor(predictions):
+                all_predictions = predictions.cpu().numpy()
+            else:
+                all_predictions = np.array(predictions)
 
             if len(all_predictions.shape) != 1:
                 df = pd.DataFrame({"File": file_ids, "Target": all_targets})
@@ -898,7 +904,8 @@ class SVMNystroemTrainer(BaseTrainer):
                  n_components: int = 300,
                  gamma: float = 'scale',
                  C: float = 1.0,
-                 biases: typing.Optional[typing.List[float]] = None) -> None:
+                 biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced') -> None:
         """Initialize SVMNystroemTrainer.
 
         Args:
@@ -910,12 +917,14 @@ class SVMNystroemTrainer(BaseTrainer):
             gamma (float): RBF kernel width parameter. 'scale' = auto. Default: 'scale'.
             C (float): SVM regularization parameter. Default: 1.0.
             biases (List[float]): Offsets to apply to decision scores for margin shift calibration. Default: None.
+            class_weight (Union[str, dict, None]): Weights associated with classes. Default: 'balanced'.
         """
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
         self.C = C
         self.biases = biases
+        self.class_weight = class_weight
 
     def fit(self,
             model_base_dir: str,
@@ -956,7 +965,8 @@ class SVMNystroemTrainer(BaseTrainer):
                 gamma=self.gamma,
                 C=self.C,
                 n_targets=self.n_targets,
-                biases=self.biases
+                biases=self.biases,
+                class_weight=self.class_weight
             )
 
             targets = trn_dataset.get_targets()
@@ -985,7 +995,8 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                  n_pca_components: int = 64,
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
-                 biases: typing.Optional[typing.List[float]] = None) -> None:
+                 biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced') -> None:
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
@@ -996,6 +1007,7 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
         self.penalty = penalty
         self.l1_ratio = l1_ratio
         self.biases = biases
+        self.class_weight = class_weight
 
     def fit(self,
             model_base_dir: str,
@@ -1033,7 +1045,8 @@ class SVMNystroemPreprocessedTrainer(BaseTrainer):
                 n_pca_components=self.n_pca_components,
                 penalty=self.penalty,
                 l1_ratio=self.l1_ratio,
-                biases=self.biases
+                biases=self.biases,
+                class_weight=self.class_weight
             )
 
             targets = trn_dataset.get_targets()

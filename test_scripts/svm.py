@@ -106,6 +106,7 @@ class SVMNystroemHybrid(iara_model.BaseModel):
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
                  biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced',
                  random_state: int = 42):
         super().__init__()
         self.n_components = n_components
@@ -118,6 +119,7 @@ class SVMNystroemHybrid(iara_model.BaseModel):
         self.penalty = penalty
         self.l1_ratio = l1_ratio
         self.biases = biases
+        self.class_weight = class_weight
         self.random_state = random_state
         
         self.pca_trans = PCA(n_components=n_pca_components, random_state=random_state)
@@ -135,7 +137,7 @@ class SVMNystroemHybrid(iara_model.BaseModel):
             penalty=penalty,
             l1_ratio=l1_ratio,
             alpha=1.0,
-            class_weight='balanced',
+            class_weight=class_weight,
             max_iter=1000,
             tol=1e-3,
             random_state=random_state,
@@ -249,7 +251,8 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
                  normalize: bool = True,
                  penalty: str = 'l2',
                  l1_ratio: float = 0.15,
-                 biases: typing.Optional[typing.List[float]] = None) -> None:
+                 biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced') -> None:
         super().__init__(training_strategy, trainer_id, n_targets)
         self.n_components = n_components
         self.gamma = gamma
@@ -260,6 +263,7 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
         self.penalty = penalty
         self.l1_ratio = l1_ratio
         self.biases = biases
+        self.class_weight = class_weight
 
     def fit(self,
             model_base_dir: str,
@@ -295,7 +299,8 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
                 normalize=self.normalize,
                 penalty=self.penalty,
                 l1_ratio=self.l1_ratio,
-                biases=self.biases
+                biases=self.biases,
+                class_weight=self.class_weight
             )
             
             targets = trn_dataset.get_targets()
@@ -308,7 +313,244 @@ class SVMNystroemHybridTrainer(iara_trn.BaseTrainer):
             model.save(model_filename)
 
 
-def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15, biases: typing.Optional[typing.List[float]] = None):
+class SVMNystroemWithRMS(iara_model.BaseModel):
+    """Approximate RBF-SVM that extracts and injects raw RMS energy as an auxiliary feature."""
+    def __init__(self,
+                 n_components: int = 300,
+                 gamma: typing.Union[str, float] = 'scale',
+                 C: float = 1.0,
+                 n_targets: int = 4,
+                 normalize: bool = False,
+                 pca: bool = False,
+                 n_pca_components: int = 64,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced',
+                 random_state: int = 42):
+        super().__init__()
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+        self.n_targets = n_targets
+        self.normalize = normalize
+        self.pca = pca
+        self.n_pca_components = n_pca_components
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
+        self.biases = biases
+        self.class_weight = class_weight
+        self.random_state = random_state
+        
+        self.scaler = StandardScaler() if normalize else None
+        self.pca_trans = PCA(n_components=n_pca_components, random_state=random_state) if pca else None
+        self.rms_scaler = StandardScaler()
+        
+        self.nystroem = Nystroem(
+            kernel='rbf',
+            gamma=None,
+            n_components=n_components,
+            random_state=random_state
+        )
+        
+        self.sgd = SGDClassifier(
+            loss='hinge',
+            penalty=penalty,
+            l1_ratio=l1_ratio,
+            alpha=1.0,
+            class_weight=class_weight,
+            max_iter=1000,
+            tol=1e-3,
+            random_state=random_state,
+            n_jobs=1
+        )
+        
+        self.is_fitted = False
+
+    def _normalize_and_extract_rms(self, X: np.ndarray) -> typing.Tuple[np.ndarray, np.ndarray]:
+        # Compute RMS of each raw frame (each row)
+        rms = np.sqrt(np.mean(X**2, axis=1, keepdims=True))
+        
+        # Replicate standard IARA Normalization.NORM_L2
+        min_vals = X.min(axis=1, keepdims=True)
+        max_vals = X.max(axis=1, keepdims=True)
+        range_vals = np.where(max_vals - min_vals == 0, 1.0, max_vals - min_vals)
+        X_minmax = (X - min_vals) / range_vals
+        l2_norms = np.linalg.norm(X_minmax, ord=2, axis=1, keepdims=True)
+        l2_norms = np.where(l2_norms == 0, 1.0, l2_norms)
+        X_norm = X_minmax / l2_norms
+        
+        return X_norm, rms
+
+    def fit(self, samples: torch.Tensor, targets: torch.Tensor) -> None:
+        X = samples.view(samples.size(0), -1).cpu().numpy()
+        y = targets.cpu().numpy().astype(int)
+        
+        n_samples = X.shape[0]
+        
+        # Extract RMS and apply L2 normalization locally
+        X_norm, rms = self._normalize_and_extract_rms(X)
+        
+        # Apply standard preprocessing on normalized spectra
+        if self.normalize:
+            X_norm = self.scaler.fit_transform(X_norm)
+        if self.pca:
+            X_norm = self.pca_trans.fit_transform(X_norm)
+            
+        # Calculate gamma on RBF inputs
+        if isinstance(self.gamma, str) and 'scale' in self.gamma:
+            base_gamma = 1.0 / (X_norm.shape[1] * X_norm.var())
+            if '*' in self.gamma:
+                parts = self.gamma.split('*')
+                multiplier = 1.0
+                for p in parts:
+                    if p != 'scale':
+                        try:
+                            multiplier = float(p)
+                        except ValueError:
+                            pass
+                gamma = base_gamma * multiplier
+            else:
+                gamma = base_gamma
+        elif self.gamma is None:
+            gamma = 1.0 / X_norm.shape[1]
+        else:
+            gamma = self.gamma
+            
+        self.nystroem.set_params(gamma=gamma)
+        
+        # Transform using Nyström
+        X_transformed = self.nystroem.fit_transform(X_norm)
+        
+        # Scale the RMS feature
+        rms_scaled = self.rms_scaler.fit_transform(rms)
+        
+        # Concatenate RMS scaled feature to the end of Nyström features
+        X_final = np.hstack([X_transformed, rms_scaled])
+        
+        # Train SGD linear SVM on the (m + 1) feature space
+        alpha = 1.0 / (self.C * n_samples)
+        self.sgd.set_params(alpha=alpha)
+        self.sgd.fit(X_final, y)
+        self.is_fitted = True
+
+    def forward(self, data: torch.Tensor) -> torch.Tensor:
+        if not self.is_fitted:
+            raise RuntimeError("Model must be fitted before calling forward().")
+            
+        X = data.view(data.size(0), -1).cpu().numpy()
+        
+        X_norm, rms = self._normalize_and_extract_rms(X)
+        
+        if self.normalize:
+            X_norm = self.scaler.transform(X_norm)
+        if self.pca:
+            X_norm = self.pca_trans.transform(X_norm)
+            
+        X_transformed = self.nystroem.transform(X_norm)
+        rms_scaled = self.rms_scaler.transform(rms)
+        
+        X_final = np.hstack([X_transformed, rms_scaled])
+        
+        scores = self.sgd.decision_function(X_final)
+        biases = getattr(self, 'biases', None)
+        if biases is not None:
+            if len(scores.shape) == 1 or scores.shape[1] == 1:
+                bias_val = biases[1] - biases[0]
+                if len(scores.shape) == 1:
+                    scores += bias_val
+                    predictions = (scores > 0).astype(int)
+                else:
+                    scores[:, 0] += bias_val
+                    predictions = (scores[:, 0] > 0).astype(int)
+            else:
+                for i, cls in enumerate(self.sgd.classes_):
+                    if cls < len(biases):
+                        scores[:, i] += biases[cls]
+                predictions = np.argmax(scores, axis=1)
+        else:
+            predictions = self.sgd.predict(X_final)
+            
+        return torch.tensor(predictions, dtype=torch.long)
+
+
+class SVMNystroemWithRMSTrainer(iara_trn.BaseTrainer):
+    """Trainer class for SVMNystroemWithRMS compatible with Manager framework."""
+    def __init__(self,
+                 training_strategy: iara_trn.ModelTrainingStrategy,
+                 trainer_id: str,
+                 n_targets: int,
+                 n_components: int = 300,
+                 gamma: typing.Union[str, float] = 'scale',
+                 C: float = 1.0,
+                 normalize: bool = False,
+                 pca: bool = False,
+                 n_pca_components: int = 64,
+                 penalty: str = 'l2',
+                 l1_ratio: float = 0.15,
+                 biases: typing.Optional[typing.List[float]] = None,
+                 class_weight: typing.Union[str, dict, None] = 'balanced') -> None:
+        super().__init__(training_strategy, trainer_id, n_targets)
+        self.n_components = n_components
+        self.gamma = gamma
+        self.C = C
+        self.normalize = normalize
+        self.pca = pca
+        self.n_pca_components = n_pca_components
+        self.penalty = penalty
+        self.l1_ratio = l1_ratio
+        self.biases = biases
+        self.class_weight = class_weight
+
+    def fit(self,
+            model_base_dir: str,
+            trn_dataset: iara_dataset.BaseDataset,
+            val_dataset: iara_dataset.BaseDataset) -> None:
+        if self.is_trained(model_base_dir=model_base_dir):
+            return
+            
+        os.makedirs(model_base_dir, exist_ok=True)
+        
+        if self.training_strategy == iara_trn.ModelTrainingStrategy.MULTICLASS:
+            target_ids = [None]
+        elif self.training_strategy == iara_trn.ModelTrainingStrategy.CLASS_SPECIALIST:
+            target_ids = trn_dataset.get_targets()
+            
+        samples = trn_dataset.get_samples()
+        if samples is None:
+            raise ValueError("Training dataset without data")
+            
+        for target_id in target_ids:
+            model_filename = self.output_filename(model_base_dir=model_base_dir,
+                                                   target_id=target_id)
+            if os.path.exists(model_filename):
+                continue
+                
+            model = SVMNystroemWithRMS(
+                n_components=self.n_components,
+                gamma=self.gamma,
+                C=self.C,
+                n_targets=self.n_targets,
+                normalize=self.normalize,
+                pca=self.pca,
+                n_pca_components=self.n_pca_components,
+                penalty=self.penalty,
+                l1_ratio=self.l1_ratio,
+                biases=self.biases,
+                class_weight=self.class_weight
+            )
+            
+            targets = trn_dataset.get_targets()
+            if target_id is not None:
+                targets = torch.where(targets == target_id,
+                                       torch.tensor(1.0),
+                                       torch.tensor(0.0))
+                                       
+            model.fit(samples=samples, targets=targets)
+            model.save(model_filename)
+
+
+def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 'log_melgram', C: float = 1.0, gamma: typing.Union[str, float] = 'scale', normalize: bool = False, pca: bool = False, n_pca_components: int = 64, penalty: str = 'l2', l1_ratio: float = 0.15, biases: typing.Optional[typing.List[float]] = None, class_weight: typing.Union[str, dict, None] = 'balanced', rms: bool = False):
 
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -320,11 +562,13 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
     input_type = iara_dataset.InputType.Window()
 
     # Audio preprocessing pipeline
+    norm_mode = iara_proc.Normalization.NONE if rms else iara_proc.Normalization.NORM_L2
+
     if analysis_name.lower() == 'hybrid':
         dp_mel = iara_manager.AudioFileProcessor(
             data_base_dir=directories.data_dir,
             data_processed_base_dir=directories.process_dir,
-            normalization=iara_proc.Normalization.NORM_L2,
+            normalization=norm_mode,
             analysis=iara_proc.SpectralAnalysis.LOG_MELGRAM,
             n_pts=1024,
             n_overlap=0,
@@ -335,7 +579,7 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
         dp_lofar = iara_manager.AudioFileProcessor(
             data_base_dir=directories.data_dir,
             data_processed_base_dir=directories.process_dir,
-            normalization=iara_proc.Normalization.NORM_L2,
+            normalization=norm_mode,
             analysis=iara_proc.SpectralAnalysis.LOFAR,
             n_pts=1024,
             n_overlap=0,
@@ -353,7 +597,7 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
         dp = iara_manager.AudioFileProcessor(
             data_base_dir=directories.data_dir,
             data_processed_base_dir=directories.process_dir,
-            normalization=iara_proc.Normalization.NORM_L2,
+            normalization=norm_mode,
             analysis=analysis_enum,
             n_pts=1024,
             n_overlap=0,
@@ -364,6 +608,8 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
 
     # Dynamic folder name includes C, gamma and preprocessors if non-default
     name_parts = [f'svm_nystroem_{n_components}', analysis_name]
+    if rms:
+        name_parts.append('rms')
     if normalize:
         name_parts.append('norm')
     if pca and analysis_name.lower() != 'hybrid':
@@ -376,6 +622,16 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
         name_parts.append(f'C{C}')
     if gamma != 'scale':
         name_parts.append(f'g{gamma}')
+    
+    if isinstance(class_weight, dict):
+        s_val = class_weight.get(0, 1.0)
+        m_val = class_weight.get(1, 1.0)
+        l_val = class_weight.get(2, 1.0)
+        b_val = class_weight.get(3, 1.0)
+        name_parts.append(f'w_S{s_val}_M{m_val}_L{l_val}_B{b_val}')
+    elif class_weight is None:
+        name_parts.append('w_none')
+        
     exp_name = "_".join(name_parts)
 
     config = iara_exp.Config(
@@ -389,7 +645,23 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
     trainers = []
 
     # SVM with Nyström approximation (subclass selection for 100% safety)
-    if analysis_name.lower() == 'hybrid':
+    if rms:
+        trainer = SVMNystroemWithRMSTrainer(
+            training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
+            trainer_id=exp_name,
+            n_targets=config.dataset.target.get_n_targets(),
+            n_components=n_components,
+            gamma=gamma,
+            C=C,
+            normalize=normalize,
+            pca=pca,
+            n_pca_components=n_pca_components,
+            penalty=penalty,
+            l1_ratio=l1_ratio,
+            biases=biases,
+            class_weight=class_weight
+        )
+    elif analysis_name.lower() == 'hybrid':
         trainer = SVMNystroemHybridTrainer(
             training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
             trainer_id=exp_name,
@@ -402,9 +674,10 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             normalize=normalize,
             penalty=penalty,
             l1_ratio=l1_ratio,
-            biases=biases
+            biases=biases,
+            class_weight=class_weight
         )
-    elif normalize or pca:
+    elif normalize or pca or penalty != 'l2':
         trainer = iara_trn.SVMNystroemPreprocessedTrainer(
             training_strategy=iara_trn.ModelTrainingStrategy.MULTICLASS,
             trainer_id=exp_name,
@@ -417,7 +690,8 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             n_pca_components=n_pca_components,
             penalty=penalty,
             l1_ratio=l1_ratio,
-            biases=biases
+            biases=biases,
+            class_weight=class_weight
         )
     else:
         trainer = iara_trn.SVMNystroemTrainer(
@@ -427,13 +701,14 @@ def main(folds: typing.List[int], n_components: int = 300, analysis_name: str = 
             n_components=n_components,
             gamma=gamma,
             C=C,
-            biases=biases
+            biases=biases,
+            class_weight=class_weight
         )
     trainers.append(trainer)
 
     manager = iara_exp.Manager(config, *trainers)
 
-    result_grid = manager.run(folds=folds, override=True)
+    result_grid = manager.run(folds=folds, override=False)
 
     for (eval_subset, eval_strategy), result_dict in result_grid.items():
         if eval_subset == iara_trn.Subset.ALL:
@@ -500,7 +775,11 @@ if __name__ == "__main__":
         action='store_true',
         help='Enable StandardScaler feature standardization preprocessing'
     )
-
+    parser.add_argument(
+        '--rms',
+        action='store_true',
+        help='Inject raw RMS energy as an auxiliary feature'
+    )
     parser.add_argument(
         '--pca',
         action='store_true',
@@ -553,6 +832,37 @@ if __name__ == "__main__":
         default=0.0,
         help='Decision score bias offset for BACKGROUND class. Default: 0.0'
     )
+    parser.add_argument(
+        '--cw_type',
+        type=str,
+        default='balanced',
+        choices=['balanced', 'custom', 'none'],
+        help='Class weight mode: balanced, custom, or none. Default: balanced'
+    )
+    parser.add_argument(
+        '--cw_small',
+        type=float,
+        default=1.0,
+        help='Custom class weight for SMALL class. Only used when --cw_type=custom. Default: 1.0'
+    )
+    parser.add_argument(
+        '--cw_medium',
+        type=float,
+        default=1.0,
+        help='Custom class weight for MEDIUM class. Only used when --cw_type=custom. Default: 1.0'
+    )
+    parser.add_argument(
+        '--cw_large',
+        type=float,
+        default=1.0,
+        help='Custom class weight for LARGE class. Only used when --cw_type=custom. Default: 1.0'
+    )
+    parser.add_argument(
+        '--cw_background',
+        type=float,
+        default=1.0,
+        help='Custom class weight for BACKGROUND class. Only used when --cw_type=custom. Default: 1.0'
+    )
 
     args = parser.parse_args()
 
@@ -561,6 +871,7 @@ if __name__ == "__main__":
     analysis_type = args.analysis
     reg_c = args.reg_c
     normalize_enabled = args.normalize
+    rms_enabled = args.rms
     pca_enabled = args.pca
     pca_comp = args.pca_components
     penalty_type = args.penalty
@@ -580,12 +891,29 @@ if __name__ == "__main__":
         args.bias_background
     ]
 
+    # Resolve class_weight argument
+    cw_type = args.cw_type
+    if cw_type == 'balanced':
+        class_weight = 'balanced'
+    elif cw_type == 'none':
+        class_weight = None
+    elif cw_type == 'custom':
+        class_weight = {
+            0: args.cw_small,
+            1: args.cw_medium,
+            2: args.cw_large,
+            3: args.cw_background
+        }
+
     print(f"Running SVM Nyström on folds: {folds_to_execute}")
     print(f"  n_components={n_components}, gamma={gamma_val}, C={reg_c}")
     print(f"  analysis={analysis_type}")
-    print(f"  preprocessing: normalize={normalize_enabled}, pca={pca_enabled} (n_components={pca_comp})")
+    print(f"  preprocessing: normalize={normalize_enabled}, rms={rms_enabled}, pca={pca_enabled} (n_components={pca_comp})")
     print(f"  regularization: penalty={penalty_type}, l1_ratio={l1_ratio_val}")
     print(f"  biases: SMALL={biases[0]}, MEDIUM={biases[1]}, LARGE={biases[2]}, BACKGROUND={biases[3]}")
+    print(f"  class weights: type={cw_type}")
+    if cw_type == 'custom':
+        print(f"    SMALL={args.cw_small}, MEDIUM={args.cw_medium}, LARGE={args.cw_large}, BACKGROUND={args.cw_background}")
     print(f"  InputType: Window (by_audio evaluation via majority vote)")
     print()
 
@@ -600,7 +928,9 @@ if __name__ == "__main__":
         n_pca_components=pca_comp,
         penalty=penalty_type,
         l1_ratio=l1_ratio_val,
-        biases=biases
+        biases=biases,
+        class_weight=class_weight,
+        rms=rms_enabled
     )
 
     end_time = time.time()
