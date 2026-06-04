@@ -24,6 +24,7 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **RF** | LOFAR | 56.92 ± 1.69 | 58.87 ± 1.68 | 58.00 ± 1.41 | Baseline (Silva et al., 2025) |
 | **MLP** | MEL | 63.38 ± 1.81 | 64.51 ± 1.75 | 62.89 ± 1.68 | Baseline (Silva et al., 2025) |
 | **MLP** | LOFAR | **66.51 ± 1.39** | **67.48 ± 1.24** | **66.72 ± 1.17** | Baseline (Silva et al., 2025) |
+| **MLP (pca64)** | HYBRID | 66.13 ± 1.09 | 66.92 ± 1.06 | 65.92 ± 1.13 | Baseline (Híbrido) / Nova Referência |
 | **CNN** | MEL | 63.52 ± 2.26 | 64.99 ± 2.09 | 63.04 ± 2.02 | Baseline (Silva et al., 2025) |
 | **CNN** | LOFAR | 66.05 ± 1.90 | 67.02 ± 1.78 | 66.29 ± 2.13 | Baseline (Silva et al., 2025) |
 | *---* | *---* | *---* | *---* | *---* | *---* |
@@ -35,6 +36,7 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **SVM (m=3000)** | MEL | 63.65 ± 1.99 | 64.77 ± 1.87 | 63.59 ± 1.92 | Proposto (Nyström Puro) |
 | **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | MEL | 63.82 ± 1.61 | 64.61 ± 1.60 | 64.60 ± 1.54 | Proposto (Regularizado L1/L2) |
 | **SVM (m=4000) (C=2.0) (elasticnet)** | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** | **Proposto (Golden MEL - Sem PCA)** |
+| **SVM (m=4000) (C=0.5) (elasticnet)** | MEL | 57.51 ± 1.66 | 58.14 ± 1.16 | 58.14 ± 1.16 | SVM MEL (C=0.5) – 10‑fold completo |
 | *---* | *---* | *---* | *---* | *---* | *---* |
 | **SVM (m=1000)** | LOFAR | 57.86 ± 3.83 | 60.95 ± 2.89 | 57.86 ± 3.53 | Proposto (Nyström Puro) |
 | **SVM (m=2000)** | LOFAR | 60.10 ± 2.25 | 62.54 ± 1.98 | 59.95 ± 2.77 | Proposto (Nyström Puro) |
@@ -42,7 +44,10 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **SVM (m=2000) (C=2.0)** | LOFAR | 60.15 ± 2.74 | 62.45 ± 2.17 | 60.59 ± 2.64 | Proposto (Nyström Puro) |
 | **SVM (m=4000) (C=2.0)** | LOFAR | 61.70 ± 3.67 | 63.55 ± 2.91 | 62.85 ± 3.33 | Proposto (Nyström Puro) |
 | **SVM (m=1000) (C=2.0) (pca64)** | LOFAR | 61.96 ± 2.22 | 63.16 ± 2.18 | 62.65 ± 1.74 | Proposto (PCA Redutivo) |
-| **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | LOFAR | **63.10 ± 2.19** | **64.04 ± 1.88** | **64.34 ± 2.23** | **Proposto (Campeão LOFAR)** |
+| **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | LOFAR | 63.10 ± 2.19 | 64.04 ± 1.88 | 64.34 ± 2.23 | Proposto (Nyström LOFAR C=2.0) |
+| **SVM (m=4000) (C=0.5) (pca64) (elasticnet)** | LOFAR | **63.81 ± 2.35** | **64.89 ± 2.05** | **64.60 ± 2.38** | **Novo Campeão LOFAR (C=0.5)** |
+| **SVM (m=4000) (C=0.5) (elasticnet)** | LOFAR | 60.66 ± 2.78 | 63.23 ± 2.05 | 60.82 ± 2.47 | SVM LOFAR (C=0.5) – Sem PCA |
+| **SVM (m=6000) (elasticnet)** | LOFAR | **63.83 ± 1.91** | **65.47 ± 1.77** | **63.58 ± 1.72** | **SVM LOFAR (C=1.0) – Sem PCA** |
 | *---* | *---* | *---* | *---* | *---* | *---* |
 | **SVM (m=4000) (C=2.0) (elasticnet)** | HYBRID | 64.67 ± 2.24 | 65.31 ± 1.90 | 65.83 ± 2.43 | Proposto (Híbrido) |
 | **SVM (m=4000) (C=0.5) (elasticnet)** | HYBRID | **65.16 ± 1.67** | **65.77 ± 1.55** | **65.75 ± 1.51** | **Proposto (Campeão Híbrido)** |
@@ -71,14 +76,14 @@ Em cenários táticos reais de classificação acústica submarina, o custo asso
 
 Seja um arquivo acústico fatiado em $W$ janelas espectrais discretas. A confiança temporal $c(x)$ da classificação do arquivo é dada por:
 
-### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL vs. CNN vs. MLP)
-
-| Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) | F1-Score (Micro) (%) |
-| :---: | :--- | :---: | :---: | :---: | :---: |
-| **$t = 0$** <br> *(Sem Rejeição)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 100.00 ± 0.00 <br> 100.00 ± 0.00 <br> 100.00 ± 0.00 <br> 100.00 ± 0.00 | 63.32 ± 2.10 <br> **64.56 ± 1.18** <br> 65.01 ± 2.05 <br> **63.54 ± 1.93** | 63.10 ± 2.19 <br> **63.78 ± 1.14** <br> **63.80 ± 2.23** <br> **64.74 ± 2.05** | 64.34 ± 2.23 <br> **64.32 ± 1.02** <br> 63.29 ± 2.25 <br> 64.19 ± 2.14 |
-| **$t \ge 0.5$** <br> *(Maioria Simples)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 78.25 ± 1.90 <br> **89.67 ± 1.17** <br> 95.93 ± 0.96 <br> 85.60 ± 1.15 | **70.36 ± 2.13** <br> 66.23 ± 1.48 <br> 63.18 ± 2.39 <br> 67.41 ± 1.74 | **68.56 ± 2.88** <br> 66.07 ± 1.63 <br> 64.59 ± 2.25 <br> 67.34 ± 1.70 | **70.03 ± 2.56** <br> 66.74 ± 1.59 <br> 64.21 ± 2.29 <br> 67.26 ± 1.80 |
-| **$t \ge 0.6$** <br> *(Maioria Absoluta)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 61.21 ± 2.20 <br> **76.07 ± 2.69** <br> 82.90 ± 1.73 <br> 70.36 ± 2.47 | **76.54 ± 3.26** <br> 69.60 ± 1.86 <br> 66.61 ± 2.27 <br> 71.97 ± 2.00 | **72.87 ± 4.86** <br> 68.32 ± 2.37 <br> 66.76 ± 2.25 <br> 70.02 ± 2.06 | **74.64 ± 4.15** <br> 69.22 ± 2.18 <br> 66.75 ± 2.21 <br> 70.57 ± 2.10 |
-| **$t \ge 0.9$** <br> *(Consenso Crítico)* | **LOFAR (Proposto SVM)** <br> **MEL (Golden SVM)** <br> **CNN (Local)** <br> **MLP (Local)** | 22.27 ± 2.86 <br> **37.48 ± 2.32** <br> 54.01 ± 2.47 <br> 32.90 ± 2.17 | **90.43 ± 2.95** <br> **83.42 ± 2.07** <br> 74.39 ± 2.06 <br> **85.93 ± 2.81** | **78.85 ± 7.18** <br> 75.58 ± 3.18 <br> 70.15 ± 3.21 <br> 72.87 ± 5.09 | **82.68 ± 5.36** <br> 78.10 ± 2.71 <br> 71.14 ± 2.81 <br> 77.16 ± 4.19 |
+### Tabela 2: Curva de Trade-off Cobertura-Acurácia (LOFAR vs. MEL vs. MLP vs. Híbridos)
+ 
+  | Limiar de Confiança ($t$) | Representação Espectral / Arquitetura | Taxa de Cobertura (%) | Acurácia de Teste (ACC) (%) | Índice SP (%) |
+  | :---: | :--- | :---: | :---: | :---: |
+  | **$t = 0$** <br> *(Sem Rejeição)* | **SVM MEL (Best)** <br> **SVM LOFAR (Best)** <br> **MLP MEL** <br> **MLP LOFAR** <br> **MLP Híbrido** <br> **SVM Híbrido** <br> **SVM Calibrado (Híbrido)** <br> **SVM LOFAR Calibrado** | 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 <br> 100.0 ± 0.0 | 63.3 ± 1.1 <br> 63.8 ± 2.2 <br> 63.5 ± 2.0 <br> **65.5 ± 1.8** <br> 64.9 ± 1.2 <br> 64.8 ± 1.4 <br> 64.6 ± 1.8 <br> 63.2 ± 2.2 | 63.0 ± 1.6 <br> 62.7 ± 2.9 <br> 63.8 ± 2.4 <br> **65.3 ± 2.1** <br> 65.4 ± 1.2 <br> 64.5 ± 1.9 <br> 64.0 ± 2.4 <br> 63.3 ± 2.7 |
+  | **$t \ge 0.5$** <br> *(Maioria Simples)* | **SVM MEL (Best)** <br> **SVM LOFAR (Best)** <br> **MLP MEL** <br> **MLP LOFAR** <br> **MLP Híbrido** <br> **SVM Híbrido** <br> **SVM Calibrado (Híbrido)** <br> **SVM LOFAR Calibrado** | 89.7 ± 1.2 <br> 78.3 ± 1.7 <br> 85.6 ± 1.2 <br> 77.4 ± 1.9 <br> 86.2 ± 1.5 <br> 88.5 ± 1.6 <br> **91.0 ± 1.8** <br> 79.5 ± 2.9 | 66.2 ± 1.6 <br> 70.6 ± 2.8 <br> 67.4 ± 1.8 <br> **72.6 ± 1.5** <br> 69.1 ± 1.9 <br> 67.9 ± 2.0 <br> 66.9 ± 1.9 <br> 68.9 ± 3.2 | 65.3 ± 2.4 <br> 67.7 ± 3.9 <br> 66.3 ± 2.0 <br> **70.4 ± 2.3** <br> 68.3 ± 1.8 <br> 66.9 ± 2.7 <br> 66.1 ± 2.6 <br> 67.9 ± 3.7 |
+  | **$t \ge 0.6$** <br> *(Maioria Absoluta)* | **SVM MEL (Best)** <br> **SVM LOFAR (Best)** <br> **MLP MEL** <br> **MLP LOFAR** <br> **MLP Híbrido** <br> **SVM Híbrido** <br> **SVM Calibrado (Híbrido)** <br> **SVM LOFAR Calibrado** | 76.1 ± 2.8 <br> 62.9 ± 2.1 <br> 70.4 ± 2.6 <br> 61.0 ± 1.6 <br> 71.3 ± 1.2 <br> 75.7 ± 1.5 <br> **77.6 ± 2.6** <br> 62.3 ± 2.1 | 69.6 ± 2.0 <br> 75.9 ± 3.4 <br> 72.0 ± 2.1 <br> **78.1 ± 2.3** <br> 73.7 ± 1.8 <br> 71.5 ± 1.9 <br> 70.2 ± 2.4 <br> 75.2 ± 3.2 | 67.4 ± 3.3 <br> 71.5 ± 4.8 <br> 68.8 ± 2.5 <br> **73.5 ± 3.3** <br> 71.3 ± 2.1 <br> 69.5 ± 2.8 <br> 68.8 ± 3.3 <br> 73.2 ± 4.2 |
+  | **$t \ge 0.9$** <br> *(Consenso Crítico)* | **SVM MEL (Best)** <br> **SVM LOFAR (Best)** <br> **MLP MEL** <br> **MLP LOFAR** <br> **MLP Híbrido** <br> **SVM Híbrido** <br> **SVM Calibrado (Híbrido)** <br> **SVM LOFAR Calibrado** | 37.5 ± 2.4 <br> 25.1 ± 1.4 <br> 32.9 ± 2.3 <br> 24.8 ± 2.6 <br> 33.8 ± 1.5 <br> 37.7 ± 1.4 <br> **37.8 ± 1.4** <br> 22.7 ± 1.7 | 83.4 ± 2.2 <br> 89.6 ± 2.9 <br> 85.9 ± 3.0 <br> **91.6 ± 2.2** <br> 87.7 ± 1.9 <br> 83.2 ± 2.3 <br> 81.5 ± 3.2 <br> 89.1 ± 4.4 | 74.1 ± 4.3 <br> 78.0 ± 8.3 <br> 70.1 ± 6.5 <br> 76.3 ± 7.0 <br> 77.1 ± 4.6 <br> 73.2 ± 5.3 <br> 75.7 ± 4.6 <br> **81.9 ± 8.2** |
 
 ---
 
@@ -105,6 +110,11 @@ O treinamento local e a subsequente avaliação da CNN convolucional sob opção
 A execução do MLP de duas camadas oculta `[32, 16]` replicando as especificações do artigo revelou um comportamento fascinante sob opção de rejeição.
 * **Calibração Superior:** Sob limiar crítico ($t \ge 0.9$), a acurácia de teste do MLP escalou para excelentes **85.93% ± 2.81%** (superando o MEL-SVM em **2.5%** e a CNN Convolucional em **11.5%**).
 * **O Efeito da Dimensionalidade:** Como o MLP é treinado no nível de vetor de janela espectral (`InputType.Window()`) em vez de frames de imagens com pooling espacial, a rede é desprovida de operadores de agregação de textura bidimensional. Isso limita a capacidade da rede de memorizar ou correlacionar transientes espúrios adjacentes. Sob votação de maioria temporal simples, a incerteza estatística se traduz de forma muito mais fidedigna e calibrada nas probabilidades de saída. A consequência é um estimador de confiança extremamente honesto que, embora reduza a cobertura para **32.90%**, entrega certezas altamente assertivas na tomada de decisão.
+
+### 5.5 A Fusão Espectral Híbrida no MLP (Mel + LOFAR-PCA64)
+A avaliação da arquitetura MLP sob entrada híbrida (concatenação do vetor Mel de 256 dimensões com as 64 componentes principais do LOFAR, totalizando 320 atributos de entrada) evidenciou a capacidade de generalização e fusão das redes feedforward:
+* **Desempenho Geral Estável**: O MLP Híbrido atingiu **66.13% ± 1.09%** de índice SP e **66.92% ± 1.06%** de acurácia média (sem rejeição). Esse resultado é superior ao SVM Híbrido ($65.16\%$ SP) e demonstra baixíssimo desvio padrão ($\pm 1.09\%$), o que ressalta a estabilidade de aprendizado das camadas totalmente conectadas ao mesclar representações de banda larga e banda estreita.
+* **Calibração e Robustez na Rejeição**: Sob consenso absoluto ($t \ge 0.9$), o MLP Híbrido atingiu **87.7% ± 1.9%** de acurácia residual com cobertura operacional de **33.8% ± 1.5%** e índice SP de **77.1% ± 4.6%**. A fusão híbrida provou-se altamente calibrada e assertiva, superando de forma consistente o MLP MEL puro em todas as métricas residuais sem sacrificar significativamente a cobertura.
 
 ---
 
