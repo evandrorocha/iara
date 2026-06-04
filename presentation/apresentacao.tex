@@ -383,12 +383,11 @@
             \item \textbf{Janelamento}: $0.512$s ($N_{pts}=1024$), sem sobreposição.
             \item \textbf{Foco}: Envelope espectral de banda larga e ruído difuso de cavitação.
             \item \textbf{Normalização L2}: Mitiga flutuações de ganho e distância do alvo.
-            \item \textbf{Sem PCA}: A compressão log-mel já é não-linear; PCA adicional degrada desempenho.
         \end{itemize}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Pipeline LOFAR: Áudio $\rightarrow$ Vetor de 64 Features (PCA)}
+\begin{frame}{Pipeline LOFAR: Áudio $\rightarrow$ Vetor de 1024 Features}
     \begin{columns}
         \column{0.58\textwidth}
         \includegraphics[width=\linewidth,keepaspectratio]{imgs/lofar_pipeline.png}
@@ -400,7 +399,6 @@
             \item \textbf{Dimensão}: 1024 bins lineares de banda estreita.
             \item \textbf{Foco}: Raias harmônicas discretas de motores rotativos.
             \item \textbf{TPSW} (\textit{Two-Pass Split Window}): Normalização adaptativa que suprime o ruído oceânico contínuo de fundo.
-            \item \textbf{PCA (n=64)}: Remove ruído residual e melhora separabilidade linear das classes.
         \end{itemize}
     \end{columns}
 \end{frame}
@@ -419,16 +417,15 @@
         \item \textbf{Seleção e Estrutura das Entradas (Inputs):}
         \begin{itemize}
             \scriptsize
-            \item \textbf{Classificadores 1D} (Random Forest, MLP, SVM): Alimentados por vetores de janelas discretas de $0.512$s (\texttt{InputType.Window()}).
-            \item \textbf{Classificador 2D} (CNN Convolucional): Imagem temporal composta por $32$ janelas consecutivas com 50\% de sobreposição (\texttt{InputType.Image()}).
+            \item \textbf{Estrutura de Entrada}: Tanto o MLP quanto o SVM são alimentados por vetores de janelas discretas de $0.512$s (\texttt{InputType.Window()}) representando a densidade espectral instantânea.
         \end{itemize}
         
         \vspace{0.15cm}
-        \item \textbf{Validação Interna e Parada Antecipada:}
+        \item \textbf{Validação Interna e Early Stoping:}
         \begin{itemize}
             \scriptsize
-            \item \textbf{Early Stopping}: MLP e CNN separam uma fração do treino para validação interna, monitorando perda para interromper o treinamento (paciência de 8 épocas).
-            \item \textbf{Sem Validação}: O classificador SVM aproximado via Nyström dispensa conjunto de validação interna, realizando o ajuste (\textit{fit}) direto no treino global.
+            \item \textbf{Early Stoping (MLP)}: A rede MLP separa uma fração do treino para validação interna, monitorando a perda para interromper o treinamento de forma otimizada (paciência de 8 épocas).
+            \item \textbf{Ajuste Sem Validação (SVM)}: O classificador SVM aproximado via Nyström dispensa conjunto de validação interna, realizando o ajuste (\textit{fit}) de forma direta e determinística no treino global.
         \end{itemize}
     \end{itemize}
 \end{frame}
@@ -480,7 +477,7 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Métricas de Avaliação: Acurácia Global}
+\begin{frame}{Figuras de Mérito: Acurácia Global}
     \small
     Para avaliar com rigor científico a classificação em bases de dados desbalanceadas, adota-se a tradicional acurácia global complementada por métricas robustas:
     
@@ -497,7 +494,7 @@
     \end{block}
 \end{frame}
 
-\begin{frame}{Métricas de Avaliação: Índice Sum-Product (SP)}
+\begin{frame}{Figuras de Mérito: Índice Sum-Product (SP)}
     \footnotesize
     Como principal figura de mérito do dataset IARA, adota-se uma métrica balanceada que avalia o equilíbrio de desempenho entre todas as classes:
     
@@ -518,6 +515,31 @@
             \setlength{\parsep}{0pt}
             \item Se o \textit{Recall} de qualquer classe colapsar para zero, o Índice SP cai imediatamente a \textbf{0\%}.
             \item Penaliza assimetrias e a incapacidade de generalizar em minorias físicas, forçando o classificador a manter taxas decentes de acerto em todas as categorias.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}{Figuras de Mérito: F1-Score Macro}
+    \footnotesize
+    Como métrica complementar ao índice SP, utiliza-se o \textbf{F1-Score Macro} para avaliar o balanço entre precisão e revocação de forma equânime entre todas as classes:
+
+    \vspace{0.1cm}
+
+    \begin{block}{F1-Score Macro}
+        \scriptsize
+        Média aritmética não-ponderada dos F1-scores individuais de cada classe $k$:
+        \begin{equation*}
+            F1_{Macro} = \frac{1}{K} \sum_{k=1}^{K} F1_k, \quad \text{onde} \quad F1_k = \frac{2 \cdot Precision_k \cdot Recall_k}{Precision_k + Recall_k}
+        \end{equation*}
+
+        \vspace{0.05cm}
+        \textbf{Justificativa}:
+        \begin{itemize}
+            \setlength{\itemsep}{1pt}
+            \setlength{\parskip}{0pt}
+            \setlength{\parsep}{0pt}
+            \item Combina \textbf{Precisão} (fração de predições corretas entre as classificadas como $k$) e \textbf{Recall} (fração de acertos reais da classe $k$) em uma única medida harmônica por classe.
+            \item A \textit{média macro} (não ponderada) penaliza igualmente o fraco desempenho em classes minoritárias (como \textbf{SMALL}), sendo complementar ao Índice SP.
         \end{itemize}
     \end{block}
 \end{frame}
@@ -546,7 +568,7 @@
         \textbf{Lacuna na Literatura:}
         \begin{itemize}
             \item \textbf{Dados Limitados}: Trabalhos anteriores validam o SVM em bases de pequeno porte (de 3h a 47h) e com trânsitos restritos.
-            \item \textbf{Custo Computacional}: O crescimento do custo RBF $O(N^3)$ limitava o teste em bases massivas.
+            \item \textbf{Custo Computacional}: O crescimento do custo RBF $O(N^3)$ limita o teste em bases massivas.
         \end{itemize}
         
         \column{0.5\textwidth}
@@ -568,8 +590,8 @@
         \scriptsize
         \textbf{Dois modos de entrada avaliados em paralelo:}
         \begin{itemize}
-            \item \textbf{MEL} $\rightarrow$ vetor $x \in \mathbb{R}^{256}$ (sem PCA).
-            \item \textbf{LOFAR} $\rightarrow$ vetor $x \in \mathbb{R}^{64}$ (após PCA).
+            \item \textbf{MEL} $\rightarrow$ vetor $x \in \mathbb{R}^{256}$.
+            \item \textbf{LOFAR} $\rightarrow$ vetor $x \in \mathbb{R}^{1024}$ .
         \end{itemize}
 
         \vspace{0.2cm}
@@ -589,25 +611,34 @@
 
 
 \begin{frame}{SVM com Aproximação de Nyström}
-    \footnotesize
+    \scriptsize
     \begin{block}{O Gargalo do SVM RBF Clássico}
         O SVM padrão com kernel RBF exige calcular e armazenar a matriz de kernel $N \times N$, com complexidade espacial $O(N^2)$.
         \begin{itemize}
             \scriptsize
-            \item \textbf{O que é $N$ no IARA}: $N \approx 500.000$ janelas espectrais no treino ($853$ arquivos $\times$ $586$ janelas/arquivo).
+            \item \textbf{O que é $N$ no IARA}: $N$ é o número de janelas espectrais de treinamento — \textbf{varia com o espectro}: MEL ($0.512$s/janela) $\approx 500$K janelas; LOFAR ($0.058$s/janela) $\approx 800$K janelas.
             \item \textbf{Custo do SVM RBF Clássico}: Matriz $N \times N$ exige \textbf{$1,0$ Terabyte de RAM} (inviável localmente).
         \end{itemize}
     \end{block}
-    
+
     \scriptsize
     \begin{itemize}
-        \item \textbf{Aproximação de Nyström (Baixo Rank)}: Seleciona $m = 4000$ amostras de referência (landmarks) do treino para mapear implicitamente cada amostra no espaço linear $\mathbb{R}^m$.
-        \item \textbf{Matriz de Kernel Nyström ($m \times m$)}: Mede apenas $4000 \times 4000$ de float32 $\approx$ \textbf{$64$ Megabytes de RAM} (inversão matemática instantânea).
-        \item \textbf{Base Projetada de Treinamento ($N \times m$)}: Matriz $500K \times 4000$ de float32 $\approx$ \textbf{$8,0$ Gigabytes de RAM} (viabiliza o treino em hardware convencional com overhead total $\approx 10$ GB).
-        \item \textbf{Complexidade de Tempo}: Reduz de $O(N^3)$ para $O(N \cdot m^2)$, permitindo o treinamento linear em lotes através de classificador SGD.
-        \item \textbf{Tamanho do Modelo Final}: Armazena apenas o vetor de pesos linear das classes ($4 \times 4000$ floats $\approx$ \textbf{$< 100$ KB}).
+        \setlength{\itemsep}{2pt}
+        \item \textbf{Aproximação de Nyström (Baixo Rank)}: Seleciona $m$ amostras de referência (landmarks) do treino para mapear implicitamente cada amostra no espaço linear $\mathbb{R}^m$.
+        \item \textbf{Base Projetada de Treinamento ($N \times m$)}: Memória dominante — escala com \textbf{ambos} $N$ e $m$:
+        \begin{itemize}
+            \tiny
+            \setlength{\itemsep}{1pt}
+            \item MEL, $m=4000$: $500\text{K} \times 4000 \times 4\text{B} \approx \mathbf{8\text{ GB}}$ (overhead total $\approx 10$ GB).
+            \item LOFAR, $m=4000$: $800\text{K} \times 4000 \times 4\text{B} \approx \mathbf{13\text{ GB}}$ (overhead total $\approx 15$ GB).
+        \end{itemize}
+        \item \textbf{Complexidade de Tempo}: Reduz de $O(N^3)$ para $O(N \cdot m^2)$, permitindo o treinamento linear em lotes via classificador SGD.
+        \item \textbf{Tamanho do Modelo Final}: Armazena apenas o vetor de pesos linear das classes ($4 \times m$ floats $\approx$ \textbf{$<100$ KB}).
     \end{itemize}
 \end{frame}
+
+
+
 
 \begin{frame}{Visualização: Seleção de Landmarks}
     \begin{columns}
@@ -625,7 +656,7 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Visualização: O Truque do Kernel RBF com Nyström}
+\begin{frame}{Kernel RBF com Nyström}
     \begin{columns}
         \column{0.58\textwidth}
         \includegraphics[width=\linewidth,keepaspectratio]{imgs/svm_kernel_trick.png}
@@ -641,30 +672,6 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Representações Espectrais e a Dinâmica do PCA}
-    \scriptsize
-    \begin{columns}
-        \column{0.5\textwidth}
-        \textbf{Banco de Filtros MEL (256 bins):}
-        \begin{itemize}
-            \item Entrada direta de 256 bandas sem redução.
-            \item \textbf{Por que sem PCA?} A representação Mel-Spectrogram já é uma compressão logarítmica integradora não-linear. Aplicar PCA linear gera perda severa de informações das bandas espectrais.
-            \item Confirmado em testes: MEL com PCA degradou o desempenho.
-        \end{itemize}
-        
-        \column{0.5\textwidth}
-        \textbf{LOFAR Espectral (TPSW):}
-        \begin{itemize}
-            \item Entrada comprimida previamente via PCA linear ($n_{components}=64$).
-            \item \textbf{Por que com PCA?} O espectrograma LOFAR cru é extremamente caótico e ruidoso. O PCA atua como um excelente filtro de ruído tridimensional de fundo marinho, evidenciando as raias discretas e melhorando a separabilidade linear.
-        \end{itemize}
-    \end{columns}
-    
-    \vspace{0.3cm}
-    \begin{alertblock}{Descoberta Científica Relevante}
-        Verificou-se uma dinâmica inversa do PCA: essencial para LOFAR (limpeza de ruído), mas prejudicial para MEL (supressão de features anatômicas já integradas de forma não-linear).
-    \end{alertblock}
-\end{frame}
 
 %===========================================
 % 4. RESULTADOS DE DESEMPENHO GERAL
@@ -687,21 +694,18 @@
             RF & LOFAR & 56.92 $\pm$ 1.69 & 58.87 $\pm$ 1.68 \\
             MLP (Baseline Artigo) & MEL & 63.38 $\pm$ 1.81 & 64.51 $\pm$ 1.75 \\
             \textbf{MLP (Baseline Artigo)} & \textbf{LOFAR} & \textbf{66.51 $\pm$ 1.39} & \textbf{67.48 $\pm$ 1.24} \\
-            MLP Híbrido (pca64) & HYBRID & 66.13 $\pm$ 1.09 & 66.92 $\pm$ 1.06 \\
             CNN & MEL & 63.52 $\pm$ 2.26 & 64.99 $\pm$ 2.09 \\
             CNN & LOFAR & 66.05 $\pm$ 1.90 & 67.02 $\pm$ 1.78 \\
             \midrule
             \textbf{SVM Proposto (m=4000)} & \textbf{MEL} & \textbf{63.78 $\pm$ 1.14} & \textbf{64.56 $\pm$ 1.18} \\
-            \textbf{SVM Proposto (m=4000)} & \textbf{LOFAR (C=0.5)} & \textbf{63.81 $\pm$ 2.35} & \textbf{64.89 $\pm$ 2.05} \\
             \textbf{SVM Proposto (m=6000)} & \textbf{LOFAR (elasticnet)} & \textbf{63.83 $\pm$ 1.91} & \textbf{65.47 $\pm$ 1.77} \\
-            \textbf{SVM Híbrido (C=0.5)} & \textbf{HYBRID} & \textbf{65.16 $\pm$ 1.67} & \textbf{65.77 $\pm$ 1.55} \\
             \bottomrule
         \end{tabular}
     \end{table}
     
     \vspace{-0.2cm}
     \scriptsize
-    \textbf{Destaque}: O \textbf{SVM Mel} equivale à CNN Mel com metade da variância ($\sigma_{SVM} = 1.18\%$ vs. $2.09\%$). Os modelos de \textbf{Fusão Híbrida} (MLP: $66.13\%$ SP, SVM: $65.16\%$ SP) unem a força de banda larga e banda estreita com excelente estabilidade inter-fold.
+    \textbf{Destaque}: O \textbf{SVM Mel} equivale à CNN Mel com metade da variância ($\sigma_{SVM} = 1.18\%$ vs. $2.09\%$). O \textbf{SVM LOFAR (m=6000)} atinge $63.83\%$ de SP sem redução por PCA, oferecendo uma comparação robusta e direta com a baseline MLP LOFAR do artigo de referência.
 \end{frame}
 
 %===========================================
@@ -733,7 +737,7 @@
 \begin{frame}{Sintonia de Kernel e Complexidade ($m$)}
     \small
     \begin{block}{A Relação entre Componentes de Nyström ($m$) e Desempenho}
-        O escalonamento logarítmico de $m = 300$ até $m = 4000$ revela a evolução da modelagem matemática das fronteiras de decisão complexas das classes acústicas.
+        O escalonamento logarítmico de $m = 300$ até $m = 6000$ revela a evolução da modelagem matemática das fronteiras de decisão complexas das classes acústicas.
     \end{block}
     
     \vspace{0.15cm}
@@ -741,11 +745,11 @@
     \begin{itemize}
         \item \textbf{Fase Inicial ($m = 300$)}: Acurácia modesta de $61.02\% \pm 1.94\%$ (MEL). O espaço projetado carece de representação para as frequências não-lineares.
         \item \textbf{Fase Intermediária ($m = 1000$ a $3000$)}: Aumento contínuo da representatividade. O modelo captura transições espectrais importantes de motores.
-        \item \textbf{Golden Scale ($m = 4000$)}:
+        \item \textbf{Escala de Alto Desempenho ($m \ge 4000$)}:
         \begin{itemize}
             \footnotesize
-            \item \textbf{Golden MEL}: $64.56\% \pm 1.18\%$ (sem PCA) -- estabilidade com variância reduzida.
-            \item \textbf{Golden LOFAR}: $64.04\% \pm 1.88\%$ (com PCA64) -- excepcional para generalização e filtragem temporal.
+            \item \textbf{Golden MEL ($m=4000$)}: $64.56\% \pm 1.18\%$ (sem PCA) -- estabilidade com variância reduzida.
+            \item \textbf{Golden LOFAR ($m=6000$)}: $63.83\% \pm 1.91\%$ (sem PCA) -- excepcional estabilidade de generalização e alinhamento direto com a baseline.
         \end{itemize}
     \end{itemize}
 \end{frame}
@@ -769,7 +773,7 @@
         \setlength{\itemsep}{8pt}
         \item \textbf{SVM Nyström}: Estimador altamente robusto e estável, entregando desempenho equivalente a redes convolucionais profundas (CNN) com metade do desvio padrão fold-wise (menor sensibilidade a variações de partição).
         \item \textbf{Opção de Rejeição}: Essencial para a viabilidade tática prática, permitindo elevar a precisão global de teste para \textbf{90,43\%} nos alvos classificados com alto limiar de consenso ($t \ge 0.9$).
-        \item \textbf{Dualidade do PCA}: Revelou-se benéfico como filtro passa-faixa estatístico no LOFAR (limpeza de ruído), mas prejudicial no MEL (onde degrada a separabilidade não-linear já integrada).
+        \item \textbf{Estudo do PCA}: A análise exploratória indicou uma dinâmica dual (benéfico no LOFAR, prejudicial no MEL), mas optou-se por omiti-lo no benchmark final para assegurar a comparação direta ("maçã com maçã") com as baselines.
     \end{itemize}
 \end{frame}
 

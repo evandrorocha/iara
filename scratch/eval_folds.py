@@ -8,7 +8,7 @@ sys.path.append(os.path.abspath('src'))
 from iara.ml.metrics import Metric
 from sklearn.metrics import confusion_matrix
 
-EXP_NAME = "svm_nystroem_10000_lofar_elasticnet_l1r0.15"
+EXP_NAME = "svm_nystroem_10000_lofar_elasticnet_l1r0.15_C0.5"
 BASE_DIR = f"results/trainings/tests/{EXP_NAME}/eval"
 
 def most_common_value(series):
