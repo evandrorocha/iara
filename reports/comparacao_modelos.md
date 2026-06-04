@@ -170,3 +170,15 @@ O protocolo avalia a generalização cruzada inter-dataset sob validação cruza
    * **Recorde de Acurácia Geral:** Quando treinado e testado em Alta SNR (Trained A -> Test A), o **SVM LOFAR atingiu a acurácia recorde absoluta de todo o estudo de proximidade do IARA: 68.23% ± 2.94%** (superando a acurácia máxima de 67.74% da MLP Mel de banda larga!).
    * **Fundamentação Física:** Isso demonstra empiricamente que as raias harmônicas finas e discretas de máquinas rotativas (eixos e cilindros de pistões) fornecem assinaturas acústicas com fronteiras de separabilidade geométrica muito mais nítidas do que o borramento energético integrado de banda larga da escala Mel. A projeção PCA64 filtrou o ruído de alta dimensionalidade oceânico, permitindo que a Gaussiana RBF do SVM traçasse o hiperplano ótimo global.
    * **Resiliência na Generalização:** Ao generalizar de C (baixa SNR) para A (alta SNR), o **SVM LOFAR atingiu 59.59% de acurácia**, superando o baseline deep convolucional de CNN Mel (53.28% ACC) em **mais de 6.3 pontos percentuais**.
+
+---
+
+## 8. Trabalhos Futuros: Landmarks Inteligentes via MiniBatchKMeans
+
+Atualmente, o mapeamento de kernel por aproximação de Nyström seleciona $m$ componentes de referência (landmarks) de forma puramente aleatória sobre o conjunto de treinamento. Embora eficiente, essa amostragem aleatória é estatisticamente redundante em regiões densas de dados (como o ruído de fundo plano) e falha em garantir cobertura robusta para assinaturas acústicas menos frequentes (como a classe minoritária `SMALL`).
+
+Como trabalho futuro, propõe-se a substituição da amostragem aleatória pela **Aproximação de Nyström baseada em Centroides de MiniBatchKMeans**:
+
+1. **Espectros de Referência Suavizados (Filtro Físico):** O algoritmo `MiniBatchKMeans` será executado sobre os dados brutos de treino para extrair $K = m$ centroides. Cada centroide representará a assinatura espectral média de janelas semelhantes, atenuando flutuações rápidas de ruído e realçando raias harmônicas estruturais.
+2. **Eficiência de Memória e Dimensão ($m$ reduzido):** A literatura de aprendizado de máquina demonstra que landmarks estruturados via centroides cobrem melhor o espaço de dados, permitindo obter o mesmo nível de acurácia e índice SP com uma dimensão de projeção $m$ significativamente menor (ex: $m=2000$ centroides performando de forma idêntica ou superior a $m=5000$ pontos aleatórios). Isso reduziria drasticamente a pegada de RAM e o tempo de treinamento.
+3. **Melhoria no Índice SP (Representação de Alvos Silenciosos):** O clustering assegura que mesmo regiões de baixa densidade (como as assinaturas discretas e silenciosas da classe `SMALL`) sejam capturadas por alguns dos centroides de projeção, fornecendo ao SVM as margens de decisão necessárias para reduzir falsos negativos sem introduzir viés em favor das classes majoritárias (`LARGE`/`BACKGROUND`).

@@ -775,6 +775,7 @@
     \begin{itemize}
         \item \textbf{Estratégia de Dois Estágios}: Classificação hierárquica dividida em duas etapas (Etapa 1: separar BACKGROUND de Navios; Etapa 2: classificar SMALL vs. MEDIUM/LARGE).
         \item \textbf{Modelo Híbrido (Fusão Espectral)}: Concatenar banda estreita de baixa frequência (LOFAR) com banda larga de alta frequência (MEL).
+        \item \textbf{Landmarks via MiniBatchKMeans}: Substituir a amostragem aleatória do Nyström por centroides. Otimiza o espaço projetado, permitindo reduzir $m$ (economizando memória RAM) sem perda de precisão.
     \end{itemize}
 \end{frame}
 
