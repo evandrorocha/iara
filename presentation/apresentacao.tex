@@ -760,22 +760,29 @@
     \label{sec:concl}
 \end{frame}
 
-\begin{frame}{Conclusões e Trabalhos Futuros}
+\begin{frame}{Conclusões do Trabalho}
     \small
-    \textbf{Conclusões do Trabalho:}
+    Como resultado da avaliação e benchmarking do SVM Gaussiano com Nyström na base de dados de grande escala IARA, conclui-se que:
+    
+    \vspace{0.2cm}
     \begin{itemize}
-        \item \textbf{SVM Nyström}: Estimador robusto e estável, com desempenho equivalente a redes profundas e metade da variância fold-wise.
-        \item \textbf{Opção de Rejeição}: Essencial para viabilidade prática, elevando a precisão global para \textbf{90.43\%} nos áudios classificados.
-        \item \textbf{Dualidade do PCA}: Deve ser usado no LOFAR (filtro de ruído), mas evitado no MEL (degrada representações não-lineares).
+        \setlength{\itemsep}{8pt}
+        \item \textbf{SVM Nyström}: Estimador altamente robusto e estável, entregando desempenho equivalente a redes convolucionais profundas (CNN) com metade do desvio padrão fold-wise (menor sensibilidade a variações de partição).
+        \item \textbf{Opção de Rejeição}: Essencial para a viabilidade tática prática, permitindo elevar a precisão global de teste para \textbf{90,43\%} nos alvos classificados com alto limiar de consenso ($t \ge 0.9$).
+        \item \textbf{Dualidade do PCA}: Revelou-se benéfico como filtro passa-faixa estatístico no LOFAR (limpeza de ruído), mas prejudicial no MEL (onde degrada a separabilidade não-linear já integrada).
     \end{itemize}
+\end{frame}
+
+\begin{frame}{Trabalhos Futuros (Foco no Alvo SMALL)}
+    \small
+    Com o objetivo de refinar as margens de decisão e mitigar os erros de classificação no alvo mais difícil (\textbf{SMALL}), propõem-se os seguintes passos:
     
-    \vspace{0.15cm}
-    
-    \textbf{Trabalhos Futuros (Foco no Alvo SMALL):}
+    \vspace{0.2cm}
     \begin{itemize}
-        \item \textbf{Estratégia de Dois Estágios}: Classificação hierárquica dividida em duas etapas (Etapa 1: separar BACKGROUND de Navios; Etapa 2: classificar SMALL vs. MEDIUM/LARGE).
-        \item \textbf{Modelo Híbrido (Fusão Espectral)}: Concatenar banda estreita de baixa frequência (LOFAR) com banda larga de alta frequência (MEL).
-        \item \textbf{Landmarks via MiniBatchKMeans}: Substituir a amostragem aleatória do Nyström por centroides. Otimiza o espaço projetado, permitindo reduzir $m$ (economizando memória RAM) sem perda de precisão.
+        \setlength{\itemsep}{8pt}
+        \item \textbf{Estratégia Híbrida de Dois Estágios}: Classificação hierárquica dividida em duas etapas (Etapa 1: separação binária de BACKGROUND/Navio; Etapa 2: classificação multiclasse de SMALL vs. MEDIUM/LARGE).
+        \item \textbf{Modelo Híbrido Avançado}: Fusão espectral completa concatenando a banda estreita fina (LOFAR) com a banda larga integradora (MEL) na entrada.
+        \item \textbf{Landmarks via MiniBatchKMeans}: Substituição da amostragem aleatória do Nyström por centroides obtidos via clustering. Otimiza a representatividade espacial, reduzindo a dimensão $m$ (RAM) sem perdas de acurácia.
     \end{itemize}
 \end{frame}
 
