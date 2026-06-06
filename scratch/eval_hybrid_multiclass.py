@@ -1,10 +1,9 @@
 import csv, math, os
 from collections import defaultdict
 
-def eval_exp_partial(exp_dir):
+def eval_exp(exp_dir):
     all_rec = {c: [] for c in range(4)}
     all_acc = []; all_sp = []
-    folds_done = []
     for fold in range(10):
         fold_dir = os.path.join(exp_dir, "eval", "fold_{}".format(fold))
         if not os.path.exists(fold_dir):
@@ -18,8 +17,7 @@ def eval_exp_partial(exp_dir):
                 fid = int(row["File"])
                 ft[fid] = int(row["Target"])
                 fp[fid].append(int(row["Prediction"]))
-        cm = defaultdict(int)
-        correct = total = 0
+        cm = defaultdict(int); correct = total = 0
         for fid, preds in fp.items():
             pred = max(set(preds), key=preds.count)
             cm[(ft[fid], pred)] += 1
@@ -33,42 +31,36 @@ def eval_exp_partial(exp_dir):
         recs = [rec[c] for c in range(4)]
         gm = math.exp(sum(math.log(max(r, 1e-9)) for r in recs) / 4)
         all_sp.append(math.sqrt(sum(recs) / 4 * gm) * 100)
-        folds_done.append(fold)
-    return all_rec, all_acc, all_sp, folds_done
+    return all_rec, all_acc, all_sp
 
 def st(v):
-    if len(v) == 1:
-        return v[0], 0.0
     mu = sum(v) / len(v)
     sd = math.sqrt(sum((x - mu) ** 2 for x in v) / len(v))
     return mu, sd
 
 base = "results/trainings/tests"
-
 exps = [
-    ("hybmc + SM + SL (sempre) [melhor anterior]",
-     "svm_nystroem_4000_hybrid_cascade_pretrained_svm_nystroem_6000_hybrid_binary_small_medium_pca64_elasticnet_l1r0.15_smallalso_fbmc_large_svm_nystroem_6000_hybrid_binary_small_large_pca8_elasticnet_l1r0.15_hybmc4000C2.0"),
-    ("lofarmc + SL only (bias=-1.0)",
-     "svm_nystroem_4000_hybrid_cascade_pretrained_sm6000pca64_smallalso_fbmc_large_sl6000pca8_lofarmc6000_nosm_elasticnet_l1r0.15"),
+    ("MEL m=4000 C=2 (base)", "svm_nystroem_4000_mel_elasticnet_l1r0.15_C2.0"),
+    ("HYBRID m=4000 C=0.5",   "svm_nystroem_4000_hybrid_norm_elasticnet_l1r0.15_C0.5"),
+    ("HYBRID m=4000 C=2.0",   "svm_nystroem_4000_hybrid_norm_elasticnet_l1r0.15_C2.0"),
 ]
 
 for label, exp in exps:
     path = os.path.join(base, exp)
     if not os.path.exists(path):
-        print("{} -> NAO ENCONTRADO".format(label))
+        print("{} -> DIR NAO ENCONTRADO".format(label))
         continue
-    rec, acc, sp, folds = eval_exp_partial(path)
-    n = len(folds)
-    if not folds:
-        print("{} -> sem folds avaliados ainda".format(label))
+    rec, acc, sp = eval_exp(path)
+    n = len(acc)
+    if not acc:
+        print("{} -> SEM FOLDS".format(label))
         continue
     s = st(sp); a = st(acc)
-    print("{} [{}/10 folds]".format(label, n))
-    for c, cn in [(0,'SMALL'),(1,'MEDIUM'),(2,'LARGE'),(3,'BG')]:
-        vals = rec[c]
-        r = st(vals)
-        per_fold = "  ".join("{:.1f}%".format(v) for v in vals)
-        print("  {:<8}: {:.1f}% (+-{:.1f})  [{}]".format(cn, r[0], r[1], per_fold))
-    print("  ACC    : {:.2f}% (+-{:.2f})".format(*a))
-    print("  SP     : {:.2f}% (+-{:.2f})".format(*s))
+    print("{} [n={}]".format(label, n))
+    print("  SMALL:  {:.1f} +- {:.1f}%".format(*st(rec[0])))
+    print("  MEDIUM: {:.1f} +- {:.1f}%".format(*st(rec[1])))
+    print("  LARGE:  {:.1f} +- {:.1f}%".format(*st(rec[2])))
+    print("  BG:     {:.1f} +- {:.1f}%".format(*st(rec[3])))
+    print("  ACC:    {:.2f} +- {:.2f}%".format(*a))
+    print("  SP:     {:.2f} +- {:.2f}%".format(*s))
     print()
