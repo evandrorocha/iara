@@ -24,6 +24,8 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **RF** | LOFAR | 56.92 ± 1.69 | 58.87 ± 1.68 | 58.00 ± 1.41 | Baseline (Silva et al., 2025) |
 | **MLP** | MEL | 63.38 ± 1.81 | 64.51 ± 1.75 | 62.89 ± 1.68 | Baseline (Silva et al., 2025) |
 | **MLP** | LOFAR | **66.51 ± 1.39** | **67.48 ± 1.24** | **66.72 ± 1.17** | Baseline (Silva et al., 2025) |
+| **MLP (reproduzido)** | MEL | 64.66 ± 2.11 | 65.64 ± 1.96 | 64.12 ± 2.19 | Reproduzido Localmente |
+| **MLP (reproduzido)** | LOFAR | **66.25 ± 1.78** | **67.21 ± 1.65** | **66.44 ± 1.88** | Reproduzido Localmente |
 | **MLP (pca64)** | HYBRID | 66.13 ± 1.09 | 66.92 ± 1.06 | 65.92 ± 1.13 | Baseline (Híbrido) / Nova Referência |
 | **CNN** | MEL | 63.52 ± 2.26 | 64.99 ± 2.09 | 63.04 ± 2.02 | Baseline (Silva et al., 2025) |
 | **CNN** | LOFAR | 66.05 ± 1.90 | 67.02 ± 1.78 | 66.29 ± 2.13 | Baseline (Silva et al., 2025) |
@@ -35,7 +37,7 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **SVM (m=2000) (C=10)** | MEL | 62.18 ± 3.14 | 63.53 ± 2.50 | 62.67 ± 2.84 | Proposto (Nyström Puro) |
 | **SVM (m=3000)** | MEL | 63.65 ± 1.99 | 64.77 ± 1.87 | 63.59 ± 1.92 | Proposto (Nyström Puro) |
 | **SVM (m=4000) (C=2.0) (pca64) (elasticnet)** | MEL | 63.82 ± 1.61 | 64.61 ± 1.60 | 64.60 ± 1.54 | Proposto (Regularizado L1/L2) |
-| **SVM (m=4000) (C=2.0) (elasticnet)** | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** | **Proposto (Golden MEL - Sem PCA)** |
+| **SVM (m=4000) (C=2.0) (elasticnet)** | MEL | **63.78 ± 1.14** | **64.56 ± 1.18** | **64.32 ± 1.02** | **Proposto (Golden MEL)** |
 | **SVM (m=4000) (C=0.5) (elasticnet)** | MEL | 57.51 ± 1.66 | 58.14 ± 1.16 | 58.14 ± 1.16 | SVM MEL (C=0.5) – 10‑fold completo |
 | *---* | *---* | *---* | *---* | *---* | *---* |
 | **SVM (m=1000)** | LOFAR | 57.86 ± 3.83 | 60.95 ± 2.89 | 57.86 ± 3.53 | Proposto (Nyström Puro) |
@@ -51,10 +53,16 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | *---* | *---* | *---* | *---* | *---* | *---* |
 | **SVM (m=4000) (C=2.0) (elasticnet)** | HYBRID | 64.67 ± 2.24 | 65.31 ± 1.90 | 65.83 ± 2.43 | Proposto (Híbrido) |
 | **SVM (m=4000) (C=0.5) (elasticnet)** | HYBRID | **65.16 ± 1.67** | **65.77 ± 1.55** | **65.75 ± 1.51** | **Proposto (Campeão Híbrido)** |
+| **SVM Cascata: MEL→SM(PCA64)/LOFAR (só MEDIUM)** | HYBRID | 65.11 ± 1.95 | 63.90 ± 2.08 | 65.40 ± 2.07 | Cascata: Especialista SM Híbrido |
+| **SVM Cascata: MEL→SM(PCA64)/LOFAR (SMALL+MEDIUM)** | HYBRID | 65.35 ± 1.94 | 63.87 ± 2.05 | 65.33 ± 2.08 | Cascata: SM rota SMALL+MEDIUM |
+| **SVM Cascata: MEL→SM(PCA64)+SL(PCA8) (SMALL+MEDIUM)** | HYBRID | 67.58 ± 1.78 | 66.46 ± 2.06 | 67.50 ± 1.95 | Cascata Dupla Especialista |
+| **SVM Cascata: HYBRID-MC→SM(PCA64)+SL(PCA8) (sempre)** | HYBRID | **68.05 ± 1.63** | **67.89 ± 1.73** | **67.89 ± 1.73** | **Cascata Dupla + Multiclasse Híbrido (Melhor)** |
+| **SVM Cascata: HYBRID-MC→SM(PCA64)+SL(PCA8) (runner-up)** | HYBRID | 67.59 ± 1.95 | 67.45 ± 1.95 | 67.59 ± 1.95 | Cascata + Runner-up Routing |
+| **SVM Cascata Dupla (t=0.55)** | HYBRID | 64.33 ± 2.12 | 64.90 ± 1.94 | 64.70 ± 2.28 | Cascata de Duplo Especialista (LOFAR) |
 
 
 > [!NOTE]
-> *As incertezas denotam o desvio padrão fold-wise derivado da validação cruzada 5x2. Os resultados das baselines (RF, MLP, CNN) foram extraídos diretamente da literatura de origem (Silva et al., 2025).*
+> *As incertezas denotam o desvio padrão fold-wise derivado da validação cruzada 5x2. Os resultados das baselines (RF, MLP, CNN) foram extraídos diretamente da literatura de origem (Silva et al., 2025). As linhas "MLP (reproduzido)" correspondem a execuções locais do mesmo protocolo experimental, confirmando a reprodutibilidade: MLP LOFAR reproduzido (SP 66.25%, Ac. Bal. 67.21%) difere do artigo em menos de 0.3 p.p. A "Acurácia Global (ACC)" corresponde à acurácia balanceada (média dos recalls por classe), conforme implementado em `iara.ml.metrics.Metric.BALANCED_ACCURACY`.*
 
 ---
 
@@ -182,3 +190,37 @@ Como trabalho futuro, propõe-se a substituição da amostragem aleatória pela 
 1. **Espectros de Referência Suavizados (Filtro Físico):** O algoritmo `MiniBatchKMeans` será executado sobre os dados brutos de treino para extrair $K = m$ centroides. Cada centroide representará a assinatura espectral média de janelas semelhantes, atenuando flutuações rápidas de ruído e realçando raias harmônicas estruturais.
 2. **Eficiência de Memória e Dimensão ($m$ reduzido):** A literatura de aprendizado de máquina demonstra que landmarks estruturados via centroides cobrem melhor o espaço de dados, permitindo obter o mesmo nível de acurácia e índice SP com uma dimensão de projeção $m$ significativamente menor (ex: $m=2000$ centroides performando de forma idêntica ou superior a $m=5000$ pontos aleatórios). Isso reduziria drasticamente a pegada de RAM e o tempo de treinamento.
 3. **Melhoria no Índice SP (Representação de Alvos Silenciosos):** O clustering assegura que mesmo regiões de baixa densidade (como as assinaturas discretas e silenciosas da classe `SMALL`) sejam capturadas por alguns dos centroides de projeção, fornecendo ao SVM as margens de decisão necessárias para reduzir falsos negativos sem introduzir viés em favor das classes majoritárias (`LARGE`/`BACKGROUND`).
+
+---
+
+## 9. Arquitetura Proposta: Cascata de Duplo Especialista Híbrido
+
+Como solução definitiva para a severa sobreposição acústica dos alvos do IARA, implementamos um sistema em cascata de dois estágios que une os dois domínios espectrais (Melgram e LOFAR):
+
+1. **Estágio 1 (Multiclasse Geral):** Modelo `SVMNystroem` ($m=4000$) treinado em características **híbridas MEL+LOFAR** (dim=1280, C=2.0, normalizado) para predizer a classe geral. O multiclasse híbrido atinge 74.7% de recall em LARGE, aproveitando as assinaturas harmônicas de propulsão visíveis no LOFAR.
+2. **Estágio 2 (Especialistas Binários Híbridos):** Dependendo da predição do Estágio 1, dois especialistas híbridos pré-treinados ($m=6000$) assumem:
+   * Predições `SMALL` ou `MEDIUM` $\rightarrow$ **Especialista SM** (MEL-256 + LOFAR-PCA64, dim=320): resolve a ambiguidade entre embarcações pequenas e médias.
+   * Predição `LARGE` $\rightarrow$ **Especialista SL** (MEL-256 + LOFAR-PCA8, dim=264): resolve a ambiguidade SMALL vs LARGE.
+
+Duas variantes de roteamento para o especialista SL foram avaliadas:
+- **Sempre**: todas as janelas preditas LARGE são enviadas ao especialista SL.
+- **Runner-up**: o especialista SL é acionado apenas quando a segunda classe mais votada pelo multiclasse é SMALL (score SMALL > score MEDIUM). Caso contrário, mantém a predição LARGE diretamente.
+
+### Resultados da Validação Cruzada de 10 Folds:
+
+#### Tabela 4: Comparativo Multifold — Evolução da Cascata
+
+| Variante da Cascata | Recall SMALL | Recall MEDIUM | Recall LARGE | Recall BG | ACC | SP |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: |
+| **Base MEL (m=4000)** | 42.3 ± 7.8% | 66.1 ± 5.3% | 69.2 ± 6.0% | 81.0 ± 6.6% | 62.8 ± 2.0% | — |
+| **Base Híbrido (m=4000, C=2.0)** | 51.2 ± 10.0% | 62.3 ± 9.3% | 74.7 ± 3.8% | 73.0 ± 3.7% | 65.0 ± 2.2% | 64.66 ± 2.24% |
+| **MEL→SM(PCA64)+SL(PCA8)** | 64.3 ± 7.8% | 61.5 ± 5.4% | 65.3 ± 5.1% | 80.4 ± 3.5% | 66.5 ± 2.1% | 67.58 ± 1.78% |
+| **HYBRID-MC→SM(PCA64)+SL(PCA8) — sempre** | **69.6 ± 4.0%** | 61.3 ± 5.7% | 68.6 ± 4.4% | 73.4 ± 3.5% | 67.9 ± 1.7% | **68.05 ± 1.63%** |
+| **HYBRID-MC→SM(PCA64)+SL(PCA8) — runner-up** | 64.9 ± 4.9% | **62.2 ± 5.8%** | **70.5 ± 4.2%** | 73.3 ± 3.6% | 67.5 ± 2.0% | 67.59 ± 1.95% |
+
+### Discussão dos Resultados da Cascata:
+1. **Multiclasse Híbrido no Estágio 1:** Substituir o multiclasse MEL por um híbrido MEL+LOFAR (C=2.0) elevou LARGE de 65.3% para 68.6% na variante "sempre" e para 70.5% na variante "runner-up". O custo é a queda de BG de 80.4% para ~73%, pois o multiclasse híbrido confunde mais BG com classes de navios.
+2. **Variante "sempre" vs "runner-up":** O roteamento por runner-up protege LARGE (+1.9pp vs "sempre") ao não chamar o especialista SL quando a segunda classe mais votada é MEDIUM ou BG. Porém, essa proteção custa SMALL recall (-4.7pp), pois SMalls roteados erroneamente para LARGE pelo multiclasse deixam de ser corrigidos. O SP final empata com a cascata MEL pura (67.59% vs 67.58%).
+3. **Melhor configuração:** A variante **HYBRID-MC→SM+SL (sempre)** com SP **68.05% ± 1.63%** é a melhor arquitetura geral: SMALL mais estável (±4.0 vs ±7.8 da MEL pura), LARGE recuperado (+3.3pp vs MEL pura) e SP +0.47pp acima da cascata anterior.
+4. **SP fold-wise:** O SP é calculado por fold como $\sqrt{\bar{r} \cdot \tilde{r}} \times 100$ ($\bar{r}$ = média aritmética dos recalls, $\tilde{r}$ = média geométrica), reportado como média ± desvio padrão sobre 10 folds.
+

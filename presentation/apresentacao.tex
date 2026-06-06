@@ -12,6 +12,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{amssymb}
+\usepackage{colortbl}
 
 \setbeamertemplate{footline}[frame number]
 \setbeamertemplate{frametitle}[default][center]
@@ -67,12 +68,12 @@
 \begin{frame}{Agenda}
   \begin{enumerate}
       \item \hyperref[sec:intro]{Introdução e Contexto (Dataset IARA)}
-      \item \hyperref[sec:baselines]{Metodologia e Protocolo Experimental}
-      \item \hyperref[sec:method]{Método Proposto (SVM Nyström)}
-      \item \hyperref[sec:results_global]{Resultados Gerais de Desempenho}
-      
+      \item \hyperref[sec:baselines]{Representação Espectral, Baseline e Avaliação}
+      \item \hyperref[sec:method]{Método Proposto}
       \item \hyperref[sec:evolution]{Trajetória de Escalonamento}
-      \item \hyperref[sec:concl]{Conclusões e Mitigações Futuras}
+
+      \item \hyperref[sec:results_global]{Resultados Gerais de Desempenho}
+      \item \hyperref[sec:concl]{Conclusões e Trabalhos Futuros}
   \end{enumerate}
 \end{frame}
 
@@ -110,33 +111,6 @@
         \begin{itemize}
             \item Uso predominante de dados fechados/privados que inviabilizam a reprodutibilidade.
             \item Modelos aplicados a datasets pequenos, sem validação cruzada rigorosa baseada em isolamento de navios específicos.
-        \end{itemize}
-    \end{columns}
-\end{frame}
-
-\begin{frame}{O Dataset de Referência IARA}
-    \small
-    \begin{block}{Projeto de Monitoramento da Paisagem Acústica Submarina da Bacia de Santos (PMPAS-BS)}
-        Criado pela PETROBRAS em conformidade com as exigências ambientais do licenciamento federal do IBAMA. Trata-se de uma base aberta de extrema riqueza científica.
-    \end{block}
-    
-    \begin{columns}
-        \column{0.55\textwidth}
-        \footnotesize
-        \textbf{Riqueza de Volume e Diversidade:}
-        \begin{itemize}
-            \item \textbf{129 h 34 min} de gravações acústicas (~50 GB).
-            \item \textbf{1.825 áudios} contínuos de 2 a 5 minutos.
-            \item \textbf{ShipsEar} possui apenas 3h 9min.
-            \item \textbf{DeepShip} abrange 47h 4min.
-        \end{itemize}
-        
-        \column{0.45\textwidth}
-        \footnotesize
-        \textbf{Duas Plataformas de Captura:}
-        \begin{itemize}
-            \item \textbf{Gliders}: Monitoramento oceânico móvel (descida até 1000m depth, taxa de 125 kHz).
-            \item \textbf{Observatório Submarino (UO)}: Fixado em regiões costeiras de tráfego a 19-28m de profundidade (taxa de 48 kHz).
         \end{itemize}
     \end{columns}
 \end{frame}
@@ -186,6 +160,33 @@
     \end{columns}
 \end{frame}
 
+\begin{frame}{O Dataset de Referência IARA}
+    \small
+    \begin{block}{Projeto de Monitoramento da Paisagem Acústica Submarina da Bacia de Santos (PMPAS-BS)}
+        Criado pela PETROBRAS em conformidade com as exigências ambientais do licenciamento federal do IBAMA. Trata-se de uma base aberta de extrema riqueza científica.
+    \end{block}
+
+    \begin{columns}
+        \column{0.55\textwidth}
+        \footnotesize
+        \textbf{Riqueza de Volume e Diversidade:}
+        \begin{itemize}
+            \item \textbf{129 h 34 min} de gravações acústicas (~50 GB).
+            \item \textbf{1.825 áudios} contínuos de 2 a 5 minutos.
+            \item \textbf{ShipsEar} possui apenas 3h 9min.
+            \item \textbf{DeepShip} abrange 47h 4min.
+        \end{itemize}
+
+        \column{0.45\textwidth}
+        \footnotesize
+        \textbf{Duas Plataformas de Captura:}
+        \begin{itemize}
+            \item \textbf{Gliders}: Monitoramento oceânico móvel (descida até 1000m depth, taxa de 125 kHz).
+            \item \textbf{Observatório Submarino (UO)}: Fixado em regiões costeiras de tráfego a 19-28m de profundidade (taxa de 48 kHz).
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
 \begin{frame}{Artigo de Referência: Silva et al.\\ (IEEE Access, 2025)}
     \small
     \begin{block}{Trabalho de Referência do Dataset IARA}
@@ -221,7 +222,6 @@
         \begin{itemize}
             \item \textbf{Novo Modelo (SVM Nyström)}: Propor e avaliar o SVM aproximado via Nyström para processamento em larga escala.
             \item \textbf{Comparação Direta (SVM vs. MLP)}: Comparar sistematicamente nosso modelo com a \textbf{MLP} (modelo campeão do estudo de referência) sob validação cruzada $5\times2$cv.
-            \item \textbf{Opção de Rejeição}: Desenvolver uma estratégia de classificação com rejeição por votação temporal para aumentar a acurácia de decisão.
         \end{itemize}
     \end{block}
 \end{frame}
@@ -288,10 +288,10 @@
 %===========================================
 % 2. METODOLOGIA E PROTOCOLO EXPERIMENTAL
 %===========================================
-\section{Metodologia e Protocolo Experimental}
+\section{Representação Espectral, Baseline e Avaliação}
 \begin{frame}
     \centering
-    \huge Metodologia e Protocolo Experimental
+    \huge Representação Espectral, Baseline e Avaliação
     \label{sec:baselines}
 \end{frame}
 \begin{frame}{Extração de Características Espectrais}
@@ -370,64 +370,75 @@
 \end{frame}
 
 
-\begin{frame}{Pipeline MEL: Áudio $\rightarrow$ Vetor de 256 Features}
-    \begin{columns}
-        \column{0.58\textwidth}
-        \includegraphics[width=\linewidth,keepaspectratio]{imgs/mel_pipeline.png}
-        
-        \column{0.42\textwidth}
+\begin{frame}{Pipelines de Extração: MEL e LOFAR}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth,keepaspectratio]{imgs/mel_pipeline.png}\\[0.1cm]
         \scriptsize
-        \textbf{Banco de Filtros MEL (256 bins):}
-        \begin{itemize}
-            \item \textbf{Dimensão}: 256 bandas em escala logarítmica (percepção humana).
-            \item \textbf{Janelamento}: $0.512$s ($N_{pts}=1024$), sem sobreposição.
-            \item \textbf{Foco}: Envelope espectral de banda larga e ruído difuso de cavitação.
-            \item \textbf{Normalização L2}: Mitiga flutuações de ganho e distância do alvo.
-        \end{itemize}
+        \textbf{MEL (256 bins):} Banco de filtros triangulares em escala logarítmica. Captura envelope de banda larga e cavitação. Normalização L2 por janela de $0.512$s.
+
+        \column{0.02\textwidth}
+
+        \column{0.48\textwidth}
+        \centering
+        \includegraphics[width=\linewidth,keepaspectratio]{imgs/lofar_pipeline.png}\\[0.1cm]
+        \scriptsize
+        \textbf{LOFAR (1024 bins):} Espectro linear de banda estreita. Captura raias harmônicas de motores rotativos. Filtro TPSW suprime ruído oceânico contínuo.
     \end{columns}
 \end{frame}
 
-\begin{frame}{Pipeline LOFAR: Áudio $\rightarrow$ Vetor de 1024 Features}
-    \begin{columns}
-        \column{0.58\textwidth}
-        \includegraphics[width=\linewidth,keepaspectratio]{imgs/lofar_pipeline.png}
-        
-        \column{0.42\textwidth}
-        \scriptsize
-        \textbf{LOFAR Espectral + TPSW (1024 bins):}
-        \begin{itemize}
-            \item \textbf{Dimensão}: 1024 bins lineares de banda estreita.
-            \item \textbf{Foco}: Raias harmônicas discretas de motores rotativos.
-            \item \textbf{TPSW} (\textit{Two-Pass Split Window}): Normalização adaptativa que suprime o ruído oceânico contínuo de fundo.
-        \end{itemize}
-    \end{columns}
-\end{frame}
 
-\begin{frame}{Estruturação dos Modelos e Filtros de Software}
-    \scriptsize
-    \begin{itemize}
-        \item \textbf{Seleção Lógica de Dados (Via Código):}
-        \begin{itemize}
-            \scriptsize
-            \item \textbf{Filtro de Classes}: O parâmetro \texttt{include\_others = False} descarta áudios de embarcações que não pertencem a nenhuma das 4 classes do estudo (comprimento ausente ou categoria inválida).
-            \item \textbf{Rotulação}: Mapeamento automático em tempo de carregamento do comprimento físico do navio (em metros) para as classes \textbf{SMALL}, \textbf{MEDIUM} ou \textbf{LARGE}.
-        \end{itemize}
-        
-        \vspace{0.15cm}
-        \item \textbf{Seleção e Estrutura das Entradas (Inputs):}
-        \begin{itemize}
-            \scriptsize
-            \item \textbf{Estrutura de Entrada}: Tanto o MLP quanto o SVM são alimentados por vetores de janelas discretas de $0.512$s (\texttt{InputType.Window()}) representando a densidade espectral instantânea.
-        \end{itemize}
-        
-        \vspace{0.15cm}
-        \item \textbf{Validação Interna e Early Stoping:}
-        \begin{itemize}
-            \scriptsize
-            \item \textbf{Early Stoping (MLP)}: A rede MLP separa uma fração do treino para validação interna, monitorando a perda para interromper o treinamento de forma otimizada (paciência de 8 épocas).
-            \item \textbf{Ajuste Sem Validação (SVM)}: O classificador SVM aproximado via Nyström dispensa conjunto de validação interna, realizando o ajuste (\textit{fit}) de forma direta e determinística no treino global.
-        \end{itemize}
-    \end{itemize}
+\begin{frame}{Arquitetura MLP de Referência (Silva et al., 2025)}
+    \footnotesize
+    Mesma topologia de camadas ocultas para ambas as variantes — a única diferença está na entrada e no uso de dropout:
+
+    \vspace{0.15cm}
+    \begin{columns}[t]
+        \column{0.48\textwidth}
+        \centering
+        \textbf{MLP MEL}\\[0.15cm]
+        \scriptsize
+        \begin{tabular}{cl}
+            \toprule
+            \textbf{Camada} & \textbf{Detalhe} \\
+            \midrule
+            Entrada        & 256 features (MEL) \\
+            FC + BN + ReLU & 32 neurônios \\
+            Dropout        & $p = 0.2$ \\
+            FC + BN + ReLU & 16 neurônios \\
+            Dropout        & $p = 0.2$ \\
+            Saída          & 4 classes (Sigmoid) \\
+            \bottomrule
+        \end{tabular}
+
+        \column{0.02\textwidth}
+
+        \column{0.42\textwidth}
+        \centering
+        \textbf{MLP LOFAR}\\[0.15cm]
+        \scriptsize
+        \begin{tabular}{cl}
+            \toprule
+            \textbf{Camada} & \textbf{Detalhe} \\
+            \midrule
+            Entrada        & 1024 features (LOFAR) \\
+            FC + BN + ReLU & 32 neurônios \\
+            \multicolumn{2}{c}{\textit{(sem dropout)}} \\
+            FC + BN + ReLU & 16 neurônios \\
+            \multicolumn{2}{c}{\textit{(sem dropout)}} \\
+            Saída          & 4 classes (Sigmoid) \\
+            \bottomrule
+        \end{tabular}
+
+        \column{0.08\textwidth}
+    \end{columns}
+
+    \vspace{0.15cm}
+    \begin{block}{\scriptsize Protocolo de Treinamento}
+        \scriptsize
+        Adam ($\eta = 10^{-4}$, weight decay $= 10^{-3}$) $\cdot$ CrossEntropyLoss $\cdot$ Batch size = 32 $\cdot$ \textit{Early stopping} (paciência = 8 épocas, máx. 50 épocas).
+    \end{block}
 \end{frame}
 
 \begin{frame}{Rigor Experimental: Validação Cruzada $5\times2$cv}
@@ -477,71 +488,36 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Figuras de Mérito: Acurácia Global}
-    \small
-    Para avaliar com rigor científico a classificação em bases de dados desbalanceadas, adota-se a tradicional acurácia global complementada por métricas robustas:
-    
-    \vspace{0.2cm}
-    
-    \begin{block}{Acurácia Global ($ACC$)}
-        Proporção de acertos globais do classificador sobre o conjunto de teste.
-        \begin{equation*}
-            ACC = \frac{1}{N_{total}} \sum_{i=1}^{N_{total}} \mathbb{I}(\hat{y}_i = y_i) \times 100\%
-        \end{equation*}
-        
-        \vspace{0.1cm}
-        \textbf{Limitação e Viés}: Em bases desbalanceadas (como o IARA), a acurácia é altamente inflada pelo acerto nas classes majoritárias (como alvos grandes e ruído de fundo), mascarando falhas críticas de identificação em classes de baixo calado (alvos pequenos).
-    \end{block}
-\end{frame}
+\begin{frame}{Figuras de Mérito}
+    \scriptsize
+    \begin{columns}[t]
+        \column{0.34\textwidth}
+        \begin{block}{Índice SP \textnormal{(métrica principal)}}
+            Média geométrica dos recalls por classe:
+            \begin{equation*}
+                SP = \sqrt[4]{\prod_{k=1}^{4} Recall_k}
+            \end{equation*}
+            Se qualquer $Recall_k = 0$, $SP = 0$. Penaliza falhas em qualquer classe, especialmente minorias.
+        \end{block}
 
-\begin{frame}{Figuras de Mérito: Índice Sum-Product (SP)}
-    \footnotesize
-    Como principal figura de mérito do dataset IARA, adota-se uma métrica balanceada que avalia o equilíbrio de desempenho entre todas as classes:
-    
-    \vspace{0.1cm}
-    
-    \begin{block}{Índice Sum-Product ($SP$)}
-        \scriptsize
-        Média geométrica das taxas de acerto (\textit{Recall}) de cada uma das $K$ classes ($K=4$).
-        \begin{equation*}
-            SP = \left( \prod_{k=1}^{K} Recall_k \right)^{\frac{1}{K}} = \sqrt[4]{Recall_{Small} \cdot Recall_{Med} \cdot Recall_{Large} \cdot Recall_{Back}}
-        \end{equation*}
-        
-        \vspace{0.05cm}
-        \textbf{Justificativa Física e Matemática}:
-        \begin{itemize}
-            \setlength{\itemsep}{1pt}
-            \setlength{\parskip}{0pt}
-            \setlength{\parsep}{0pt}
-            \item Se o \textit{Recall} de qualquer classe colapsar para zero, o Índice SP cai imediatamente a \textbf{0\%}.
-            \item Penaliza assimetrias e a incapacidade de generalizar em minorias físicas, forçando o classificador a manter taxas decentes de acerto em todas as categorias.
-        \end{itemize}
-    \end{block}
-\end{frame}
+        \column{0.33\textwidth}
+        \begin{block}{F1-Score Macro}
+            Média dos F1 por classe:
+            \begin{equation*}
+                F1 = \frac{1}{K}\sum_{k} \frac{2 \cdot P_k \cdot R_k}{P_k + R_k}
+            \end{equation*}
+            Complementar ao SP: incorpora Precisão além do Recall, penalizando igualmente classes minoritárias.
+        \end{block}
 
-\begin{frame}{Figuras de Mérito: F1-Score Macro}
-    \footnotesize
-    Como métrica complementar ao índice SP, utiliza-se o \textbf{F1-Score Macro} para avaliar o balanço entre precisão e revocação de forma equânime entre todas as classes:
-
-    \vspace{0.1cm}
-
-    \begin{block}{F1-Score Macro}
-        \scriptsize
-        Média aritmética não-ponderada dos F1-scores individuais de cada classe $k$:
-        \begin{equation*}
-            F1_{Macro} = \frac{1}{K} \sum_{k=1}^{K} F1_k, \quad \text{onde} \quad F1_k = \frac{2 \cdot Precision_k \cdot Recall_k}{Precision_k + Recall_k}
-        \end{equation*}
-
-        \vspace{0.05cm}
-        \textbf{Justificativa}:
-        \begin{itemize}
-            \setlength{\itemsep}{1pt}
-            \setlength{\parskip}{0pt}
-            \setlength{\parsep}{0pt}
-            \item Combina \textbf{Precisão} (fração de predições corretas entre as classificadas como $k$) e \textbf{Recall} (fração de acertos reais da classe $k$) em uma única medida harmônica por classe.
-            \item A \textit{média macro} (não ponderada) penaliza igualmente o fraco desempenho em classes minoritárias (como \textbf{SMALL}), sendo complementar ao Índice SP.
-        \end{itemize}
-    \end{block}
+        \column{0.33\textwidth}
+        \begin{block}{Acurácia Global ($ACC$)}
+            Proporção de acertos globais:
+            \begin{equation*}
+                ACC = \frac{1}{N} \sum_{i=1}^{N} \mathbb{I}(\hat{y}_i = y_i)
+            \end{equation*}
+            \textbf{Limitação}: em bases desbalanceadas, inflada pelas classes majoritárias — mascara falhas em SMALL.
+        \end{block}
+    \end{columns}
 \end{frame}
 
 %===========================================
@@ -550,7 +526,7 @@
 \section{Método Proposto}
 \begin{frame}
     \centering
-    \huge Método Proposto: SVM Nyström
+    \huge Método Proposto
     \label{sec:method}
 \end{frame}
 
@@ -674,58 +650,7 @@
 
 
 %===========================================
-% 4. RESULTADOS DE DESEMPENHO GERAL
-%===========================================
-\section{Resultados Gerais}
-\begin{frame}
-    \centering
-    \huge Resultados Gerais
-    \label{sec:results_global}
-\end{frame}
-
-\begin{frame}{Benchmarking Global de Teste (Sem Rejeição)}
-    \begin{table}
-        \footnotesize
-        \begin{tabular}{lcccc}
-            \toprule
-            \textbf{Modelo / Classificador} & \textbf{Espectro} & \textbf{Índice SP (\%)} & \textbf{Acurácia Global (\%)} \\
-            \midrule
-            RF & MEL & 62.22 $\pm$ 1.86 & 62.64 $\pm$ 1.84 \\
-            RF & LOFAR & 56.92 $\pm$ 1.69 & 58.87 $\pm$ 1.68 \\
-            MLP (Baseline Artigo) & MEL & 63.38 $\pm$ 1.81 & 64.51 $\pm$ 1.75 \\
-            \textbf{MLP (Baseline Artigo)} & \textbf{LOFAR} & \textbf{66.51 $\pm$ 1.39} & \textbf{67.48 $\pm$ 1.24} \\
-            CNN & MEL & 63.52 $\pm$ 2.26 & 64.99 $\pm$ 2.09 \\
-            CNN & LOFAR & 66.05 $\pm$ 1.90 & 67.02 $\pm$ 1.78 \\
-            \midrule
-            \textbf{SVM Proposto (m=4000)} & \textbf{MEL} & \textbf{63.78 $\pm$ 1.14} & \textbf{64.56 $\pm$ 1.18} \\
-            \textbf{SVM Proposto (m=6000)} & \textbf{LOFAR (elasticnet)} & \textbf{63.83 $\pm$ 1.91} & \textbf{65.47 $\pm$ 1.77} \\
-            \bottomrule
-        \end{tabular}
-    \end{table}
-    
-    \vspace{-0.2cm}
-    \scriptsize
-    \textbf{Destaque}: O \textbf{SVM Mel} equivale à CNN Mel com metade da variância ($\sigma_{SVM} = 1.18\%$ vs. $2.09\%$). O \textbf{SVM LOFAR (m=6000)} atinge $63.83\%$ de SP sem redução por PCA, oferecendo uma comparação robusta e direta com a baseline MLP LOFAR do artigo de referência.
-\end{frame}
-
-%===========================================
-\begin{frame}{A Limitação Física do Alvo SMALL}
-    \small
-    \begin{block}{Entendimento Físico-Acústico do Problema}
-        Embarcações de pequeno porte (SMALL) produzem assinaturas de baixíssima potência e carecem das clássicas raias harmônicas discretas abaixo de 1000Hz (que compõem a maior parte das energias do LOFAR).
-    \end{block}
-    
-    \vspace{0.15cm}
-    \footnotesize
-    \textbf{Fatores de Degradação:}
-    \begin{itemize}
-        \item \textbf{Ruído Difuso de Banda Larga}: A assinatura acústica assemelha-se ao mar aberto e vento, gerando forte confusão espectral com a classe \textbf{BACKGROUND} (alta entropia de Shannon).
-        \item \textbf{A Sabedoria Geométrica da Rejeição}: A opção de rejeição temporal atua descartando sabiamente \textbf{92.64\%} de todas as janelas acústicas do SMALL. Isso evita sobrecarregar o operador de sonar com falsas classificações e alarmes inconsistentes.
-    \end{itemize}
-\end{frame}
-
-%===========================================
-% 5. TRAJETÓRIA DE ESCALONAMENTO
+% 4. TRAJETÓRIA DE ESCALONAMENTO
 %===========================================
 \section{Trajetória de Escalonamento}
 \begin{frame}
@@ -737,22 +662,169 @@
 \begin{frame}{Sintonia de Kernel e Complexidade ($m$)}
     \small
     \begin{block}{A Relação entre Componentes de Nyström ($m$) e Desempenho}
-        O escalonamento logarítmico de $m = 300$ até $m = 6000$ revela a evolução da modelagem matemática das fronteiras de decisão complexas das classes acústicas.
+        O escalonamento de $m = 300$ até $m = 6000$ revela dinâmicas distintas entre os espectros MEL e LOFAR ao longo da curva de complexidade.
     \end{block}
-    
-    \vspace{0.15cm}
+
+    \vspace{0.1cm}
     \footnotesize
     \begin{itemize}
-        \item \textbf{Fase Inicial ($m = 300$)}: Acurácia modesta de $61.02\% \pm 1.94\%$ (MEL). O espaço projetado carece de representação para as frequências não-lineares.
-        \item \textbf{Fase Intermediária ($m = 1000$ a $3000$)}: Aumento contínuo da representatividade. O modelo captura transições espectrais importantes de motores.
-        \item \textbf{Escala de Alto Desempenho ($m \ge 4000$)}:
-        \begin{itemize}
-            \footnotesize
-            \item \textbf{Golden MEL ($m=4000$)}: $64.56\% \pm 1.18\%$ (sem PCA) -- estabilidade com variância reduzida.
-            \item \textbf{Golden LOFAR ($m=6000$)}: $63.83\% \pm 1.91\%$ (sem PCA) -- excepcional estabilidade de generalização e alinhamento direto com a baseline.
-        \end{itemize}
+        \item \textbf{Fase Inicial ($m = 300$)}: SP modesto ($\approx 61\%$, MEL). Espaço projetado insuficiente para capturar não-linearidades acústicas.
+        \item \textbf{Fase Intermediária ($m = 1000$--$3000$)}: \textbf{MEL supera LOFAR} consistentemente — a banda larga se beneficia mais rapidamente do aumento de pontos de referência.
+        \item \textbf{MEL estabiliza em $m = 4000$}: SP de $64.56\% \pm 1.18\%$ (sem PCA) com variância reduzida — ganhos marginais adicionais se tornam negligenciáveis.
+        \item \textbf{LOFAR continua evoluindo além de $m = 4000$}: As raias harmônicas finas exigem maior capacidade de representação. Em $m = 6000$, Ac. Bal. de $65.48\% \pm 1.76\%$ — LOFAR ultrapassa MEL e consolida-se como modelo de maior desempenho, replicando o padrão observado no MLP (melhor baseline do artigo de referência).
     \end{itemize}
 \end{frame}
+
+\begin{frame}{Ajuste de $C$, $\gamma$ e Regularização: Impacto Marginal}
+    \scriptsize
+    \begin{itemize}
+        \setlength{\itemsep}{3pt}
+
+        \item \textbf{Penalidade $C$:}
+        \begin{itemize}
+            \tiny \setlength{\itemsep}{0pt}
+            \item MEL — $C = 0.5$: SP cai para $57.5\%$; $C = 2.0$: SP $63.8\%$, ganho $<$0.1 p.p. sobre o padrão.
+            \item LOFAR — $C = 0.1$: SP despenca para $54.8\%$; $C = 2.0$: praticamente idêntico ao padrão.
+        \end{itemize}
+
+        \item \textbf{Largura do kernel $\gamma$:}
+        \begin{itemize}
+            \tiny \setlength{\itemsep}{0pt}
+            \item Padrão sklearn: $\gamma = 1/d$. Variações testadas reduziram a separabilidade em ambos os espectros.
+        \end{itemize}
+
+        \item \textbf{Razão ElasticNet ($\ell_1 / \ell_2$):}
+        \begin{itemize}
+            \tiny \setlength{\itemsep}{0pt}
+            \item Ajustes na proporção $\ell_1/\ell_2$ não trouxeram ganhos sobre a configuração padrão.
+        \end{itemize}
+
+        \item \textbf{Landmarks via MiniBatchKMeans:}
+        \begin{itemize}
+            \tiny \setlength{\itemsep}{0pt}
+            \item Centroides de clustering como landmarks — esperava-se melhor cobertura do espaço de características.
+            \item Resultados equivalentes ao Nyström com amostragem aleatória; custo de clustering não se justificou.
+        \end{itemize}
+    \end{itemize}
+
+    \vspace{0.1cm}
+    \begin{block}{\footnotesize Conclusão}
+        \scriptsize
+        Nenhuma dessas estratégias superou os valores padrão. \textbf{O ganho decisivo veio exclusivamente do aumento de $m$}: mais landmarks $\Rightarrow$ projeção mais fiel ao kernel RBF $\Rightarrow$ fronteiras de decisão mais precisas.
+    \end{block}
+\end{frame}
+
+%===========================================
+% 5. RESULTADOS DE DESEMPENHO GERAL
+%===========================================
+\section{Resultados Gerais}
+\begin{frame}
+    \centering
+    \huge Resultados Gerais
+    \label{sec:results_global}
+\end{frame}
+
+\begin{frame}{Benchmarking com melhores modelos: SVM vs. MLP}
+    \centering
+    \resizebox{\linewidth}{!}{%
+    \begin{tabular}{llccccc}
+        \toprule
+        \textbf{Origem} & \textbf{Modelo} & \textbf{Espectro} & \textbf{SP (\%)} & \textbf{Ac. Bal. (\%)} & \textbf{F1 Macro (\%)} \\
+        \midrule
+        \multirow{2}{*}{\textit{Artigo}}
+            & MLP                              & MEL            & 63.38 $\pm$ 1.81          & 64.51 $\pm$ 1.75          & 62.89 $\pm$ 1.68 \\
+            & \textbf{MLP}                     & \textbf{LOFAR} & \textbf{66.51 $\pm$ 1.39} & \textbf{67.48 $\pm$ 1.24} & \textbf{66.72 $\pm$ 1.17} \\
+        \midrule
+        \multirow{2}{*}{\textit{Reproduzido}}
+            & MLP                              & MEL            & 64.66 $\pm$ 2.11          & 65.64 $\pm$ 1.96          & 64.12 $\pm$ 2.19 \\
+            & \textbf{MLP}                     & \textbf{LOFAR} & \textbf{66.25 $\pm$ 1.78} & \textbf{67.21 $\pm$ 1.65} & \textbf{66.44 $\pm$ 1.88} \\
+        \midrule
+        \multirow{2}{*}{\textbf{Proposto}}
+            & \textbf{SVM ($m$=4000)}          & \textbf{MEL}   & \textbf{63.80 $\pm$ 1.12} & \textbf{64.58 $\pm$ 1.14} & \textbf{64.36 $\pm$ 1.05} \\
+            & \textbf{SVM ($m$=6000)}          & \textbf{LOFAR} & \textbf{63.84 $\pm$ 1.91} & \textbf{65.48 $\pm$ 1.76} & \textbf{63.60 $\pm$ 1.71} \\
+        \bottomrule
+    \end{tabular}}
+
+    \vspace{0.15cm}
+    \scriptsize
+    \begin{itemize}
+        \item \textbf{Reprodução}: MLP LOFAR local (SP $66.25\%$, Ac. Bal. $67.21\%$) vs.\ artigo ($66.51\%$, $67.48\%$) — diferença $<$0.3 p.p. \checkmark
+        \item \textbf{SVM MEL} (proposta) reduz variância em \textbf{38\%} vs.\ MLP MEL ($\sigma$: $1.12\%$ vs.\ $1.81\%$) com SP equivalente.
+        \item \textbf{SVM LOFAR} (proposta) fica a apenas \textbf{2.67 p.p.} do MLP LOFAR sem uso de PCA.
+    \end{itemize}
+\end{frame}
+
+%===========================================
+\begin{frame}{Matrizes de Confusão — Nível de Áudio (5$\times$2cv)}
+    \centering
+    \scriptsize
+    \textit{Linhas = classe real \ | \ Colunas = predição \ | \ Acumulado sobre 10 folds, avaliação por navio (votação majoritária)}\\
+    \textit{Desvio padrão omitido nas células por clareza visual — prática padrão na literatura.}
+
+    \vspace{0.15cm}
+
+    % S=SMALL M=MEDIUM L=LARGE B=BACKGROUND
+    % hi: diagonal>=60 | md: diagonal 40-59 | lo: diagonal<40 ou erro off-diag>22%
+    \newcommand{\cahi}[1]{\cellcolor{green!35}\textbf{#1}}
+    \newcommand{\camd}[1]{\cellcolor{yellow!40}#1}
+    \newcommand{\calo}[1]{\cellcolor{red!20}#1}
+
+    \begin{columns}[T]
+
+        \column{0.5\textwidth}
+        \centering \textbf{MLP MEL} (Baseline) \\[0.1cm]
+        \resizebox{0.95\columnwidth}{!}{%
+        \begin{tabular}{r|cccc}
+             & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+            \textbf{SMALL}  & \camd{44.8} & \calo{25.4} & 17.9 & 11.8 \\
+            \textbf{MEDIUM} & 20.4        & \cahi{64.0} & 13.1 &  2.5 \\
+            \textbf{LARGE}  & 12.9        & 15.0        & \cahi{68.6} & 3.6 \\
+            \textbf{BG}     &  6.1        &  3.8        &  5.0 & \cahi{85.1} \\
+        \end{tabular}}
+
+        \vspace{0.25cm}
+        \centering \textbf{MLP LOFAR} (Melhor Baseline do Artigo) \\[0.1cm]
+        \resizebox{0.95\columnwidth}{!}{%
+        \begin{tabular}{r|cccc}
+             & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+            \textbf{SMALL}  & \camd{46.6} & 21.2        & \calo{25.3} &  7.0 \\
+            \textbf{MEDIUM} & \calo{22.6} & \cahi{61.3} & 13.8 &  2.3 \\
+            \textbf{LARGE}  & 12.8        & 10.0        & \cahi{74.7} & 2.5 \\
+            \textbf{BG}     &  7.3        &  3.8        &  2.6 & \cahi{86.3} \\
+        \end{tabular}}
+
+        \column{0.5\textwidth}
+        \centering \textbf{SVM MEL} ($m$=4000, Proposto) \\[0.1cm]
+        \resizebox{0.95\columnwidth}{!}{%
+        \begin{tabular}{r|cccc}
+             & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+            \textbf{SMALL}  & \camd{50.9} & \calo{24.3} & 17.6 &  7.2 \\
+            \textbf{MEDIUM} & \calo{26.0} & \cahi{60.4} & 12.5 &  1.1 \\
+            \textbf{LARGE}  & 14.9        & 13.6        & \cahi{69.2} & 2.3 \\
+            \textbf{BG}     & 11.0        &  4.9        &  6.2 & \cahi{77.9} \\
+        \end{tabular}}
+
+        \vspace{0.25cm}
+        \centering \textbf{SVM LOFAR} ($m$=6000, Proposto) \\[0.1cm]
+        \resizebox{0.95\columnwidth}{!}{%
+        \begin{tabular}{r|cccc}
+             & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+            \textbf{SMALL}  & \calo{38.2} & 22.9        & \calo{28.6} & 10.3 \\
+            \textbf{MEDIUM} & 17.6        & \cahi{60.5} & 17.2 &  4.8 \\
+            \textbf{LARGE}  &  9.3        & 10.8        & \cahi{76.3} & 3.6 \\
+            \textbf{BG}     &  6.1        &  2.8        &  4.2 & \cahi{86.9} \\
+        \end{tabular}}
+
+    \end{columns}
+
+    \vspace{0.15cm}
+    \begin{itemize}
+        \item \textbf{SMALL} é o alvo crítico: \textbf{SVM MEL lidera} com 51\% vs.\ 47\% (MLP LOFAR) e 38\% (SVM LOFAR).
+        \item Modelos \textbf{LOFAR} maximizam LARGE (74--76\%) mas confundem SMALL$\leftrightarrow$LARGE; modelos \textbf{MEL} confundem SMALL$\leftrightarrow$MEDIUM.
+        \item \textbf{BG} bem classificado por todos ($>$77\%); MEDIUM e LARGE convergem acima de 60\% em todos os modelos.
+    \end{itemize}
+\end{frame}
+
 
 %===========================================
 % 6. CONCLUSÕES E MITIGAÇÕES FUTURAS
@@ -766,27 +838,27 @@
 
 \begin{frame}{Conclusões do Trabalho}
     \small
-    Como resultado da avaliação e benchmarking do SVM Gaussiano com Nyström na base de dados de grande escala IARA, conclui-se que:
-    
-    \vspace{0.2cm}
+    Como resultado da avaliação e benchmarking do SVM Gaussiano com Nyström frente à MLP de referência (Silva et al., 2025) na base IARA, conclui-se que:
+
+    \vspace{0.15cm}
     \begin{itemize}
-        \setlength{\itemsep}{8pt}
-        \item \textbf{SVM Nyström}: Estimador altamente robusto e estável, entregando desempenho equivalente a redes convolucionais profundas (CNN) com metade do desvio padrão fold-wise (menor sensibilidade a variações de partição).
-        \item \textbf{Opção de Rejeição}: Essencial para a viabilidade tática prática, permitindo elevar a precisão global de teste para \textbf{90,43\%} nos alvos classificados com alto limiar de consenso ($t \ge 0.9$).
-        \item \textbf{Estudo do PCA}: A análise exploratória indicou uma dinâmica dual (benéfico no LOFAR, prejudicial no MEL), mas optou-se por omiti-lo no benchmark final para assegurar a comparação direta ("maçã com maçã") com as baselines.
+        \setlength{\itemsep}{6pt}
+        \item \textbf{SVM Nyström é competitivo e estável}: SVM LOFAR ($m$=6000) alcança SP\,63.8\% e ACC\,65.5\%, frente ao MLP LOFAR (SP\,66.5\%, ACC\,67.5\%) — gap de apenas $\approx$2.7\,p.p.\ com desvio padrão fold-wise menor.
+        \item \textbf{SVM MEL supera MLP no alvo SMALL}: recall SMALL de \textbf{50.9\%} (SVM MEL) vs.\ 46.6\% (MLP LOFAR) — vantagem no alvo de maior dificuldade.
+        \item \textbf{LOFAR e MEL são complementares}: LOFAR maximiza LARGE/BG; MEL favorece SMALL — motivando estratégias de fusão como trabalho futuro.
     \end{itemize}
 \end{frame}
 
-\begin{frame}{Trabalhos Futuros (Foco no Alvo SMALL)}
-    \small
+\begin{frame}{Trabalhos Futuros}
+    \footnotesize
     Com o objetivo de refinar as margens de decisão e mitigar os erros de classificação no alvo mais difícil (\textbf{SMALL}), propõem-se os seguintes passos:
-    
-    \vspace{0.2cm}
+
+    \vspace{0.1cm}
     \begin{itemize}
-        \setlength{\itemsep}{8pt}
-        \item \textbf{Estratégia Híbrida de Dois Estágios}: Classificação hierárquica dividida em duas etapas (Etapa 1: separação binária de BACKGROUND/Navio; Etapa 2: classificação multiclasse de SMALL vs. MEDIUM/LARGE).
-        \item \textbf{Modelo Híbrido Avançado}: Fusão espectral completa concatenando a banda estreita fina (LOFAR) com a banda larga integradora (MEL) na entrada.
-        \item \textbf{Landmarks via MiniBatchKMeans}: Substituição da amostragem aleatória do Nyström por centroides obtidos via clustering. Otimiza a representatividade espacial, reduzindo a dimensão $m$ (RAM) sem perdas de acurácia.
+        \setlength{\itemsep}{5pt}
+        \item \textbf{Estratégia Híbrida de Dois Estágios}: Classificação hierárquica com especialistas focados nas classes de menor recall (\textbf{SMALL} e \textbf{MEDIUM}), combinando as forças complementares de LOFAR e MEL para reduzir confusões críticas entre categorias de navios.
+        \item \textbf{Exploração de Outras Representações Espectrais}: Avaliar Outras Técnicas de Extração de características como \textbf{DEMON} (modulação do hélice/taxa de pás) e \textbf{MFCC} (coeficientes cepstrais), que capturam fenômenos físicos distintos de LOFAR e MEL e podem beneficiar especialmente o alvo \textbf{SMALL}.
+        \item \textbf{Modelos com Dinâmica Temporal}: Avaliar arquiteturas recorrentes como \textbf{GRU} e \textbf{LSTM}, capazes de processar a sequência de frames espectrais ao longo do tempo — capturando padrões temporais (ciclos do hélice, ritmos de maquinário) que o SVM descarta ao agregar o segmento em vetor fixo.
     \end{itemize}
 \end{frame}
 
