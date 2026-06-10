@@ -310,7 +310,7 @@
                 \setlength{\parsep}{0pt}
                 \item \textbf{Resolução}: Banco de 256 filtros triangulares.
                 \item \textbf{Foco Físico}: Banda larga (ruído de cavitação de hélice e hidrodinâmico).
-                \item \textbf{Dinâmica}: Compressão logarítmica das amplitudes de energia.
+                \item \textbf{Motivação}: Escala Mel aproxima a resposta auditiva humana — realça características espectrais perceptualmente relevantes.
             \end{itemize}
         \end{block}
 
@@ -324,10 +324,14 @@
                 \setlength{\parsep}{0pt}
                 \item \textbf{Resolução}: 1024 bins de frequência linear fina.
                 \item \textbf{Foco Físico}: Raias harmônicas discretas de maquinário (motores, eixos).
-                \item \textbf{Uso}: Padrão na análise clássica de sonar passivo.
+                \item \textbf{Motivação}: Realça padrões de frequência consistentes e suprime ruídos transientes — ideal para assinaturas acústicas estáveis.
             \end{itemize}
         \end{block}
     \end{columns}
+
+    \vspace{0.12cm}
+    \scriptsize
+    \textit{Os parâmetros 256 e 1024 bins foram definidos visando à viabilidade computacional diante do volume de dados do IARA \cite{silva2025}.}
 \end{frame}
 
 \begin{frame}{Técnicas de Normalização Espectral}
@@ -532,8 +536,8 @@
 
 \begin{frame}{Motivação: O SVM em Sonar Passivo}
     \small
-    \begin{block}{O Clássico de Referência na Literatura}
-        O SVM é amplamente consolidado como um baseline robusto em classificação acústica de alvos submarinos (UATR), sendo empregado em bases de dados consagradas como \textbf{ShipsEar} (Santos-Domínguez, 2016) e \textbf{DeepShip} (Irfan, 2021).
+    \begin{block}{Método Clássico em UATR}
+        O SVM foi um dos primeiros métodos de ML aplicados em UATR \cite{chen2023survey} e ainda é empregado como baseline de comparação em trabalhos recentes — como Xu et al.\ \cite{xu2023}, que reportam 69,24\% de acurácia no \textbf{DeepShip} \cite{deepship} . Contudo, esses datasets são de pequeno a médio porte (\textbf{ShipsEar} \cite{shipsear}: 3h; \textbf{DeepShip}: 47h); a avaliação em bases de grande escala como o IARA (129h+) permanece em aberto.
     \end{block}
     
     \vspace{0.1cm}
@@ -557,34 +561,38 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Entradas do SVM: Conectando o Pré-Processamento}
+\begin{frame}{Projeção de Nyström}
     \begin{columns}
         \column{0.60\textwidth}
         \includegraphics[width=\linewidth,keepaspectratio]{imgs/nystroem_projection.png}
 
         \column{0.40\textwidth}
-        \scriptsize
-        \textbf{Dois modos de entrada avaliados em paralelo:}
-        \begin{itemize}
-            \item \textbf{MEL} $\rightarrow$ vetor $x \in \mathbb{R}^{256}$.
-            \item \textbf{LOFAR} $\rightarrow$ vetor $x \in \mathbb{R}^{1024}$ .
-        \end{itemize}
+        \centering\scriptsize
 
-        \vspace{0.2cm}
-        \textbf{Classificação por janela:}
-        \begin{itemize}
-            \item O SVM Nyström ($m=4000$) classifica cada janela de $0.512$s individualmente.
-            \item O rótulo final do áudio é decidido por \textbf{votação por consenso temporal} sobre todas as janelas.
-        \end{itemize}
+        \textbf{Entrada} — bins espectrais\\[4pt]
+        $x = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_d \end{bmatrix}$\\[2pt]
+        {\tiny MEL: $d=256$ \ / \ LOFAR: $d=1024$}
 
-        \vspace{0.2cm}
-        \textbf{4 Classes de Saída:}
-        \begin{itemize}
-            \item \textbf{SMALL} / \textbf{MEDIUM} / \textbf{LARGE} / \textbf{BACKGROUND}
-        \end{itemize}
+        \vspace{6pt}
+        \fbox{\parbox{0.85\linewidth}{\centering\tiny
+            Para cada landmark $l_j$:\\
+            \textit{``quão parecido é $x$ com $l_j$?''}\\[2pt]
+            $\text{sim}(x,l_j) = e^{-\gamma\|x - l_j\|^2}$\\[1pt]
+            {\tiny distância grande $\to$ 0 \quad distância nula $\to$ 1}
+        }}\\[-2pt]
+        $\Big\downarrow$
+
+        \vspace{2pt}
+        \textbf{Saída} — score de similaridade\\[4pt]
+        $\phi(x) = \begin{bmatrix}
+            \text{sim}(x,\,l_1) \\
+            \text{sim}(x,\,l_2) \\
+            \vdots \\
+            \text{sim}(x,\,l_m)
+        \end{bmatrix}$\\[2pt]
+        {\tiny $m =  número de landmarks}
     \end{columns}
 \end{frame}
-
 
 \begin{frame}{SVM com Aproximação de Nyström}
     \scriptsize
@@ -613,9 +621,6 @@
     \end{itemize}
 \end{frame}
 
-
-
-
 \begin{frame}{Visualização: Seleção de Landmarks}
     \begin{columns}
         \column{0.55\textwidth}
@@ -632,6 +637,15 @@
     \end{columns}
 \end{frame}
 
+
+
+
+
+
+
+
+
+
 \begin{frame}{Kernel RBF com Nyström}
     \begin{columns}
         \column{0.58\textwidth}
@@ -644,6 +658,22 @@
             \item \textbf{Espaço Original (256D)}: Os dados acústicos marinhos são altamente não-lineares e misturados (inseparáveis por retas).
             \item \textbf{Projeção de Nyström (4000D)}: O cálculo da similaridade RBF contra os $4000$ landmarks projeta os dados em alta dimensão.
             \item \textbf{Margem Linear}: No espaço projetado $\mathbb{R}^{4000}$, as classes tornam-se separáveis por um \textbf{Hiperplano de Decisão Linear} ($w^T z + b = 0$).
+        \end{itemize}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Estratégia Multiclasse: One-vs-Rest (OvR)}
+    \begin{columns}
+        \column{0.58\textwidth}
+        \includegraphics[width=\linewidth,keepaspectratio]{imgs/svm_ovr_training_process.png}
+
+        \column{0.42\textwidth}
+        \scriptsize
+        \textbf{Classificação com 4 Classes:}
+        \begin{itemize}
+            \item \textbf{Estratégia OvR}: São treinados 4 classificadores binários lineares paralelos, um para cada classe (SMALL, MEDIUM, LARGE, BG) contra o "Resto".
+            \item \textbf{Hiperplanos 3D Retos}: No espaço projetado ($\Phi$), cada classificador gera um plano reto de separação.
+            \item \textbf{Violações de Margem}: Por conta do ruído real e sobreposição física de assinaturas, os dados não são perfeitamente separáveis. Os pontos no lado incorreto representam os erros regulados pela penalidade $C$ (margem suave).
         \end{itemize}
     \end{columns}
 \end{frame}
@@ -670,7 +700,7 @@
     \begin{itemize}
         \item \textbf{Fase Inicial ($m = 300$)}: SP modesto ($\approx 61\%$, MEL). Espaço projetado insuficiente para capturar não-linearidades acústicas.
         \item \textbf{Fase Intermediária ($m = 1000$--$3000$)}: \textbf{MEL supera LOFAR} consistentemente — a banda larga se beneficia mais rapidamente do aumento de pontos de referência.
-        \item \textbf{MEL estabiliza em $m = 4000$}: SP de $64.56\% \pm 1.18\%$ (sem PCA) com variância reduzida — ganhos marginais adicionais se tornam negligenciáveis.
+        \item \textbf{MEL estabiliza em $m = 4000$}: SP de $64.56\% \pm 1.18\%$  com variância reduzida — ganhos marginais adicionais se tornam negligenciáveis.
         \item \textbf{LOFAR continua evoluindo além de $m = 4000$}: As raias harmônicas finas exigem maior capacidade de representação. Em $m = 6000$, Ac. Bal. de $65.48\% \pm 1.76\%$ — LOFAR ultrapassa MEL e consolida-se como modelo de maior desempenho, replicando o padrão observado no MLP (melhor baseline do artigo de referência).
     \end{itemize}
 \end{frame}
@@ -838,14 +868,17 @@
 
 \begin{frame}{Conclusões do Trabalho}
     \small
-    Como resultado da avaliação e benchmarking do SVM Gaussiano com Nyström frente à MLP de referência (Silva et al., 2025) na base IARA, conclui-se que:
+    \begin{block}{\small Avaliação do SVM Gaussiano com Nyström vs.\ MLP (Silva et al., 2025) — Base IARA}
+        \scriptsize
+        O SVM Nyström é uma alternativa competitiva, estável e computacionalmente viável para classificação acústica em bases de grande escala.
+    \end{block}
 
-    \vspace{0.15cm}
+    \vspace{0.1cm}
     \begin{itemize}
-        \setlength{\itemsep}{6pt}
-        \item \textbf{SVM Nyström é competitivo e estável}: SVM LOFAR ($m$=6000) alcança SP\,63.8\% e ACC\,65.5\%, frente ao MLP LOFAR (SP\,66.5\%, ACC\,67.5\%) — gap de apenas $\approx$2.7\,p.p.\ com desvio padrão fold-wise menor.
-        \item \textbf{SVM MEL supera MLP no alvo SMALL}: recall SMALL de \textbf{50.9\%} (SVM MEL) vs.\ 46.6\% (MLP LOFAR) — vantagem no alvo de maior dificuldade.
-        \item \textbf{LOFAR e MEL são complementares}: LOFAR maximiza LARGE/BG; MEL favorece SMALL — motivando estratégias de fusão como trabalho futuro.
+        \setlength{\itemsep}{5pt}
+        \item \textbf{Viabilidade em Grande Escala}: a aproximação de Nyström reduz o custo de memória de $\approx$1\,TB (SVM clássico) para $\approx$8\,GB, tornando o SVM RBF aplicável ao IARA.
+        \item \textbf{Desempenho Competitivo e Estável}: SVM LOFAR fica a apenas 2,7\,p.p.\ do MLP LOFAR em SP, com menor variância fold-wise — mais robusto a variações de partição.
+        \item \textbf{MEL e LOFAR são Complementares}: LOFAR maximiza LARGE/BG capturando raias harmônicas; MEL tende a favorecer SMALL pela integração de banda larga — padrões de erro opostos que motivam estratégias híbridas como trabalho futuro.
     \end{itemize}
 \end{frame}
 
@@ -900,6 +933,12 @@
 
         \bibitem{zhou2023}
         Zhou, A., et al. (2023). A novel cross-attention fusion-based joint training framework for robust underwater acoustic signal recognition. \textit{IEEE Transactions on Geoscience and Remote Sensing}, Vol. 61, Art. 4209516.
+
+        \bibitem{xu2023}
+        Xu, J., Xie, Y. \& Wang, W. (2023). Underwater acoustic target recognition based on smoothness-inducing regularization and spectrogram-based data augmentation. \textit{Ocean Engineering}, Vol. 281, Art. 114926.
+
+        \bibitem{chen2023survey}
+        Chen, Z., et al. (2023). A survey of underwater acoustic target recognition methods based on machine learning. \textit{Journal of Marine Science and Engineering}, Vol. 11, No. 2, Art. 384.
     \end{thebibliography}
 \end{frame}
 

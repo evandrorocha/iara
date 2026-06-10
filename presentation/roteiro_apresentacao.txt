@@ -1,0 +1,481 @@
+================================================================================
+ROTEIRO DE APRESENTAÇÃO — CLASSIFICAÇÃO ACÚSTICA SUBMARINA COM SVM
+Evandro Rocha | UFRJ/COPPE/PEE | Junho de 2026
+Tempo total estimado: ~20 minutos (~35–40 s por slide de conteúdo)
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 1 — Título]  (~30 s)
+--------------------------------------------------------------------------------
+Bom dia / Boa tarde. Meu nome é Evandro Rocha, sou aluno do PEE da COPPE/UFRJ.
+O trabalho que vou apresentar hoje é sobre classificação acústica submarina
+passiva em datasets de grande porte, com um estudo de caso no dataset IARA
+usando Support Vector Machines.
+
+--------------------------------------------------------------------------------
+[SLIDE 2 — Agenda]  (~30 s)
+--------------------------------------------------------------------------------
+A apresentação está organizada em seis partes. Começo introduzindo o contexto
+e o dataset. Em seguida, apresento as representações espectrais e o baseline
+do artigo de referência. Depois descrevo o método proposto, a trajetória de
+ajuste de hiperparâmetros, os resultados, e finalmente as conclusões e
+trabalhos futuros.
+
+================================================================================
+SEÇÃO 1 — INTRODUÇÃO E CONTEXTO
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 3 — Seção: Introdução]  (~10 s)
+--------------------------------------------------------------------------------
+Vamos começar pela introdução.
+
+--------------------------------------------------------------------------------
+[SLIDE 4 — Classificação Acústica Submarina (UATR)]  (~50 s)
+--------------------------------------------------------------------------------
+A tarefa central deste trabalho é o reconhecimento acústico de alvos
+submarinos, ou UATR. O objetivo é identificar embarcações a partir
+exclusivamente das suas assinaturas acústicas irradiadas pela água —
+sem câmeras, sem radar, só o som.
+
+Isso é relevante para monitoramento de tráfego naval, soberania nacional
+e até preservação ambiental — por exemplo, detectar navios que perturbam
+habitats marinhos.
+
+O problema é difícil. O canal acústico submarino é instável: temperatura,
+salinidade e densidade variam e distorcem o sinal. Há ainda multipath —
+o som reflete no fundo e na superfície — e ruído de fundo de fontes
+biológicas e meteorológicas.
+
+Do lado da literatura, o problema adicional é que a maioria dos trabalhos
+usa dados privados e datasets pequenos, o que dificulta a reprodução e
+a comparação justa entre modelos.
+
+--------------------------------------------------------------------------------
+[SLIDE 5 — SIMMAO: Plataformas e Trajetórias]  (~40 s)
+--------------------------------------------------------------------------------
+Os dados deste trabalho vêm do projeto PMPAS-BS da Petrobras, gerenciado
+pelo sistema SIMMAO — o Sistema de Medições e Modelagem Acústica Oceânica.
+
+Nesta figura, vocês podem ver as trajetórias dos sensores na Bacia de Santos:
+os gliders — sensores autônomos subaquáticos — e os observatórios fixos
+instalados no fundo do mar. O SIMMAO rastreia os navios via AIS e calcula
+o nível de pressão sonora em tempo real.
+
+--------------------------------------------------------------------------------
+[SLIDE 6 — Curadoria do Dataset IARA: Isolamento de Alvos]  (~45 s)
+--------------------------------------------------------------------------------
+Para que os áudios gravados correspondam exclusivamente ao navio-alvo,
+os autores Silva et al. adotaram um protocolo rigoroso de filtragem espacial.
+
+Um áudio só é incluído se o navio-alvo estiver dentro de uma distância
+máxima do sensor — 500 metros para os observatórios costeiros e 10 km para
+os gliders. Ao mesmo tempo, exige-se que não haja outros navios dentro de
+um raio de exclusão maior — 2 km e 30 km respectivamente.
+
+Além disso, cada gravação passa por análise espectral para confirmar o ganho
+de energia no momento de máxima aproximação, cruzamento de dados AIS em
+múltiplos bancos, e revisão manual auditiva. É um processo muito cuidadoso.
+
+--------------------------------------------------------------------------------
+[SLIDE 7 — O Dataset de Referência IARA]  (~45 s)
+--------------------------------------------------------------------------------
+O resultado desse processo de curadoria é o dataset IARA — uma das maiores
+bases públicas de acústica submarina do mundo.
+
+São 129 horas e 34 minutos de gravações, totalizando cerca de 50 GB.
+Para comparar: o ShipsEar, uma referência clássica da literatura, tem apenas
+3 horas; o DeepShip tem 47 horas. O IARA é significativamente maior.
+
+Os dados foram capturados por duas plataformas: os gliders, que fazem
+monitoramento oceânico móvel descendo até 1000 metros com taxa de 125 kHz;
+e os observatórios submarinos fixos, instalados entre 19 e 28 metros de
+profundidade em regiões costeiras de tráfego, com taxa de 48 kHz.
+
+--------------------------------------------------------------------------------
+[SLIDE 8 — Artigo de Referência: Silva et al. (IEEE Access, 2025)]  (~40 s)
+--------------------------------------------------------------------------------
+O artigo que introduz e documenta o dataset IARA é de autoria de Silva et al.,
+publicado na IEEE Access em 2025. É um trabalho de colaboração entre UFRJ,
+LNCC, IPqM da Marinha do Brasil e Petrobras.
+
+O artigo não só disponibiliza os dados como estabelece três baselines:
+Random Forest, MLP e CNN — avaliados com o mesmo protocolo experimental
+que usaremos aqui.
+
+--------------------------------------------------------------------------------
+[SLIDE 9 — Objetivo do Trabalho]  (~40 s)
+--------------------------------------------------------------------------------
+A MLP foi o modelo de melhor desempenho no artigo, com acurácia balanceada
+de 67,48% — os próprios autores afirmam isso no texto.
+
+O objetivo do nosso trabalho é complementar essa análise propondo um modelo
+baseado em SVM com aproximação de Nyström, avaliando-o com o mesmo protocolo
+do artigo e comparando diretamente com a MLP.
+
+--------------------------------------------------------------------------------
+[SLIDE 10 — Definição do Problema e Mapeamento de Classes]  (~40 s)
+--------------------------------------------------------------------------------
+O dataset IARA registra metadados AIS detalhados de cada navio — tipo,
+comprimento exato em metros, ID único. Mas como os tipos nominais são muito
+variados e inconsistentes, o artigo propõe um mapeamento baseado no
+comprimento físico.
+
+Classes com menos de 50 metros viram SMALL; entre 50 e 100 metros, MEDIUM;
+acima de 100 metros, LARGE; e gravações sem navio são BACKGROUND.
+
+Essa categorização tem uma base físico-acústica clara: o tamanho do navio
+influencia diretamente as frequências das raias harmônicas e o nível
+de ruído irradiado.
+
+--------------------------------------------------------------------------------
+[SLIDE 11 — Desafios Técnicos e Requisitos do Projeto]  (~40 s)
+--------------------------------------------------------------------------------
+Os desafios técnicos principais são três. Primeiro, atenuação e multipath
+distorcem as assinaturas propagadas pelo canal. Segundo, ruído oceânico
+mascara raias discretas de interesse. Terceiro, o dataset é desbalanceado:
+há muito mais gravações de navios LARGE e BACKGROUND do que de SMALL —
+e SMALL é justamente o alvo mais difícil e acusticamente mais fraco.
+
+Do lado dos requisitos, além da robustez ao ruído, usamos métricas de
+equilíbrio para não mascarar as falhas em classes minoritárias, e o
+modelo final deve ser leve o suficiente para viabilizar uso embarcado.
+
+================================================================================
+SEÇÃO 2 — REPRESENTAÇÃO ESPECTRAL, BASELINE E AVALIAÇÃO
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 12 — Seção: Representação Espectral]  (~10 s)
+--------------------------------------------------------------------------------
+Passemos agora para a representação espectral e o protocolo de avaliação.
+
+--------------------------------------------------------------------------------
+[SLIDE 13 — Extração de Características Espectrais]  (~50 s)
+--------------------------------------------------------------------------------
+O sinal bruto de sonar é convertido para o domínio tempo-frequência via STFT,
+gerando espectrogramas. Usamos dois extratores distintos.
+
+O MEL aplica um banco de 256 filtros triangulares em escala logarítmica,
+inspirado na percepção auditiva humana. Ele captura o envelope de banda larga
+— ruído de cavitação do hélice e ruído hidrodinâmico. É uma representação
+compacta e bem adequada a variações de energia global.
+
+O LOFAR é o espectro de banda estreita clássico do sonar passivo. Com 1024
+bins de frequência linear, ele resolve raias harmônicas finas — as frequências
+discretas emitidas por motores rotativos, eixos e engrenagens. É o padrão
+histórico na análise de sonar passivo naval.
+
+Os dois capturam fenômenos físicos diferentes e complementares.
+
+--------------------------------------------------------------------------------
+[SLIDE 14 — Técnicas de Normalização Espectral]  (~45 s)
+--------------------------------------------------------------------------------
+Ambos os extratores incorporam normalização para mitigar as variações de
+amplitude causadas pelo canal — distância, atenuação e ganho do sensor.
+
+Para o MEL, aplicamos normalização L2 em cada janela de 512 milissegundos.
+Dividimos o vetor pela sua norma euclidiana, de forma que o classificador
+avalia apenas a forma da distribuição de energia, não o volume absoluto.
+
+Para o LOFAR, usamos o filtro TPSW — Two-Pass Split Window. Ele estima o
+patamar local de ruído contínuo e o subtrai, realçando automaticamente as
+raias harmônicas. É equivalente a um branqueamento espectral local.
+
+--------------------------------------------------------------------------------
+[SLIDE 15 — Pipelines de Extração: MEL e LOFAR]  (~30 s)
+--------------------------------------------------------------------------------
+Nesta figura vemos os dois pipelines completos lado a lado. À esquerda,
+o pipeline MEL com normalização L2; à direita, o LOFAR com filtro TPSW.
+O vetor resultante — 256 dimensões para MEL e 1024 para LOFAR — é a entrada
+direta para os modelos de classificação.
+
+--------------------------------------------------------------------------------
+[SLIDE 16 — Arquitetura MLP de Referência (Silva et al., 2025)]  (~45 s)
+--------------------------------------------------------------------------------
+O baseline principal do artigo é a MLP. As duas variantes — MEL e LOFAR —
+compartilham a mesma topologia: camada de entrada, seguida de duas camadas
+ocultas com 32 e 16 neurônios, cada uma com batch normalization e ReLU,
+e saída com 4 classes.
+
+A diferença está na entrada — 256 para MEL e 1024 para LOFAR — e no dropout:
+a variante MEL usa dropout de 0,2 em ambas as camadas ocultas; a variante
+LOFAR não usa dropout.
+
+O treinamento usa Adam com learning rate 1e-4, weight decay 1e-3, batch de 32,
+com early stopping de paciência 8 épocas e máximo de 50. Reproduzimos esses
+resultados localmente e confirmamos a compatibilidade.
+
+--------------------------------------------------------------------------------
+[SLIDE 17 — Rigor Experimental: Validação Cruzada 5×2cv]  (~45 s)
+--------------------------------------------------------------------------------
+O protocolo de validação é o 5×2cv. Em cada uma das 5 repetições, dividimos
+o dataset em duas metades, treinamos em uma e testamos na outra, depois
+invertemos. Isso dá 10 folds no total.
+
+O ponto crítico é o isolamento por ID de navio: um mesmo navio físico nunca
+aparece simultaneamente no treino e no teste. Isso previne o data leakage
+temporal — sem isso, janelas do mesmo trânsito de navio contaminariam o teste.
+
+Esse protocolo garante que estamos avaliando a generalização real para alvos
+completamente inéditos.
+
+--------------------------------------------------------------------------------
+[SLIDE 18 — Figuras de Mérito]  (~45 s)
+--------------------------------------------------------------------------------
+Usamos três métricas. A principal é o Índice SP, que é a média geométrica
+dos recalls por classe. Ele penaliza duramente qualquer classe com recall zero,
+sendo ideal para datasets desbalanceados — não deixa a classe SMALL ser
+ignorada em favor das majoritárias.
+
+Complementamos com o F1-Score Macro, que incorpora também a precisão além
+do recall, e com a acurácia balanceada — a ACC — que usamos como referência,
+mas com menor peso, pois em bases desbalanceadas ela ainda pode ser inflada
+pelas classes majoritárias.
+
+================================================================================
+SEÇÃO 3 — MÉTODO PROPOSTO
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 19 — Seção: Método Proposto]  (~10 s)
+--------------------------------------------------------------------------------
+Passemos ao método proposto.
+
+--------------------------------------------------------------------------------
+[SLIDE 20 — Motivação: O SVM em Sonar Passivo]  (~40 s)
+--------------------------------------------------------------------------------
+O SVM é um clássico consolidado em classificação acústica submarina,
+tendo sido aplicado com sucesso em datasets como ShipsEar e DeepShip.
+Porém, esses datasets são muito menores — de 3 a 47 horas.
+
+O IARA, com 129 horas, é uma escala completamente diferente. E aqui está
+o problema: o SVM clássico com kernel RBF exige uma matriz de kernel N×N,
+com custo O(N³). Para o IARA, isso inviabiliza completamente o uso de RAM
+convencional. É aqui que entra a aproximação de Nyström.
+
+--------------------------------------------------------------------------------
+[SLIDE 21 — Entradas do SVM]  (~35 s)
+--------------------------------------------------------------------------------
+O SVM recebe como entrada os vetores de features já extraídos pelos pipelines
+MEL ou LOFAR. Avaliamos os dois modos em paralelo.
+
+O classificador processa cada janela de 512 milissegundos individualmente.
+No final, o rótulo do áudio completo é determinado por votação por consenso
+temporal sobre todas as janelas — a classe com mais votos vence.
+
+--------------------------------------------------------------------------------
+[SLIDE 22 — SVM com Aproximação de Nyström]  (~55 s)
+--------------------------------------------------------------------------------
+A aproximação de Nyström resolve o problema de escala de forma elegante.
+
+Em vez de calcular a matriz de kernel completa N×N — que para o IARA
+exigiria 1 terabyte de RAM — selecionamos m amostras de referência do
+conjunto de treino, chamadas de landmarks. Cada janela de treinamento
+é então mapeada para um vetor m-dimensional calculando sua similaridade RBF
+com cada um dos m landmarks.
+
+O resultado é uma projeção implícita de baixo rank que aproxima o kernel RBF.
+Com m=4000 para MEL, o consumo de memória cai para cerca de 8 GB — viável
+em hardware de pesquisa.
+
+O treinamento usa um classificador linear com SGD sobre essa projeção,
+reduzindo a complexidade de O(N³) para O(N·m²). O modelo final ocupa
+menos de 100 KB — apenas o vetor de pesos linear.
+
+--------------------------------------------------------------------------------
+[SLIDE 23 — Visualização: Seleção de Landmarks]  (~35 s)
+--------------------------------------------------------------------------------
+Os landmarks são selecionados por amostragem uniforme aleatória das janelas
+de treino. Com 500 mil janelas e m=4000, o sorteio aleatório em larga escala
+cobre bem a densidade real de todas as classes. Tentamos também usar
+centroides de clustering via MiniBatchKMeans, mas os resultados foram
+equivalentes — e o custo de clustering não se justificou.
+
+--------------------------------------------------------------------------------
+[SLIDE 24 — Kernel RBF com Nyström]  (~35 s)
+--------------------------------------------------------------------------------
+A geometria é a seguinte: no espaço original de 256 dimensões, os dados
+acústicos são altamente não-lineares e misturados. A projeção de Nyström
+mapeia cada amostra para um espaço de 4000 dimensões — onde as classes
+se tornam separáveis por um hiperplano linear. É exatamente o kernel trick
+do SVM clássico, mas implementado de forma aproximada e escalável.
+
+================================================================================
+SEÇÃO 4 — TRAJETÓRIA DE ESCALONAMENTO
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 25 — Seção: Trajetória de Escalonamento]  (~10 s)
+--------------------------------------------------------------------------------
+Vamos agora à trajetória de ajuste de hiperparâmetros.
+
+--------------------------------------------------------------------------------
+[SLIDE 26 — Sintonia de Kernel e Complexidade (m)]  (~55 s)
+--------------------------------------------------------------------------------
+O principal hiperparâmetro é m — o número de landmarks. Escalamos de 300
+até 6000 e observamos dinâmicas distintas para MEL e LOFAR.
+
+Com m=300, o desempenho é modesto — cerca de 61% de SP para MEL. O espaço
+projetado é insuficiente para capturar as não-linearidades acústicas.
+
+Na fase intermediária, de m=1000 a m=3000, o MEL supera o LOFAR
+consistentemente. A representação de banda larga se beneficia mais
+rapidamente do aumento de landmarks.
+
+Em m=4000, o MEL estabiliza com SP de 64,56% e variância reduzida.
+Ganhos adicionais são negligenciáveis.
+
+Já o LOFAR continua evoluindo além de m=4000. As raias harmônicas finas
+exigem maior capacidade de representação. Em m=6000, o LOFAR alcança
+acurácia balanceada de 65,48% — ultrapassa o MEL e replica o padrão
+observado na MLP, onde LOFAR também foi melhor.
+
+--------------------------------------------------------------------------------
+[SLIDE 27 — Ajuste de C, γ e Regularização: Impacto Marginal]  (~55 s)
+--------------------------------------------------------------------------------
+Além de m, testamos outros hiperparâmetros — e o resultado foi claro:
+nenhum trouxe ganho.
+
+Para o C, a penalidade de margem: valores muito baixos como 0,5 para MEL
+ou 0,1 para LOFAR degradam muito o SP. Valores maiores como 2,0 não
+superam o padrão C=1. A margem ótima já está no valor padrão.
+
+Para gamma, a largura do kernel RBF: o padrão do sklearn, que é 1 dividido
+pela dimensão de entrada, mostrou-se o melhor. Variações reduziram a
+separabilidade em ambos os espectros.
+
+Para o ElasticNet, ajustes na proporção L1/L2 também não trouxeram ganhos.
+
+E a substituição dos landmarks aleatórios por centroides MiniBatchKMeans —
+que esperávamos que cobrisse melhor o espaço — produziu resultados
+equivalentes ao Nyström padrão.
+
+A conclusão é direta: o ganho veio exclusivamente do aumento de m.
+Mais landmarks significam projeção mais fiel ao kernel RBF e fronteiras
+de decisão mais precisas.
+
+================================================================================
+SEÇÃO 5 — RESULTADOS GERAIS
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 28 — Seção: Resultados Gerais]  (~10 s)
+--------------------------------------------------------------------------------
+Vamos agora aos resultados.
+
+--------------------------------------------------------------------------------
+[SLIDE 29 — Benchmarking: SVM vs. MLP]  (~55 s)
+--------------------------------------------------------------------------------
+Esta tabela compara os melhores modelos. Temos dois grupos: o artigo de
+referência e nossa reprodução do MLP; e os modelos SVM propostos.
+
+Primeiro, a reprodução: nosso MLP LOFAR reproduzido alcançou SP de 66,25%
+e acurácia balanceada de 67,21% — menos de 0,3 ponto percentual de diferença
+do artigo original. Isso confirma que estamos usando o mesmo protocolo e que
+os resultados são reproduzíveis.
+
+Nosso SVM MEL com m=4000 alcança SP de 63,80% e acurácia balanceada de
+64,58% — com variância 38% menor que o MLP MEL. O SVM LOFAR com m=6000
+alcança SP de 63,84% e acurácia de 65,48% — a apenas 2,7 pontos percentuais
+do melhor baseline MLP LOFAR.
+
+Ou seja: o SVM proposto é competitivo com a MLP, apresentando menor variância
+fold-wise — o que indica maior estabilidade e menor sensibilidade às
+partições dos dados.
+
+--------------------------------------------------------------------------------
+[SLIDE 30 — Matrizes de Confusão — Nível de Áudio]  (~60 s)
+--------------------------------------------------------------------------------
+As matrizes de confusão revelam nuances importantes que as métricas globais
+não capturam.
+
+O alvo mais difícil é o SMALL. Olhando a diagonal: MLP MEL acerta 44,8%
+dos SMALL; MLP LOFAR acerta 46,6%; SVM MEL acerta 50,9%; SVM LOFAR acerta
+apenas 38,2%.
+
+O SVM MEL é o melhor modelo para o alvo SMALL — supera até o melhor
+baseline do artigo em cerca de 4 pontos percentuais.
+
+Observamos também um padrão de confusão distinto por espectro: modelos LOFAR
+confundem SMALL com LARGE; modelos MEL confundem SMALL com MEDIUM. Isso
+sugere que LOFAR e MEL são complementares — um capta informações que o
+outro não capta. LARGE e BACKGROUND são bem classificados por todos os
+modelos, acima de 69% e 77% respectivamente.
+
+================================================================================
+SEÇÃO 6 — CONCLUSÕES E TRABALHOS FUTUROS
+================================================================================
+
+--------------------------------------------------------------------------------
+[SLIDE 31 — Seção: Conclusões]  (~10 s)
+--------------------------------------------------------------------------------
+Passemos às conclusões.
+
+--------------------------------------------------------------------------------
+[SLIDE 32 — Conclusões do Trabalho]  (~45 s)
+--------------------------------------------------------------------------------
+Como resultado deste trabalho, concluímos três pontos principais.
+
+Primeiro: o SVM Nyström é competitivo e estável. O SVM LOFAR alcança SP de
+63,8% e acurácia de 65,5%, frente ao MLP LOFAR com SP de 66,5% e ACC de
+67,5% — um gap de apenas 2,7 pontos percentuais, com desvio padrão menor.
+
+Segundo: o SVM MEL supera a MLP no alvo mais difícil. Com 50,9% de recall
+para SMALL, contra 46,6% do MLP LOFAR — uma vantagem concreta no alvo
+que mais importa.
+
+Terceiro: LOFAR e MEL são complementares. LOFAR maximiza LARGE e BACKGROUND;
+MEL favorece SMALL. Isso motiva estratégias de fusão como trabalho futuro.
+
+--------------------------------------------------------------------------------
+[SLIDE 33 — Trabalhos Futuros]  (~45 s)
+--------------------------------------------------------------------------------
+Para trabalhos futuros, propomos três direções.
+
+A primeira é uma estratégia híbrida de dois estágios: usar classificadores
+especialistas focados nas classes de menor recall — SMALL e MEDIUM —
+combinando as forças complementares de LOFAR e MEL. Os resultados
+preliminares que obtivemos são promissores.
+
+A segunda é explorar outras técnicas de extração de características.
+O DEMON — que captura a modulação de amplitude causada pelas pás do hélice —
+e os coeficientes cepstrais MFCC capturam fenômenos físicos que LOFAR
+e MEL não cobrem, e podem ajudar especialmente o alvo SMALL.
+
+A terceira é avaliar modelos com dinâmica temporal, como GRU e LSTM.
+O SVM usa um vetor fixo médio por áudio e descarta a sequência temporal.
+Um modelo recorrente processa os frames espectrais em ordem, potencialmente
+capturando os ciclos do hélice e os ritmos do maquinário que identificam
+o tamanho e tipo do navio.
+
+--------------------------------------------------------------------------------
+[SLIDE 34 — Referências]  (~15 s)
+--------------------------------------------------------------------------------
+Aqui estão as referências bibliográficas do trabalho.
+
+--------------------------------------------------------------------------------
+[ENCERRAMENTO]  (~20 s)
+--------------------------------------------------------------------------------
+É isso. Agradeço a atenção. Fico à disposição para perguntas.
+
+================================================================================
+RESUMO DE TEMPO ESTIMADO
+================================================================================
+
+Seção 1 — Introdução e Contexto:          ~5 min 30 s   (slides 1–11)
+Seção 2 — Representação e Avaliação:      ~5 min         (slides 12–18)
+Seção 3 — Método Proposto:                ~3 min 30 s   (slides 19–24)
+Seção 4 — Trajetória de Escalonamento:    ~2 min         (slides 25–27)
+Seção 5 — Resultados:                     ~2 min 30 s   (slides 28–30)
+Seção 6 — Conclusões e Futuros:           ~2 min         (slides 31–34)
+---------------------------------------------------------------------------
+TOTAL ESTIMADO:                           ~20 min 30 s
+
+DICA: Caso esteja passando do tempo, os slides mais encurtáveis são:
+- Slide 6 (Curadoria): pode suprimir detalhes de raio
+- Slide 14 (Normalização): pode resumir a uma frase por técnica
+- Slide 17 (5×2cv): pode focar só no isolamento de navios
+- Slide 23 (Landmarks): pode integrar com slide 22
+
+================================================================================

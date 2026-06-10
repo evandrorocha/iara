@@ -1,0 +1,416 @@
+\documentclass[a4paper,12pt]{article}
+
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage[a4paper, top=2.5cm, bottom=2.5cm, left=3cm, right=2.5cm]{geometry}
+\usepackage{setspace}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{colortbl}
+\usepackage{array}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{cite}
+\usepackage{titlesec}
+\usepackage{abstract}
+
+\onehalfspacing
+
+\titleformat{\section}{\normalfont\large\bfseries}{\thesection.}{0.5em}{}
+\titleformat{\subsection}{\normalfont\normalsize\bfseries}{\thesubsection.}{0.5em}{}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=black,
+    citecolor=black,
+    urlcolor=blue
+}
+
+\definecolor{higreen}{rgb}{0.7,1.0,0.7}
+\definecolor{hiyellow}{rgb}{1.0,1.0,0.6}
+\definecolor{hired}{rgb}{1.0,0.85,0.85}
+
+% ====================================================================
+\title{\textbf{Classificação Acústica Submarina Passiva em Base de Dados de Grande Porte: Estudo de Caso no Dataset IARA com SVM Gaussiano via Aproximação de Nyström}}
+\author{Evandro Rocha\\
+\small Universidade Federal do Rio de Janeiro — UFRJ/COPPE/PEE\\
+\small \texttt{evandro.rocha@coppe.ufrj.br}}
+\date{Junho de 2026}
+% ====================================================================
+
+\begin{document}
+\maketitle
+
+% ====================================================================
+\begin{abstract}
+\noindent
+Este trabalho propõe e avalia o uso de \textit{Support Vector Machines} (SVM) com kernel Gaussiano (RBF) aproximado pela técnica de Nyström para a classificação acústica submarina passiva na base de dados de grande escala IARA (\textit{Silva et al.}, 2025). O dataset IARA, com 129 horas e 34 minutos de gravações reais de tráfego marítimo na Bacia de Santos, representa um dos maiores repositórios públicos de acústica submarina do mundo. O modelo proposto é comparado diretamente com a MLP — baseline de melhor desempenho do artigo de referência —, utilizando o protocolo de validação cruzada $5\times2$cv com isolamento de navios. Dois extratores espectrais são avaliados: espectrograma Mel (MEL, 256 bandas) e análise de banda estreita LOFAR (1024 bins). Os resultados demonstram que o SVM Nyström é uma alternativa competitiva e estável à MLP, com menor variância fold-wise e vantagem na classe minoritária SMALL — o alvo de maior dificuldade acústica. A aproximação de Nyström viabiliza o treinamento em escala massiva, reduzindo o custo de memória de terabytes para grandezas compatíveis com hardware de pesquisa convencional.
+
+\medskip
+\noindent\textbf{Palavras-chave:} SVM, Nyström, LOFAR, MEL, classificação acústica, sonar passivo, IARA.
+\end{abstract}
+
+% ====================================================================
+\section{Introdução}
+
+A classificação acústica de alvos submarinos (UATR — \textit{Underwater Acoustic Target Recognition}) consiste em identificar embarcações a partir de suas assinaturas acústicas irradiadas pelo meio aquático, sem qualquer auxílio visual ou de radar. Trata-se de uma tarefa com aplicações diretas em monitoramento de tráfego naval, soberania nacional e preservação ambiental.
+
+O problema é intrinsecamente difícil: o canal acústico submarino sofre atenuação variável com temperatura, salinidade e densidade; efeitos de \textit{multipath} (reflexões no fundo e na superfície do oceano) distorcem as assinaturas; e ruído ambiental de origem biológica e meteorológica compete com o sinal de interesse. Agravando o cenário, a literatura da área opera predominantemente com bases de dados fechadas ou de pequeno porte, dificultando a reprodutibilidade e a comparação justa entre modelos.
+
+O dataset IARA~\cite{silva2025}, publicado em 2025 na IEEE Access, representa um avanço significativo neste contexto: é uma base pública com 129h 34min de gravações reais de tráfego marítimo na Bacia de Santos, capturadas por gliders oceânicos e observatórios submarinos fixos no âmbito do Projeto de Monitoramento da Paisagem Acústica Submarina da Bacia de Santos (PMPAS-BS) da Petrobras. Os autores estabeleceram baselines com Random Forest, MLP e CNN, sendo a MLP LOFAR o modelo de melhor desempenho (Acurácia Balanceada: $67{,}48\% \pm 1{,}24\%$).
+
+O SVM com kernel RBF é um classificador clássico consolidado em UATR, com aplicações documentadas em bases como ShipsEar~\cite{shipsear} e DeepShip~\cite{deepship}. Contudo, o custo computacional do SVM clássico — $O(N^3)$ e memória $O(N^2)$ — inviabiliza sua aplicação direta ao IARA: para $N \approx 500.000$ janelas espectrais (MEL), a matriz de kernel exigiria aproximadamente 1 TB de RAM.
+
+Este trabalho investiga se o SVM com aproximação de Nyström~\cite{nystrom} — que reduz o custo para $O(N \cdot m^2)$ selecionando $m$ landmarks — constitui uma alternativa viável, competitiva e estável frente à MLP na base IARA.
+
+% ====================================================================
+\section{Base de Dados e Curadoria}
+
+\subsection{Dataset IARA}
+
+O dataset IARA contém 1.825 áudios contínuos de 2 a 5 minutos, totalizando $\approx$50 GB de gravações. Duas plataformas de captura foram utilizadas: \textit{gliders} oceânicos autônomos (taxa de 125 kHz, até 1000 m de profundidade) e observatórios submarinos fixos em regiões costeiras (taxa de 48 kHz, 19–28 m de profundidade). Para comparação de escala: a base ShipsEar possui 3h 9min e a DeepShip, 47h 4min.
+
+\subsection{Curadoria e Isolamento de Alvos}
+
+Para garantir que cada gravação corresponda unicamente ao navio-alvo, os autores adotaram filtragem espacial baseada em dados AIS (\textit{Automatic Identification System}): um áudio é incluído apenas se o navio-alvo estiver dentro de distância máxima do sensor (500\,m para observatórios costeiros; 10\,km para gliders) e não houver outros navios dentro de um raio de exclusão (2\,km e 30\,km, respectivamente). Cada gravação passou por análise espectral, cruzamento de dados AIS em múltiplos bancos e revisão manual humana.
+
+\subsection{Mapeamento de Classes}
+
+Os metadados AIS fornecem o comprimento físico exato de cada embarcação. O artigo de referência propõe um mapeamento de quatro classes baseado no comprimento — alinhado com os limiares do ShipsEar:
+\begin{itemize}
+    \item \textbf{SMALL}: comprimento $< 50$\,m (embarcações pequenas, baixo SNR);
+    \item \textbf{MEDIUM}: $50 \leq$ comprimento $< 100$\,m;
+    \item \textbf{LARGE}: comprimento $\geq 100$\,m (navios de grande porte);
+    \item \textbf{BACKGROUND}: ausência de navio (ruído oceânico ambiental).
+\end{itemize}
+
+O dataset apresenta desbalanceamento de classes, com predominância de LARGE e BACKGROUND. A classe SMALL, minoritária e acusticamente mais fraca, constitui o principal desafio aberto do problema.
+
+% ====================================================================
+\section{Extração de Características Espectrais}
+
+\subsection{Representações Espectrais}
+
+O sinal bruto de sonar é convertido para o domínio tempo-frequência via STFT. Dois extratores são avaliados:
+
+\textbf{MEL}: banco de 256 filtros triangulares em escala logarítmica (Mel), que captura o envelope de banda larga — ruído de cavitação do hélice e ruído hidrodinâmico. Produz janelas de 0,512\,s, resultando em $\approx$500.000 janelas por corpus completo.
+
+\textbf{LOFAR}: espectro de banda estreita com 1024 bins de frequência linear, padrão histórico de sonar passivo naval. Resolve raias harmônicas finas emitidas por motores rotativos, eixos e engrenagens. Usa janelas de $\approx$0,058\,s (alta sobreposição temporal), produzindo $\approx$800.000 janelas por corpus.
+
+Os dois extratores capturam fenômenos físicos distintos e complementares: MEL privilegia energia integrada de banda larga; LOFAR privilegia estrutura discreta de harmônicas.
+
+\subsection{Normalização Espectral}
+
+Ambos os extratores incorporam normalização para mitigar variações de amplitude causadas pelo canal acústico (distância, atenuação, ganho do sensor):
+
+\textbf{Normalização L2 (MEL)}: cada janela é dividida por sua norma euclidiana:
+\begin{equation}
+    \bar{x} = \frac{x}{\|x\|_2}
+\end{equation}
+O classificador avalia apenas a forma da distribuição de energia, não o volume absoluto.
+
+\textbf{Filtro TPSW (LOFAR)}: o algoritmo \textit{Two-Pass Split Window}~\cite{nielsen1994} estima o patamar local de ruído oceânico contínuo e o subtrai, realçando automaticamente as raias harmônicas. Equivale a um branqueamento espectral local adaptativo.
+
+% ====================================================================
+\section{Baseline: MLP de Referência (Silva et al., 2025)}
+
+O artigo de referência estabelece três baselines — RF, MLP e CNN — avaliados em MEL e LOFAR. A MLP foi o melhor modelo. Sua arquitetura para ambas as variantes consiste em:
+
+\begin{center}
+\begin{tabular}{lll}
+\toprule
+\textbf{Camada} & \textbf{MLP MEL} & \textbf{MLP LOFAR} \\
+\midrule
+Entrada        & 256 features    & 1024 features \\
+FC + BN + ReLU & 32 neurônios    & 32 neurônios \\
+Dropout        & $p = 0{,}2$     & --- (sem dropout) \\
+FC + BN + ReLU & 16 neurônios    & 16 neurônios \\
+Dropout        & $p = 0{,}2$     & --- (sem dropout) \\
+Saída          & Sigmoid (4 classes) & Sigmoid (4 classes) \\
+\bottomrule
+\end{tabular}
+\end{center}
+
+Protocolo de treinamento: Adam ($\eta=10^{-4}$, \textit{weight decay} $=10^{-3}$), CrossEntropyLoss, \textit{batch} = 32, \textit{early stopping} com paciência de 8 épocas (máximo 50). Este trabalho reproduziu o experimento localmente e confirmou compatibilidade: MLP LOFAR reproduzida obteve SP $66{,}25\% \pm 1{,}78\%$ e Ac. Bal. $67{,}21\% \pm 1{,}65\%$, diferença inferior a 0,3\,p.p.\ do artigo.
+
+% ====================================================================
+\section{Método Proposto: SVM com Aproximação de Nyström}
+
+\subsection{Motivação e Escalabilidade}
+
+O SVM com kernel RBF resolve o problema de classificação em um espaço de alta dimensão implícito definido pela função de kernel $k(x_i, x_j) = \exp(-\gamma \|x_i - x_j\|^2)$. Para o IARA com $N \approx 500.000$ janelas (MEL), a matriz de kernel $N \times N$ exigiria:
+\begin{equation}
+    500.000 \times 500.000 \times 4\,\text{bytes} = 1\,\text{TB de RAM}
+\end{equation}
+Este custo é proibitivo. A complexidade de tempo $O(N^3)$ do SVM dual é igualmente inviável.
+
+\subsection{Aproximação de Nyström}
+
+A aproximação de Nyström~\cite{nystrom} seleciona $m \ll N$ amostras de referência (landmarks) do conjunto de treino. Cada amostra $x$ é projetada para um vetor $m$-dimensional:
+\begin{equation}
+    \phi(x) = K(x, L) \, K_{LL}^{-1/2} \in \mathbb{R}^m
+\end{equation}
+onde $L \in \mathbb{R}^{m \times d}$ é a matriz de landmarks e $K_{LL}$ é a submatriz de kernel entre os landmarks. Esta projeção aproxima implicitamente o espaço de características do kernel RBF.
+
+\textbf{Custo de memória}: a base de treinamento projetada ($N \times m$ floats) domina o consumo. Para MEL com $m=4000$: $500.000 \times 4.000 \times 4$\,B $\approx$ 8\,GB — viável em hardware de pesquisa.
+
+\textbf{Custo de tempo}: reduzido de $O(N^3)$ para $O(N \cdot m^2)$, permitindo treinamento via classificador linear com SGD (\textit{hinge loss}, equivalente ao SVM primal). O modelo final armazena apenas o vetor de pesos ($4 \times m$ floats $<$ 100\,KB).
+
+\subsection{Seleção de Landmarks}
+
+Os $m$ landmarks são selecionados por amostragem uniforme aleatória das janelas de treino. Testou-se também seleção via centroides MiniBatchKMeans — esperando-se melhor cobertura do espaço de características — mas os resultados foram equivalentes à amostragem aleatória, sem justificar o custo adicional de clustering.
+
+\subsection{Decisão por Votação Temporal}
+
+O modelo classifica cada janela espectral individualmente. O rótulo final de cada arquivo de áudio é determinado por votação por consenso temporal: a classe com maior frequência de predição entre todas as janelas do áudio.
+
+\subsection{Regularização ElasticNet}
+
+O classificador linear SGD incorpora regularização ElasticNet — combinação de $\ell_1$ e $\ell_2$:
+\begin{equation}
+    \mathcal{L} = \text{HingeLoss} + \alpha \left[ \frac{1-\rho}{2} \|w\|_2^2 + \rho \|w\|_1 \right]
+\end{equation}
+onde $\rho$ é a razão $\ell_1/\ell_2$ (padrão: $\rho = 0{,}15$). Isso permite esparsidade controlada nos pesos sem degradar a capacidade de generalização.
+
+% ====================================================================
+\section{Protocolo Experimental}
+
+\subsection{Validação Cruzada $5\times2$cv}
+
+Adotou-se o protocolo $5\times2$cv~\cite{alpaydin1999}: em cada uma das 5 repetições, o dataset é dividido em duas metades (A e B), treinando-se em A e testando em B, depois invertendo. Totalizam-se 10 folds independentes.
+
+\textbf{Isolamento de navios}: a partição é feita por ID físico de navio — o mesmo navio nunca aparece simultaneamente em treino e teste. Isso previne vazamento de dados (\textit{data leakage}) temporal e garante avaliação real de generalização para alvos completamente inéditos.
+
+\subsection{Métricas de Avaliação}
+
+\textbf{Índice SP} (métrica principal): média geométrica e aritmética combinada dos recalls por classe:
+\begin{equation}
+    SP = \sqrt[K]{\prod_{k=1}^{K} Recall_k}
+\end{equation}
+Para $K=4$ classes. Se qualquer $Recall_k = 0$, então $SP = 0$. Penaliza duramente falhas em qualquer classe, especialmente minorias.
+
+\textbf{Acurácia Balanceada (ACC)}: média aritmética dos recalls por classe — equivale à acurácia balanceada implementada em \texttt{iara.ml.metrics.Metric.BALANCED\_ACCURACY}.
+
+\textbf{F1-Score Macro}: média dos F1 por classe, incorporando precisão além do recall.
+
+% ====================================================================
+\section{Ajuste de Hiperparâmetros}
+
+\subsection{Número de Landmarks ($m$)}
+
+O hiperparâmetro mais impactante é $m$. A Tabela~\ref{tab:m_sweep} resume a curva de desempenho do SVM ao escalar $m$ de 300 a 6000.
+
+\begin{table}[ht]
+\centering
+\caption{Desempenho do SVM em função do número de landmarks $m$.}
+\label{tab:m_sweep}
+\begin{tabular}{clcc}
+\toprule
+$m$ & Espectro & SP (\%) & Ac. Bal. (\%) \\
+\midrule
+300   & MEL   & $59{,}96 \pm 3{,}38$ & $62{,}34 \pm 1{,}98$ \\
+1000  & MEL   & $62{,}96 \pm 2{,}08$ & $64{,}11 \pm 1{,}98$ \\
+2000  & MEL   & $63{,}04 \pm 2{,}37$ & $64{,}45 \pm 1{,}93$ \\
+3000  & MEL   & $63{,}65 \pm 1{,}99$ & $64{,}77 \pm 1{,}87$ \\
+\textbf{4000} & \textbf{MEL} & $\mathbf{63{,}80 \pm 1{,}12}$ & $\mathbf{64{,}58 \pm 1{,}14}$ \\
+\midrule
+1000  & LOFAR & $57{,}86 \pm 3{,}83$ & $60{,}95 \pm 2{,}89$ \\
+2000  & LOFAR & $60{,}10 \pm 2{,}25$ & $62{,}54 \pm 1{,}98$ \\
+4000  & LOFAR & $61{,}70 \pm 3{,}67$ & $63{,}55 \pm 2{,}91$ \\
+\textbf{6000} & \textbf{LOFAR} & $\mathbf{63{,}84 \pm 1{,}91}$ & $\mathbf{65{,}48 \pm 1{,}76}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Observa-se que na fase intermediária ($m = 1000$--$3000$), o MEL supera o LOFAR consistentemente — a representação de banda larga se beneficia mais rapidamente do aumento de landmarks. O MEL estabiliza em $m=4000$ com variância reduzida ($\sigma = 1{,}12\%$). O LOFAR, por operar em espaço de maior dimensionalidade (1024 features), exige mais pontos de referência para aproximar as raias harmônicas finas, continuando a melhorar até $m=6000$.
+
+\subsection{Penalidade $C$, Largura $\gamma$ e Regularização ElasticNet}
+
+Variações nos demais hiperparâmetros não produziram ganhos sobre os valores padrão:
+
+\begin{itemize}
+    \item \textbf{Penalidade $C$}: $C=0{,}5$ (MEL) reduz SP para $57{,}5\%$; $C=2{,}0$ alcança $63{,}8\%$ — ganho de $< 0{,}1$\,p.p.\ sobre $C=1$. Para LOFAR, $C=0{,}1$ derruba SP para $54{,}8\%$; $C=2{,}0$ é praticamente idêntico ao padrão.
+    \item \textbf{Largura $\gamma$}: o padrão \texttt{sklearn} ($\gamma = 1/d$) mostrou-se ótimo. Variações reduziram a separabilidade em ambos os espectros.
+    \item \textbf{Razão ElasticNet ($\ell_1/\ell_2$)}: ajustes na proporção não trouxeram ganhos sobre $\rho = 0{,}15$.
+    \item \textbf{Landmarks MiniBatchKMeans}: centroides de clustering como landmarks produziram resultados equivalentes à amostragem aleatória; o custo de clustering não se justificou.
+\end{itemize}
+
+A conclusão é direta: \textbf{o ganho de desempenho veio exclusivamente do aumento de $m$}.
+
+% ====================================================================
+\section{Resultados}
+
+\subsection{Comparação Global: SVM vs.\ Baselines}
+
+A Tabela~\ref{tab:resultados} consolida os resultados dos melhores modelos.
+
+\begin{table}[ht]
+\centering
+\caption{Benchmarking dos melhores modelos — protocolo $5\times2$cv.}
+\label{tab:resultados}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{llccc}
+\toprule
+\textbf{Origem} & \textbf{Modelo / Espectro} & \textbf{SP (\%)} & \textbf{Ac. Bal. (\%)} & \textbf{F1 Macro (\%)} \\
+\midrule
+\multirow{4}{*}{Artigo~\cite{silva2025}}
+    & RF / MEL    & $62{,}22 \pm 1{,}86$ & $62{,}64 \pm 1{,}84$ & $63{,}79 \pm 1{,}73$ \\
+    & RF / LOFAR  & $56{,}92 \pm 1{,}69$ & $58{,}87 \pm 1{,}68$ & $58{,}00 \pm 1{,}41$ \\
+    & MLP / MEL   & $63{,}38 \pm 1{,}81$ & $64{,}51 \pm 1{,}75$ & $62{,}89 \pm 1{,}68$ \\
+    & \textbf{MLP / LOFAR} & $\mathbf{66{,}51 \pm 1{,}39}$ & $\mathbf{67{,}48 \pm 1{,}24}$ & $\mathbf{66{,}72 \pm 1{,}17}$ \\
+\midrule
+\multirow{2}{*}{Reproduzido}
+    & MLP / MEL   & $64{,}66 \pm 2{,}11$ & $65{,}64 \pm 1{,}96$ & $64{,}12 \pm 2{,}19$ \\
+    & MLP / LOFAR & $66{,}25 \pm 1{,}78$ & $67{,}21 \pm 1{,}65$ & $66{,}44 \pm 1{,}88$ \\
+\midrule
+\multirow{2}{*}{\textbf{Proposto}}
+    & \textbf{SVM ($m$=4000) / MEL}   & $\mathbf{63{,}80 \pm 1{,}12}$ & $\mathbf{64{,}58 \pm 1{,}14}$ & $\mathbf{64{,}36 \pm 1{,}05}$ \\
+    & \textbf{SVM ($m$=6000) / LOFAR} & $\mathbf{63{,}84 \pm 1{,}91}$ & $\mathbf{65{,}48 \pm 1{,}76}$ & $\mathbf{63{,}60 \pm 1{,}71}$ \\
+\bottomrule
+\end{tabular}}
+\end{table}
+
+Observações principais:
+\begin{itemize}
+    \item A reprodução da MLP LOFAR confirma o protocolo: diferença $< 0{,}3$\,p.p.\ em todas as métricas.
+    \item O SVM MEL alcança SP equivalente ao MLP MEL ($63{,}80\%$ vs.\ $63{,}38\%$) com variância 38\% menor ($\sigma = 1{,}12\%$ vs.\ $1{,}81\%$).
+    \item O SVM LOFAR fica a apenas \textbf{2,67\,p.p.} do MLP LOFAR em SP, sem uso de PCA.
+    \item O RF LOFAR (SP $56{,}92\%$) é o baseline mais fraco, confirmando a limitação de florestas aleatórias em espaços de alta dimensionalidade como o LOFAR.
+\end{itemize}
+
+\subsection{Análise de Erros: Matrizes de Confusão}
+
+A Tabela~\ref{tab:confusao} apresenta as matrizes de confusão por modelo (percentual por linha = recall por classe). Os valores são acumulados sobre os 10 folds do protocolo $5\times2$cv, na avaliação por navio (votação majoritária).
+
+\begin{table}[ht]
+\centering
+\caption{Matrizes de confusão por modelo (\%). Verde: recall $\geq 60\%$; Amarelo: $40\%$--$59\%$; Vermelho: $< 40\%$ ou erro off-diagonal $> 22\%$.}
+\label{tab:confusao}
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\caption{MLP LOFAR (Melhor Baseline)}
+\begin{tabular}{r|cccc}
+       & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+\textbf{SMALL}  & \cellcolor{hiyellow}46,6 & 21,2 & \cellcolor{hired}25,3 & 7,0 \\
+\textbf{MEDIUM} & \cellcolor{hired}22,6 & \cellcolor{higreen}61,3 & 13,8 & 2,3 \\
+\textbf{LARGE}  & 12,8 & 10,0 & \cellcolor{higreen}74,7 & 2,5 \\
+\textbf{BG}     & 7,3 & 3,8 & 2,6 & \cellcolor{higreen}86,3 \\
+\end{tabular}
+\end{subtable}
+\hfill
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\caption{SVM MEL ($m$=4000, Proposto)}
+\begin{tabular}{r|cccc}
+       & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+\textbf{SMALL}  & \cellcolor{hiyellow}50,9 & \cellcolor{hired}24,3 & 17,6 & 7,2 \\
+\textbf{MEDIUM} & \cellcolor{hired}26,0 & \cellcolor{higreen}60,4 & 12,5 & 1,1 \\
+\textbf{LARGE}  & 14,9 & 13,6 & \cellcolor{higreen}69,2 & 2,3 \\
+\textbf{BG}     & 11,0 & 4,9 & 6,2 & \cellcolor{higreen}77,9 \\
+\end{tabular}
+\end{subtable}
+
+\vspace{0.3cm}
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\caption{SVM LOFAR ($m$=6000, Proposto)}
+\begin{tabular}{r|cccc}
+       & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+\textbf{SMALL}  & \cellcolor{hired}38,2 & 22,9 & \cellcolor{hired}28,6 & 10,3 \\
+\textbf{MEDIUM} & 17,6 & \cellcolor{higreen}60,5 & 17,2 & 4,8 \\
+\textbf{LARGE}  & 9,3 & 10,8 & \cellcolor{higreen}76,3 & 3,6 \\
+\textbf{BG}     & 6,1 & 2,8 & 4,2 & \cellcolor{higreen}86,9 \\
+\end{tabular}
+\end{subtable}
+\hfill
+\begin{subtable}[t]{0.48\linewidth}
+\centering
+\caption{MLP MEL (Baseline)}
+\begin{tabular}{r|cccc}
+       & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
+\textbf{SMALL}  & \cellcolor{hiyellow}44,8 & \cellcolor{hired}25,4 & 17,9 & 11,8 \\
+\textbf{MEDIUM} & 20,4 & \cellcolor{higreen}64,0 & 13,1 & 2,5 \\
+\textbf{LARGE}  & 12,9 & 15,0 & \cellcolor{higreen}68,6 & 3,6 \\
+\textbf{BG}     & 6,1 & 3,8 & 5,0 & \cellcolor{higreen}85,1 \\
+\end{tabular}
+\end{subtable}
+\end{table}
+
+A análise das matrizes revela padrões de erro distintos e complementares entre os espectros:
+
+\begin{itemize}
+    \item \textbf{SMALL é o alvo crítico}: o melhor recall individual é do SVM MEL ($50{,}9\%$), superando o MLP LOFAR ($46{,}6\%$), o MLP MEL ($44{,}8\%$) e o SVM LOFAR ($38{,}2\%$).
+
+    \item \textbf{Padrão de confusão LOFAR}: modelos LOFAR (MLP e SVM) confundem SMALL com LARGE (respectivamente $25{,}3\%$ e $28{,}6\%$ de erro SMALL$\to$LARGE). Fisicamente, raias harmônicas de embarcações pequenas podem assemelhar-se às de grandes navios a certas distâncias.
+
+    \item \textbf{Padrão de confusão MEL}: modelos MEL confundem SMALL com MEDIUM (respectivamente $25{,}4\%$ e $24{,}3\%$ de erro SMALL$\to$MEDIUM), pois a energia de banda larga integrada de ambas as classes se sobrepõe.
+
+    \item \textbf{LARGE e BACKGROUND}: bem classificados por todos os modelos. BG varia de $77{,}9\%$ (SVM MEL) a $86{,}9\%$ (SVM LOFAR). LARGE de $68{,}6\%$ (MLP MEL) a $76{,}3\%$ (SVM LOFAR).
+
+    \item \textbf{Complementaridade MEL/LOFAR}: os padrões de erro opostos sugerem que MEL e LOFAR capturam informações complementares — motivando estratégias de fusão como trabalho futuro.
+\end{itemize}
+
+\subsection{Análise Estatística da Variância}
+
+O desvio padrão fold-wise é uma medida da estabilidade do modelo às variações de partição. O SVM MEL apresenta $\sigma_{SP} = 1{,}12\%$ frente a $1{,}81\%$ do MLP MEL — redução de \textbf{38\%}. Isso indica que o SVM Nyström é menos sensível à escolha de quais navios compõem cada fold, propriedade importante para implantação operacional. O SVM LOFAR apresenta $\sigma_{SP} = 1{,}91\%$, levemente superior ao MLP LOFAR ($1{,}39\%$), mas ambos dentro de margem compatível com diferenças estatisticamente não significativas.
+
+% ====================================================================
+\section{Conclusões}
+
+Este trabalho demonstrou que o SVM Gaussiano com aproximação de Nyström constitui uma alternativa competitiva, estável e computacionalmente viável à MLP para classificação acústica submarina no dataset IARA. Três conclusões principais emergem:
+
+\begin{enumerate}
+    \item \textbf{Competitividade com variância reduzida}: O SVM LOFAR ($m=6000$) alcança SP $63{,}84\%$ e Ac. Bal. $65{,}48\%$, a apenas 2,67\,p.p.\ do MLP LOFAR — o melhor baseline do artigo — com desvio padrão comparável. O SVM MEL iguala o MLP MEL em SP com variância 38\% menor.
+
+    \item \textbf{Superioridade no alvo crítico SMALL}: O SVM MEL é o modelo com maior recall para SMALL ($50{,}9\%$), superando todos os baselines neurais — incluindo o MLP LOFAR ($46{,}6\%$). Em aplicações onde a classe minoritária é a de maior relevância tática, o SVM MEL é a escolha mais adequada.
+
+    \item \textbf{Complementaridade MEL/LOFAR}: LOFAR maximiza LARGE/BG por capturar raias harmônicas discretas; MEL favorece SMALL pela integração energética de banda larga. Os padrões de erro opostos confirmam que as duas representações são complementares.
+\end{enumerate}
+
+Do ponto de vista computacional, a aproximação de Nyström reduziu o problema de 1 TB de RAM para $\approx$8\,GB (MEL) e $\approx$15\,GB (LOFAR), com modelo final de $<$100\,KB — viável para implantação embarcada em sistemas de sonar passivo.
+
+% ====================================================================
+\section{Trabalhos Futuros}
+
+\begin{enumerate}
+    \item \textbf{Estratégia Híbrida de Dois Estágios}: Classificação hierárquica com especialistas para as classes de menor recall (SMALL e MEDIUM), combinando as forças complementares de LOFAR e MEL. Resultados preliminares são promissores.
+
+    \item \textbf{Exploração de Novas Técnicas de Extração de Características}: Avaliar DEMON (\textit{Detection of Envelope Modulation on Noise}) — que captura a modulação de amplitude das pás do hélice — e MFCC (coeficientes cepstrais Mel), que capturam fenômenos físicos distintos de LOFAR e MEL, potencialmente beneficiando o alvo SMALL.
+
+    \item \textbf{Modelos com Dinâmica Temporal}: Avaliar arquiteturas recorrentes como GRU e LSTM, que processam a sequência de frames espectrais ao longo do tempo. O SVM, ao agregar o áudio em um vetor fixo por votação, descarta padrões temporais como os ciclos do hélice e os ritmos de maquinário que distinguem o tamanho dos navios.
+\end{enumerate}
+
+% ====================================================================
+\begin{thebibliography}{99}
+
+\bibitem{silva2025}
+Silva, F. O. B. da, Fernandes, J. C. V., Soares Filho, W., Souza Filho, J. B. O. e, Spengler, A. \& Moura Júnior, N. N. (2025). IARA: An Underwater Acoustic Database. \textit{IEEE Access}, Vol. 13, doi: 10.1109/ACCESS.2025.3585467.
+
+\bibitem{shipsear}
+Santos-Domínguez, D., Torres-Guijarro, S., Cardenal-Martín, J. \& Pena-Gimenez, A. (2016). ShipsEar: An underwater vessel noise database. \textit{Applied Acoustics}, 113, 64--69.
+
+\bibitem{deepship}
+Irfan, M., Jiang, Z., Ali, S., et al. (2021). DeepShip: An underwater acoustic threshold-based database for ship classification. \textit{Scientific Reports}, 11, 23005.
+
+\bibitem{nystrom}
+Williams, C. K. I. \& Seeger, M. (2001). Using the Nyström method to speed up algorithms on kernel matrices. \textit{Advances in Neural Information Processing Systems (NeurIPS)}.
+
+\bibitem{alpaydin1999}
+Alpaydın, E. (1999). Combined $5 \times 2$ cv F test for comparing supervised classification learning algorithms. \textit{Neural Computation}, 11(8), 1885--1892.
+
+\bibitem{nielsen1994}
+Nielsen, P. A. (1994). A comparison of three estimators for the background noise level in lofargrams. \textit{IEEE Journal of Oceanic Engineering}, 19(1), 106--110.
+
+\bibitem{hummel2024}
+Hummel, H. I., van der Mei, R. \& Bhulai, S. (2024). A survey on machine learning in ship radiated noise. \textit{Ocean Engineering}, Vol. 298, Art. 117252.
+
+\bibitem{fernandes2022}
+Fernandes, J. C. V., Moura Júnior, N. N. de \& Seixas, J. M. de (2022). Deep learning models for passive sonar signal classification of military data. \textit{Remote Sensing}, Vol. 14, No. 11, p. 2648.
+
+\end{thebibliography}
+
+\end{document}
