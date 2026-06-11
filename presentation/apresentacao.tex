@@ -37,7 +37,7 @@
     \end{picture}%
 }
 
-\title{Classificação Acústica Submarina Passiva em Datasets de Grande Porte}
+\title{Reconhecimento Acústico de Alvos Submarinos em Dataset de Grande Porte}
 \subtitle{Estudo de Caso no Dataset IARA com SVM}
 \author{Evandro Rocha}
 \date{Junho de 2026}
@@ -68,9 +68,9 @@
 \begin{frame}{Agenda}
   \begin{enumerate}
       \item \hyperref[sec:intro]{Introdução e Contexto (Dataset IARA)}
-      \item \hyperref[sec:baselines]{Representação Espectral, Baseline e Avaliação}
+      \item \hyperref[sec:baselines]{Features, Baseline e Avaliação}
       \item \hyperref[sec:method]{Método Proposto}
-      \item \hyperref[sec:evolution]{Trajetória de Escalonamento}
+      \item \hyperref[sec:evolution]{Experimentos}
 
       \item \hyperref[sec:results_global]{Resultados Gerais de Desempenho}
       \item \hyperref[sec:concl]{Conclusões e Trabalhos Futuros}
@@ -87,7 +87,7 @@
     \label{sec:intro}
 \end{frame}
 
-\begin{frame}{Classificação Acústica Submarina (UATR)}
+\begin{frame}{Sonar Passivo: Reconhecimento de Alvos (UATR)}
     \small
     \begin{block}{Desafio de Sonar Passivo}
         Identificar embarcações baseando-se unicamente nas suas assinaturas acústicas irradiadas através da água. Uma tarefa altamente crítica para monitoramento de tráfego, soberania nacional e preservação ambiental.
@@ -101,7 +101,7 @@
         \textbf{Dificuldades Intrínsecas:}
         \begin{itemize}
             \item \textbf{Atenuação do Meio}: Variabilidade do canal acústico (temperatura, salinidade, densidade).
-            \item \textbf{Interferência de Fronteiras}: Efeitos multipath (reflexão em fundo e superfície) e obstáculos.
+            \item \textbf{Interferência de Fronteiras}: O som ricocheteia no fundo e na superfície — cópias do mesmo sinal chegam em instantes diferentes, distorcendo a assinatura acústica do alvo.
             \item \textbf{Ruído de Fundo}: Fontes biológicas, ondas do mar e vento mascarando os alvos.
         \end{itemize}
         
@@ -109,8 +109,7 @@
         \footnotesize
         \textbf{Limitação da Literatura Geral:}
         \begin{itemize}
-            \item Uso predominante de dados fechados/privados que inviabilizam a reprodutibilidade.
-            \item Modelos aplicados a datasets pequenos, sem validação cruzada rigorosa baseada em isolamento de navios específicos.
+            \item Há uma notável escassez de dados públicos na área, pois muitos datasets são confidenciais ou de alto custo para coletar . O que inviabiliza a reprodutibilidade.
         \end{itemize}
     \end{columns}
 \end{frame}
@@ -118,7 +117,7 @@
 \begin{frame}{SIMMAO: Plataformas e Trajetórias de Captura}
     \begin{block}{\footnotesize Aquisição e Monitoramento via SIMMAO}
         \scriptsize
-        O \textbf{Sistema de Medições e Modelagem Acústica Oceânica} gerencia os dados do PMPAS-BS (Petrobras): rastreia a trajetória de Gliders/perfiladores, calcula o Nível de Pressão Sonora (SPL) e visualiza de forma integrada o tráfego naval na Bacia de Santos.
+        O \textbf{Sistema de Medições e Modelagem Acústica Oceânica} gerencia os dados do  Projeto de Monitoramento Passivo Acústico da Bacia de Santos (PMPAS-BS ): rastreia a trajetória de Gliders/perfiladores, calcula o Nível de Pressão Sonora (SPL) e visualiza de forma integrada o tráfego naval na Bacia de Santos.
     \end{block}
     
     \vspace{0.1cm}
@@ -126,38 +125,21 @@
     \includegraphics[width=0.95\textwidth,height=0.58\textheight,keepaspectratio]{imgs/simmao.png}
 \end{frame}
 
-\begin{frame}{Curadoria do Dataset IARA: Isolamento de Alvos}
-    \footnotesize
-    Para garantir que os áudios correspondam unicamente à embarcação monitorada, os autores (Silva et al., 2025) adotaram um protocolo rigoroso de filtragem espacial baseada em AIS:
-    
-    \vspace{0.15cm}
-    \begin{columns}[t]
-        \column{0.5\textwidth}
-        \begin{block}{\footnotesize Zonas de Inclusão e Exclusão}
-            \scriptsize
-            \begin{itemize}
-                \setlength{\itemsep}{1pt}
-                \setlength{\parskip}{0pt}
-                \setlength{\parsep}{0pt}
-                \item \textbf{Inclusão (Navio Alvo)}: Distância limite ao hidrofone (UO costeria: $< 500$ m, Glider: $< 10$ km).
-                \item \textbf{Exclusão (Outros Navios)}: Raio livre de tráfego concorrente (UO costeira: 2 km, Glider: 30 km).
-                \item \textbf{Atenuação}: Garante isolamento da assinatura acústica e evita contaminação.
-            \end{itemize}
-        \end{block}
+\begin{frame}{Curadoria do Dataset IARA}
+    \small
+    O IARA é um subconjunto do PMPAS-BS (Petrobras, mais de 203 mil horas desde 2015).\\[0.4cm]
+    Cada gravação passou por três critérios para garantir que contém \textbf{uma única embarcação}:
 
-        \column{0.5\textwidth}
-        \begin{block}{\footnotesize Verificação e Validação}
-            \scriptsize
-            \begin{itemize}
-                \setlength{\itemsep}{1pt}
-                \setlength{\parskip}{0pt}
-                \setlength{\parsep}{0pt}
-                \item \textbf{Análise Espectral}: Confirmação de ganho de energia durante a máxima aproximação (CPA).
-                \item \textbf{Consistência AIS}: Cruzamento de dados de múltiplos bancos para evitar erros cadastrais.
-                \item \textbf{Revisão Manual}: Inspeção humana visual/auditiva em todas as gravações.
-            \end{itemize}
-        \end{block}
-    \end{columns}
+    \vspace{0.3cm}
+    \begin{itemize}
+        \setlength{\itemsep}{6pt}
+        \item A embarcação monitorada estava \textbf{próxima o suficiente} do sensor
+        \item \textbf{Nenhuma outra embarcação} estava por perto (zona de exclusão)
+        \item A gravação foi \textbf{verificada} por análise espectral e revisão manual
+    \end{itemize}
+
+    \vspace{0.3cm}
+    \footnotesize Disponível em: \texttt{doi.org/10.5281/zenodo.15777429}
 \end{frame}
 
 \begin{frame}{O Dataset de Referência IARA}
@@ -258,40 +240,14 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Desafios Técnicos e Requisitos do Projeto}
-    \small
-    \begin{columns}[t]
-        \column{0.5\textwidth}
-        \begin{block}{Desafios Técnicos}
-            \footnotesize
-            Características físicas do ambiente:
-            \begin{itemize}
-                \item \textbf{Atenuação e Multipath}: Canal acústico instável distorce severamente as assinaturas propagadas.
-                \item \textbf{Mascaramento de Ruído}: Ruído de fundo oceânico oculta raias discretas de interesse.
-                \item \textbf{Desbalanceamento}: Predomínio de LARGE/BACKGROUND, tornando a classe SMALL (minoria, baixo SNR) o principal desafio aberto.
-            \end{itemize}
-        \end{block}
-        
-        \column{0.5\textwidth}
-        \begin{block}{Requisitos do Sistema}
-            \footnotesize
-            Metas de engenharia e operação:
-            \begin{itemize}
-                \item \textbf{Robustez a Ruído}: Identificação de alvos sob flutuações severas de SNR.
-                \item \textbf{Métrica de Equilíbrio}: Uso do Índice SP para expor e penalizar o viés em favor de classes majoritárias (avaliando minorias físicas).
-                \item \textbf{Baixa Latência}: Viabilidade de processamento embarcado local em tempo real.
-            \end{itemize}
-        \end{block}
-    \end{columns}
-\end{frame}
 
 %===========================================
 % 2. METODOLOGIA E PROTOCOLO EXPERIMENTAL
 %===========================================
-\section{Representação Espectral, Baseline e Avaliação}
+\section{Features, Baseline e Avaliação}
 \begin{frame}
     \centering
-    \huge Representação Espectral, Baseline e Avaliação
+    \huge Features, Baseline e Avaliação
     \label{sec:baselines}
 \end{frame}
 \begin{frame}{Extração de Características Espectrais}
@@ -561,39 +517,6 @@
     \end{columns}
 \end{frame}
 
-\begin{frame}{Projeção de Nyström}
-    \begin{columns}
-        \column{0.60\textwidth}
-        \includegraphics[width=\linewidth,keepaspectratio]{imgs/nystroem_projection.png}
-
-        \column{0.40\textwidth}
-        \centering\scriptsize
-
-        \textbf{Entrada} — bins espectrais\\[4pt]
-        $x = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_d \end{bmatrix}$\\[2pt]
-        {\tiny MEL: $d=256$ \ / \ LOFAR: $d=1024$}
-
-        \vspace{6pt}
-        \fbox{\parbox{0.85\linewidth}{\centering\tiny
-            Para cada landmark $l_j$:\\
-            \textit{``quão parecido é $x$ com $l_j$?''}\\[2pt]
-            $\text{sim}(x,l_j) = e^{-\gamma\|x - l_j\|^2}$\\[1pt]
-            {\tiny distância grande $\to$ 0 \quad distância nula $\to$ 1}
-        }}\\[-2pt]
-        $\Big\downarrow$
-
-        \vspace{2pt}
-        \textbf{Saída} — score de similaridade\\[4pt]
-        $\phi(x) = \begin{bmatrix}
-            \text{sim}(x,\,l_1) \\
-            \text{sim}(x,\,l_2) \\
-            \vdots \\
-            \text{sim}(x,\,l_m)
-        \end{bmatrix}$\\[2pt]
-        {\tiny $m =  número de landmarks}
-    \end{columns}
-\end{frame}
-
 \begin{frame}{SVM com Aproximação de Nyström}
     \scriptsize
     \begin{block}{O Gargalo do SVM RBF Clássico}
@@ -638,42 +561,51 @@
 \end{frame}
 
 
-
-
-
-
-
-
-
-
-\begin{frame}{Kernel RBF com Nyström}
+\begin{frame}{Projeção de Nyström}
     \begin{columns}
-        \column{0.58\textwidth}
-        \includegraphics[width=\linewidth,keepaspectratio]{imgs/svm_kernel_trick.png}
+        \column{0.60\textwidth}
+        \includegraphics[width=\linewidth,keepaspectratio]{imgs/nystroem_projection.png}
 
-        \column{0.42\textwidth}
-        \scriptsize
-        \textbf{Geometria da Separação:}
-        \begin{itemize}
-            \item \textbf{Espaço Original (256D)}: Os dados acústicos marinhos são altamente não-lineares e misturados (inseparáveis por retas).
-            \item \textbf{Projeção de Nyström (4000D)}: O cálculo da similaridade RBF contra os $4000$ landmarks projeta os dados em alta dimensão.
-            \item \textbf{Margem Linear}: No espaço projetado $\mathbb{R}^{4000}$, as classes tornam-se separáveis por um \textbf{Hiperplano de Decisão Linear} ($w^T z + b = 0$).
-        \end{itemize}
+        \column{0.40\textwidth}
+        \centering\scriptsize
+
+        \textbf{Entrada} — bins espectrais\\[4pt]
+        $x = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_d \end{bmatrix}$\\[2pt]
+        {\tiny MEL: $d=256$ \ / \ LOFAR: $d=1024$}
+
+        \vspace{6pt}
+        \fbox{\parbox{0.85\linewidth}{\centering\tiny
+            Para cada landmark $l_j$:\\
+            \textit{``quão parecido é $x$ com $l_j$?''}\\[2pt]
+            $\text{sim}(x,l_j) = e^{-\gamma\|x - l_j\|^2}$\\[1pt]
+            {\tiny distância grande $\to$ 0 \quad distância nula $\to$ 1}
+        }}\\[-2pt]
+        $\Big\downarrow$
+
+        \vspace{2pt}
+        \textbf{Saída} — score de similaridade\\[4pt]
+        $\phi(x) = \begin{bmatrix}
+            \text{sim}(x,\,l_1) \\
+            \text{sim}(x,\,l_2) \\
+            \vdots \\
+            \text{sim}(x,\,l_m)
+        \end{bmatrix}$\\[2pt]
+        {\tiny $m =  número de landmarks}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Estratégia Multiclasse: One-vs-Rest (OvR)}
+\begin{frame}{Classificação de Janela Acústica (One-vs-Rest)}
     \begin{columns}
-        \column{0.58\textwidth}
-        \includegraphics[width=\linewidth,keepaspectratio]{imgs/svm_ovr_training_process.png}
+        \column{0.55\textwidth}
+        \includegraphics[width=\linewidth,keepaspectratio]{imgs/svm_window_classification.png}
 
-        \column{0.42\textwidth}
+        \column{0.45\textwidth}
         \scriptsize
-        \textbf{Classificação com 4 Classes:}
+        \textbf{Como uma janela é classificada:}
         \begin{itemize}
-            \item \textbf{Estratégia OvR}: São treinados 4 classificadores binários lineares paralelos, um para cada classe (SMALL, MEDIUM, LARGE, BG) contra o "Resto".
-            \item \textbf{Hiperplanos 3D Retos}: No espaço projetado ($\Phi$), cada classificador gera um plano reto de separação.
-            \item \textbf{Violações de Margem}: Por conta do ruído real e sobreposição física de assinaturas, os dados não são perfeitamente separáveis. Os pontos no lado incorreto representam os erros regulados pela penalidade $C$ (margem suave).
+            \item \textbf{Entrada}: Uma janela de áudio de 512 ms é projetada no espaço de Nyström.
+            \item \textbf{One-vs-Rest}: Cada classificador retorna um score para sua classe (SMALL, MEDIUM, LARGE, BACKGROUND).
+            \item \textbf{Decisão}: O \textbf{ArgMax} dos scores determina a classe vencedora — no exemplo, SMALL.
         \end{itemize}
     \end{columns}
 \end{frame}
@@ -682,7 +614,7 @@
 %===========================================
 % 4. TRAJETÓRIA DE ESCALONAMENTO
 %===========================================
-\section{Trajetória de Escalonamento}
+\section{Experimentos}
 \begin{frame}
     \centering
     \huge Trajetória de Escalonamento (Hiperparâmetros)

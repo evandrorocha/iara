@@ -8,16 +8,14 @@ Tempo total estimado: ~20 minutos (~35–40 s por slide de conteúdo)
 [SLIDE 1 — Título]  (~30 s)
 --------------------------------------------------------------------------------
 Bom dia / Boa tarde. Meu nome é Evandro Rocha, sou aluno do PEE da COPPE/UFRJ.
-O trabalho que vou apresentar hoje é sobre classificação acústica submarina
-passiva em datasets de grande porte, com um estudo de caso no dataset IARA
-usando Support Vector Machines.
+O trabalho que vou apresentar hoje é sobre classificação acústica submarina passiva com SVM, 
+aplicado à base de dados IARA -  uma base pública de grande escala de tráfego marítimo real.
 
 --------------------------------------------------------------------------------
 [SLIDE 2 — Agenda]  (~30 s)
 --------------------------------------------------------------------------------
 A apresentação está organizada em seis partes. Começo introduzindo o contexto
-e o dataset. Em seguida, apresento as representações espectrais e o baseline
-do artigo de referência. Depois descrevo o método proposto, a trajetória de
+e o dataset. Em seguida, apresento o artigo de referência. Depois descrevo o método proposto, a trajetória de
 ajuste de hiperparâmetros, os resultados, e finalmente as conclusões e
 trabalhos futuros.
 
@@ -38,6 +36,18 @@ submarinos, ou UATR. O objetivo é identificar embarcações a partir
 exclusivamente das suas assinaturas acústicas irradiadas pela água —
 sem câmeras, sem radar, só o som.
 
+Motivações:
+Monitoramento de tráfego naval
+Saber quantos navios passaram, de que tipo, em que frequência e por quais rotas — sem precisar de radar ou câmera. Útil para gestão portuária, segurança marítima e planejamento de infraestrutura.
+
+Soberania nacional
+Detectar e classificar embarcações em águas territoriais brasileiras de forma silenciosa e passiva — o navio monitorado não sabe que está sendo escutado. Relevante para identificar navios suspeitos, submarinos estrangeiros ou embarcações sem AIS ativo.
+
+Preservação ambiental
+Cetáceos são muito sensíveis ao ruído. Saber quais tipos de navio passam por áreas de habitat marinho permite correlacionar o nível de ruído com o impacto na fauna. Também permite detectar navios que entram ilegalmente em áreas protegidas — mesmo sem transponder AIS ligado.
+
+Em todos os casos o diferencial é que funciona 24h, de forma autônoma, sem contato visual — o que sensores ópticos ou radar não conseguem fazer em ambiente submarino ou em más condições de visibilidade.
+
 Isso é relevante para monitoramento de tráfego naval, soberania nacional
 e até preservação ambiental — por exemplo, detectar navios que perturbam
 habitats marinhos.
@@ -47,9 +57,9 @@ salinidade e densidade variam e distorcem o sinal. Há ainda multipath —
 o som reflete no fundo e na superfície — e ruído de fundo de fontes
 biológicas e meteorológicas.
 
-Do lado da literatura, o problema adicional é que a maioria dos trabalhos
-usa dados privados e datasets pequenos, o que dificulta a reprodução e
-a comparação justa entre modelos.
+Do lado da literatura, há uma notável escassez de dados públicos na área —
+muitos datasets são confidenciais ou de alto custo para coletar, o que
+dificulta a reprodução e a comparação justa entre modelos.
 
 --------------------------------------------------------------------------------
 [SLIDE 5 — SIMMAO: Plataformas e Trajetórias]  (~40 s)
@@ -65,6 +75,12 @@ o nível de pressão sonora em tempo real.
 --------------------------------------------------------------------------------
 [SLIDE 6 — Curadoria do Dataset IARA: Isolamento de Alvos]  (~45 s)
 --------------------------------------------------------------------------------
+O IARA é um subconjunto selecionado dos dados coletados pelo projeto PMPAS-BS
+da Petrobras — que acumulou mais de 203 mil horas de gravações desde 2015.
+Desse volume, os autores extraíram apenas os áudios que passaram por um
+protocolo rigoroso de curadoria para garantir que cada gravação corresponde
+exclusivamente ao navio-alvo.
+
 Para que os áudios gravados correspondam exclusivamente ao navio-alvo,
 os autores Silva et al. adotaram um protocolo rigoroso de filtragem espacial.
 
