@@ -297,6 +297,13 @@ def main():
                 data_loader, config.input_type, test_ids)
             ship_preds, ship_targets = evaluate_fold_full(fold_idx, dataset)
 
+        if 'total_cm' not in locals():
+            total_cm = np.zeros((4, 4), dtype=int)
+            total_ship_cm = np.zeros((4, 4), dtype=int)
+
+        for fid in ship_preds:
+            total_ship_cm[ship_targets[fid], ship_preds[fid]] += 1
+
         rec, acc, sp = compute_metrics(ship_preds, ship_targets)
 
         for c in range(4):
@@ -320,6 +327,21 @@ def main():
     s = st(all_sp)
     print(f"  ACC    : {a[0]:.2f}% (+-{a[1]:.2f})")
     print(f"  SP     : {s[0]:.2f}% (+-{s[1]:.2f})")
+
+    print("\n=== MATRIZ DE CONFUSAO ABSOLUTA (10 FOLDS - CONTAGEM DE NAVIOS/AUDIOS) ===")
+    print(total_ship_cm)
+    print("\n=== MATRIZ DE CONFUSAO NORMALIZADA (% RECALL REAL) ===")
+    cm_norm = total_ship_cm.astype('float') / total_ship_cm.sum(axis=1)[:, np.newaxis] * 100
+    print(np.round(cm_norm, 1))
+
+    tp = total_ship_cm.diagonal()
+    prec = tp / total_ship_cm.sum(axis=0) * 100
+    rec = tp / total_ship_cm.sum(axis=1) * 100
+    f1 = 2 * prec * rec / (prec + rec)
+
+    print("\n=== METRICAS CONSOLIDADAS POR CLASSE ===")
+    for c, cn in [(0, 'SMALL'), (1, 'MEDIUM'), (2, 'LARGE'), (3, 'BG')]:
+        print(f"  {cn:<10}: Precisao = {prec[c]:5.2f}% | Recall = {rec[c]:5.2f}% | F1 = {f1[c]:5.2f}%")
 
 
 if __name__ == "__main__":

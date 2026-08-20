@@ -1,7 +1,7 @@
 \babel@toc {brazil}{}\relax 
 \beamer@sectionintoc {1}{Introdução}{3}{0}{1}
 \beamer@sectionintoc {2}{Features, Baseline e Avaliação}{11}{0}{2}
-\beamer@sectionintoc {3}{Método Proposto}{18}{0}{3}
-\beamer@sectionintoc {4}{Experimentos}{24}{0}{4}
-\beamer@sectionintoc {5}{Resultados Gerais}{27}{0}{5}
-\beamer@sectionintoc {6}{Conclusões}{30}{0}{6}
+\beamer@sectionintoc {3}{Modelo Proposto}{17}{0}{3}
+\beamer@sectionintoc {4}{Experimentos}{23}{0}{4}
+\beamer@sectionintoc {5}{Resultados Gerais}{26}{0}{5}
+\beamer@sectionintoc {6}{Conclusões}{29}{0}{6}

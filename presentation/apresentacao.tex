@@ -69,7 +69,7 @@
   \begin{enumerate}
       \item \hyperref[sec:intro]{Introdução e Contexto (Dataset IARA)}
       \item \hyperref[sec:baselines]{Features, Baseline e Avaliação}
-      \item \hyperref[sec:method]{Método Proposto}
+      \item \hyperref[sec:method]{Modelo Proposto}
       \item \hyperref[sec:evolution]{Experimentos}
 
       \item \hyperref[sec:results_global]{Resultados Gerais de Desempenho}
@@ -266,7 +266,7 @@
                 \setlength{\parsep}{0pt}
                 \item \textbf{Resolução}: Banco de 256 filtros triangulares.
                 \item \textbf{Foco Físico}: Banda larga (ruído de cavitação de hélice e hidrodinâmico).
-                \item \textbf{Motivação}: Escala Mel aproxima a resposta auditiva humana — realça características espectrais perceptualmente relevantes.
+                \item \textbf{Normalização L2}: Remove o efeito da distância — a mesma embarcação soa mais alto perto e mais baixo longe, mas o padrão espectral permanece o mesmo.
             \end{itemize}
         \end{block}
 
@@ -279,8 +279,8 @@
                 \setlength{\parskip}{0pt}
                 \setlength{\parsep}{0pt}
                 \item \textbf{Resolução}: 1024 bins de frequência linear fina.
-                \item \textbf{Foco Físico}: Raias harmônicas discretas de maquinário (motores, eixos).
-                \item \textbf{Motivação}: Realça padrões de frequência consistentes e suprime ruídos transientes — ideal para assinaturas acústicas estáveis.
+                \item \textbf{Foco Físico}: Raias harmônicas de maquinário (motores, eixos) — padrão histórico em sonar passivo naval.
+                \item \textbf{Normalização}: Filtro TPSW — remove o ruído de fundo contínuo para que os picos do maquinário fiquem visíveis.
             \end{itemize}
         \end{block}
     \end{columns}
@@ -288,45 +288,6 @@
     \vspace{0.12cm}
     \scriptsize
     \textit{Os parâmetros 256 e 1024 bins foram definidos visando à viabilidade computacional diante do volume de dados do IARA \cite{silva2025}.}
-\end{frame}
-
-\begin{frame}{Técnicas de Normalização Espectral}
-    \footnotesize
-    \textbf{Objetivo}: Mitigar flutuações de amplitude induzidas pelo canal acústico (distância, atenuação, efeitos de multipath) e ganho de captura, isolando o perfil acústico intrínseco.
-    
-    \vspace{0.15cm}
-    \begin{columns}[t]
-        \column{0.5\textwidth}
-        \begin{block}{\small Normalização L2 (MEL) \cite{zhou2023}}
-            \scriptsize
-            Aplica-se em cada janela de $0.512$s.
-            \begin{itemize}
-                \setlength{\itemsep}{1pt}
-                \setlength{\parskip}{0pt}
-                \setlength{\parsep}{0pt}
-                \item \textbf{Método}: Divide a janela por sua norma:
-                \begin{equation*}
-                    \bar{x} = x / \|x\|_2
-                \end{equation*}
-                \item \textbf{Foco}: Neutraliza ganho/volume absoluto.
-                \item \textbf{Efeito}: Classificador avalia apenas a forma da distribuição de energia.
-            \end{itemize}
-        \end{block}
-
-        \column{0.5\textwidth}
-        \begin{block}{\small Filtro TPSW (LOFAR) \cite{nielsen1994}}
-            \scriptsize
-            Algoritmo \textit{Two-Pass Split Window} para estimativa de ruído local.
-            \begin{itemize}
-                \setlength{\itemsep}{1pt}
-                \setlength{\parskip}{0pt}
-                \setlength{\parsep}{0pt}
-                \item \textbf{Método}: Estima patamar local de ruído contínuo.
-                \item \textbf{Foco}: Suprime ruído de fundo oceânico.
-                \item \textbf{Efeito}: Achatamento espectral e realce automático de raias.
-            \end{itemize}
-        \end{block}
-    \end{columns}
 \end{frame}
 
 
@@ -483,10 +444,10 @@
 %===========================================
 % 3. MÉTODO PROPOSTO
 %===========================================
-\section{Método Proposto}
+\section{Modelo Proposto}
 \begin{frame}
     \centering
-    \huge Método Proposto
+    \huge Modelo Proposto
     \label{sec:method}
 \end{frame}
 
@@ -512,7 +473,7 @@
         \textbf{A Fronteira do Dataset IARA:}
         \begin{itemize}
             \item \textbf{Base de Grande Escala}: O IARA é uma das maiores bases públicas mundiais (\textbf{129h+} de dados, tráfego real).
-            \item \textbf{Questão de Pesquisa}: Como o SVM tradicional se comporta sob este novo patamar de volume e complexidade de dados?
+            \item \textbf{Questão de Pesquisa}: Como o SVM se comporta sob este novo patamar de volume e complexidade de dados?
         \end{itemize}
     \end{columns}
 \end{frame}
