@@ -1,0 +1,465 @@
+"""
+Training and Evaluation of a 2D-CRNN Specialist (SMALL vs. LARGE)
+Input: Full 2D LOFAR Spectrogram (Time x 1024 Bins).
+Architecture: Conv2D (5x5) Feature Extractor -> Frequency Pooling -> Bi-GRU -> Temporal Attention -> Classification Head.
+
+Protocol: 5x2cv (10 independent folds) with strict ship ID isolation.
+Hardware: Accelerated by NVIDIA CUDA on GPU.
+"""
+import os
+import sys
+import math
+import time
+import argparse
+import typing
+from collections import defaultdict
+
+import numpy as np
+import pandas as pd
+from sklearn.preprocessing import StandardScaler
+import sklearn.metrics as sk_metrics
+import torch
+import torch.nn as nn
+from torch.utils.data import DataLoader, Dataset
+import tqdm
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+import iara.default as iara_default
+import iara.records
+import iara.processing.manager as iara_manager
+import iara.processing.analysis as iara_proc
+import iara.ml.dataset as iara_dataset
+import iara.ml.experiment as iara_exp
+import iara.ml.models.crnn2d as iara_crnn2d
+from iara.default import DEFAULT_DIRECTORIES
+
+
+class SmallLargeFilter:
+    """Keep only SMALL (length < 50m) and LARGE (length >= 100m) ships."""
+    def apply(self, input_df: pd.DataFrame) -> pd.DataFrame:
+        lengths = pd.to_numeric(input_df['Length'], errors='coerce')
+        return input_df[(lengths < 50) | (lengths >= 100)].copy()
+
+
+def classify_row_small_large(row) -> int:
+    """Map SMALL (0) -> 0, LARGE (2) -> 1."""
+    base = iara_default.Target.classify_row(row)
+    if base == 2:
+        return 1  # LARGE
+    return 0      # SMALL
+
+
+def apply_spec_augment(X: torch.Tensor, time_mask_max: int = 2, freq_mask_max: int = 32, noise_std: float = 0.0) -> torch.Tensor:
+    """Apply 2D SpecAugment and Gaussian Noise Jitter to training batch."""
+    B, C, T, D = X.shape
+    X_aug = X.clone()
+
+    if noise_std > 0:
+        X_aug = X_aug + torch.randn_like(X_aug) * noise_std
+
+    if time_mask_max > 0:
+        for i in range(B):
+            t_len = torch.randint(1, time_mask_max + 1, (1,)).item()
+            t_start = torch.randint(0, max(1, T - t_len + 1), (1,)).item()
+            X_aug[i, :, t_start : t_start + t_len, :] = 0.0
+
+    if freq_mask_max > 0:
+        for i in range(B):
+            f_len = torch.randint(1, freq_mask_max + 1, (1,)).item()
+            f_start = torch.randint(0, max(1, D - f_len + 1), (1,)).item()
+            X_aug[i, :, :, f_start : f_start + f_len] = 0.0
+
+    return X_aug
+
+
+def train_epoch(model, dataloader, optimizer, criterion, device, spec_augment=False, noise_jitter=0.0, time_mask_max=2, freq_mask_max=32):
+    model.train()
+    total_loss = 0.0
+    total_samples = 0
+    for X, y, _ in dataloader:
+        if spec_augment or noise_jitter > 0:
+            X = apply_spec_augment(
+                X,
+                time_mask_max=time_mask_max if spec_augment else 0,
+                freq_mask_max=freq_mask_max if spec_augment else 0,
+                noise_std=noise_jitter
+            )
+
+        X = X.to(device)
+        y = y.to(device).float().unsqueeze(1)
+
+        optimizer.zero_grad()
+        logits = model(X)
+        loss = criterion(logits, y)
+        loss.backward()
+        nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+        optimizer.step()
+
+        total_loss += loss.item() * X.size(0)
+        total_samples += X.size(0)
+    return total_loss / max(total_samples, 1)
+
+
+@torch.no_grad()
+def evaluate(model, dataloader, criterion, device):
+    model.eval()
+    total_loss = 0.0
+    total_samples = 0
+    all_preds = []
+    all_targets = []
+    all_file_ids = []
+
+    for X, y, fids in dataloader:
+        X = X.to(device)
+        y_float = y.to(device).float().unsqueeze(1)
+
+        logits = model(X)
+        loss = criterion(logits, y_float)
+
+        probs = torch.sigmoid(logits).cpu().numpy().flatten()
+        preds = (probs >= 0.5).astype(int)
+
+        total_loss += loss.item() * X.size(0)
+        total_samples += X.size(0)
+
+        all_preds.extend(preds)
+        all_targets.extend(y.numpy().flatten())
+        all_file_ids.extend(fids.numpy().flatten() if isinstance(fids, torch.Tensor) else fids)
+
+    file_preds = defaultdict(list)
+    file_targets = {}
+    for fid, pred, tgt in zip(all_file_ids, all_preds, all_targets):
+        file_preds[fid].append(pred)
+        file_targets[fid] = tgt
+
+    audio_preds = []
+    audio_targets = []
+    for fid in file_preds:
+        counts = np.bincount(file_preds[fid], minlength=2)
+        audio_preds.append(int(np.argmax(counts)))
+        audio_targets.append(int(file_targets[fid]))
+
+    audio_preds = np.array(audio_preds)
+    audio_targets = np.array(audio_targets)
+
+    # 0 = SMALL, 1 = LARGE
+    tp0 = int(np.sum((audio_targets == 0) & (audio_preds == 0)))
+    fn0 = int(np.sum((audio_targets == 0) & (audio_preds == 1)))
+    fp0 = int(np.sum((audio_targets == 1) & (audio_preds == 0)))
+
+    tp1 = int(np.sum((audio_targets == 1) & (audio_preds == 1)))
+    fn1 = int(np.sum((audio_targets == 1) & (audio_preds == 0)))
+    fp1 = int(np.sum((audio_targets == 0) & (audio_preds == 1)))
+
+    rec0 = tp0 / (tp0 + fn0) * 100 if (tp0 + fn0) > 0 else 0.0
+    prec0 = tp0 / (tp0 + fp0) * 100 if (tp0 + fp0) > 0 else 0.0
+    f1_0 = 2 * prec0 * rec0 / (prec0 + rec0) if (prec0 + rec0) > 0 else 0.0
+
+    rec1 = tp1 / (tp1 + fn1) * 100 if (tp1 + fn1) > 0 else 0.0
+    prec1 = tp1 / (tp1 + fp1) * 100 if (tp1 + fp1) > 0 else 0.0
+    f1_1 = 2 * prec1 * rec1 / (prec1 + rec1) if (prec1 + rec1) > 0 else 0.0
+
+    acc = np.mean(audio_preds == audio_targets) * 100
+    bal_acc = (rec0 + rec1) / 2
+    sp = math.sqrt(rec0 * rec1)
+
+    metrics = {
+        'loss': total_loss / max(total_samples, 1),
+        'rec_small': rec0,
+        'prec_small': prec0,
+        'f1_small': f1_0,
+        'rec_large': rec1,
+        'prec_large': prec1,
+        'f1_large': f1_1,
+        'acc': acc,
+        'bal_acc': bal_acc,
+        'sp': sp,
+        'tp0': tp0, 'fn0': fn0, 'fp0': fp0,
+        'tp1': tp1, 'fn1': fn1, 'fp1': fp1,
+    }
+    return metrics
+
+
+class SpectrogramSequenceDataset(Dataset):
+    """
+    Dataset creating 2D spectrogram sequences (1, seq_len, freq_bins).
+    """
+    def __init__(self, file_features_map, file_ids, targets, seq_len=20, stride=10):
+        self.samples = []
+        self.targets = []
+        self.file_ids = []
+
+        for fid, tgt in zip(file_ids, targets):
+            feat = file_features_map.get(fid)
+            if feat is None:
+                continue
+
+            n_windows = len(feat)
+            if n_windows < seq_len:
+                pad = np.zeros((seq_len - n_windows, feat.shape[1]), dtype=np.float32)
+                seq = np.vstack([feat, pad])  # (seq_len, freq_bins)
+                self.samples.append(torch.tensor(seq, dtype=torch.float32).unsqueeze(0)) # (1, seq_len, freq_bins)
+                self.targets.append(tgt)
+                self.file_ids.append(fid)
+                continue
+
+            n_seqs = (n_windows - seq_len) // stride + 1
+            for i in range(n_seqs):
+                start = i * stride
+                seq = feat[start : start + seq_len]
+                self.samples.append(torch.tensor(seq, dtype=torch.float32).unsqueeze(0)) # (1, seq_len, freq_bins)
+                self.targets.append(tgt)
+                self.file_ids.append(fid)
+
+    def __len__(self):
+        return len(self.samples)
+
+    def __getitem__(self, idx):
+        return self.samples[idx], self.targets[idx], self.file_ids[idx]
+
+
+def build_scaled_spectrograms(loader, file_ids_train, file_ids_all):
+    """
+    Fit StandardScaler on train split frames and return dictionary of scaled spectrograms {fid: (n_windows, freq_bins)}.
+    """
+    loader.pre_load(file_ids_all)
+
+    train_list = []
+    for fid in file_ids_train:
+        frames = loader.get_all(fid)
+        if frames is not None and len(frames) > 0:
+            train_list.append(frames.numpy())
+
+    X_train = np.vstack(train_list)
+    scaler = StandardScaler()
+    scaler.fit(X_train)
+
+    features_map = {}
+    for fid in file_ids_all:
+        frames_t = loader.get_all(fid)
+        if frames_t is None or len(frames_t) == 0:
+            continue
+        features_map[fid] = scaler.transform(frames_t.numpy()).astype(np.float32)
+
+    return features_map
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Train 2D-CRNN SL Specialist")
+    parser.add_argument("-F", "--folds", type=str, default="0-9", help="Folds to train (e.g. 0-9)")
+    parser.add_argument("--analysis", type=str, default="LOFAR", choices=["LOFAR", "LOG_MELGRAM"], help="Spectral representation")
+    parser.add_argument("--seq_len", type=int, default=20, help="Number of windows per sequence (~10s)")
+    parser.add_argument("--stride", type=int, default=10, help="Stride between sequences (~5s)")
+    parser.add_argument("--conv_channels", type=str, default="32,64,128", help="Conv2D channels, comma-separated")
+    parser.add_argument("--conv_kernel", type=int, default=5, help="Conv2D kernel size")
+    parser.add_argument("--gru_hidden", type=int, default=64, help="GRU hidden size")
+    parser.add_argument("--gru_layers", type=int, default=2, help="Number of GRU layers")
+    parser.add_argument("--pooling", type=str, default="attention", choices=["mean", "attention", "last", "max"])
+    parser.add_argument("--batch_size", type=int, default=128, help="Batch size")
+    parser.add_argument("--epochs", type=int, default=30, help="Maximum epochs")
+    parser.add_argument("--lr", type=float, default=2e-4, help="Learning rate")
+    parser.add_argument("--dropout", type=float, default=0.3, help="Dropout")
+    parser.add_argument("--weight_decay", type=float, default=1e-3, help="Weight decay L2 regularization")
+    parser.add_argument("--spec_augment", action="store_true", default=False, help="Enable 2D SpecAugment")
+    parser.add_argument("--noise_jitter", type=float, default=0.0, help="Gaussian noise std")
+    parser.add_argument("--save_dir", type=str, default="", help="Directory name to save models and CSVs")
+    args = parser.parse_args()
+
+    if "-" in args.folds:
+        s, e = args.folds.split("-")
+        fold_list = list(range(int(s), int(e) + 1))
+    else:
+        fold_list = [int(f) for f in args.folds.split(",")]
+
+    conv_ch = tuple(int(c) for c in args.conv_channels.split(","))
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    print(f"Using device: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
+
+    directories = DEFAULT_DIRECTORIES
+    spectral_analysis = iara_proc.SpectralAnalysis.LOFAR if args.analysis == "LOFAR" else iara_proc.SpectralAnalysis.LOG_MELGRAM
+    freq_bins = 1024 if args.analysis == "LOFAR" else 256
+
+    dp = iara_manager.AudioFileProcessor(
+        data_base_dir=directories.data_dir,
+        data_processed_base_dir=directories.process_dir,
+        normalization=iara_proc.Normalization.NORM_L2,
+        analysis=spectral_analysis,
+        n_pts=1024,
+        n_overlap=0,
+        decimation_rate=3,
+        n_mels=256,
+        integration_interval=0.512
+    )
+
+    binary_collection = iara.records.CustomCollection(
+        collection=iara.records.Collection.OS,
+        target=iara.records.GenericTarget(
+            n_targets=2,
+            function=classify_row_small_large,
+            include_others=False
+        ),
+        filters=SmallLargeFilter(),
+        only_sample=False
+    )
+
+    exp_name = args.save_dir if args.save_dir else f"crnn2d_sl_{args.analysis.lower()}_s{args.stride}_conv{args.conv_channels}_h{args.gru_hidden}_lr{args.lr}"
+    output_dir = os.path.join(directories.training_dir, "tests", exp_name)
+    os.makedirs(output_dir, exist_ok=True)
+
+    exp_config = iara_exp.Config(
+        name=exp_name,
+        dataset=binary_collection,
+        dataset_processor=dp,
+        output_base_dir=f"{directories.training_dir}/tests",
+        input_type=iara_dataset.InputType.Window()
+    )
+
+    split_list = exp_config.split_datasets()
+    data_loader = exp_config.get_data_loader()
+
+    results = []
+
+    print(f"\n{'='*75}")
+    print(f" Treinamento Especialista 2D-CRNN (Conv2D 5x5 + Bi-GRU + Attention) — {args.analysis} ({freq_bins} bins)")
+    print(f" Config: seq_len={args.seq_len} ({args.seq_len*0.512:.1f}s), stride={args.stride}, conv_ch={conv_ch}, "
+          f"gru_hidden={args.gru_hidden}, gru_layers={args.gru_layers}, dropout={args.dropout}, lr={args.lr}")
+    print(f" Saída: {output_dir}")
+    print(f"{'='*75}\n")
+
+    for fold_idx in fold_list:
+        print(f"\n>>> [Fold {fold_idx}/10] Preparando espectrogramas 2D ({args.analysis})...")
+        trn_df, val_df, test_df = split_list[fold_idx]
+
+        train_fids = trn_df['ID'].tolist()
+        val_fids = val_df['ID'].tolist()
+        test_fids = test_df['ID'].tolist()
+        all_fids = train_fids + val_fids + test_fids
+
+        feat_map = build_scaled_spectrograms(
+            data_loader,
+            file_ids_train=train_fids,
+            file_ids_all=all_fids
+        )
+
+        train_ds = SpectrogramSequenceDataset(
+            feat_map, train_fids, trn_df['Target'].tolist(),
+            seq_len=args.seq_len, stride=args.stride
+        )
+        val_ds = SpectrogramSequenceDataset(
+            feat_map, val_fids, val_df['Target'].tolist(),
+            seq_len=args.seq_len, stride=args.stride
+        )
+        test_ds = SpectrogramSequenceDataset(
+            feat_map, test_fids, test_df['Target'].tolist(),
+            seq_len=args.seq_len, stride=args.stride
+        )
+
+        train_loader = DataLoader(train_ds, batch_size=args.batch_size, shuffle=True, drop_last=True)
+        val_loader = DataLoader(val_ds, batch_size=args.batch_size, shuffle=False)
+        test_loader = DataLoader(test_ds, batch_size=args.batch_size, shuffle=False)
+
+        n_pos = sum(train_ds.targets)
+        n_neg = len(train_ds.targets) - n_pos
+        pos_weight = torch.tensor([n_neg / max(n_pos, 1)], device=device)
+        criterion = nn.BCEWithLogitsLoss(pos_weight=pos_weight)
+
+        model = iara_crnn2d.CRNN2D(
+            input_freq_bins=freq_bins,
+            conv_channels=conv_ch,
+            conv_kernel_size=args.conv_kernel,
+            gru_hidden_size=args.gru_hidden,
+            gru_num_layers=args.gru_layers,
+            bidirectional=True,
+            dropout=args.dropout,
+            pooling=args.pooling,
+            n_targets=1,
+            fc_hidden=32
+        ).to(device)
+
+        optimizer = torch.optim.AdamW(model.parameters(), lr=args.lr, weight_decay=args.weight_decay)
+        scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=3)
+
+        best_val_loss = float('inf')
+        best_model_state = None
+        patience = 8
+        patience_counter = 0
+
+        pbar = tqdm.trange(args.epochs, desc=f"Fold {fold_idx}", leave=False)
+        for epoch in pbar:
+            trn_loss = train_epoch(
+                model, train_loader, optimizer, criterion, device,
+                spec_augment=args.spec_augment,
+                noise_jitter=args.noise_jitter
+            )
+            val_metrics = evaluate(model, val_loader, criterion, device)
+            scheduler.step(val_metrics['loss'])
+
+            if val_metrics['loss'] < best_val_loss:
+                best_val_loss = val_metrics['loss']
+                best_model_state = {k: v.cpu().clone() for k, v in model.state_dict().items()}
+                patience_counter = 0
+            else:
+                patience_counter += 1
+                if patience_counter >= patience:
+                    break
+
+            pbar.set_postfix({'trn_l': f"{trn_loss:.3f}", 'val_l': f"{val_metrics['loss']:.3f}", 'val_f1_s': f"{val_metrics['f1_small']:.1f}%"})
+
+        if best_model_state is not None:
+            model.load_state_dict({k: v.to(device) for k, v in best_model_state.items()})
+
+        test_metrics = evaluate(model, test_loader, criterion, device)
+        results.append(test_metrics)
+
+        # Save model and CSV evaluation for this fold
+        fold_eval_dir = os.path.join(output_dir, "eval", f"fold_{fold_idx}")
+        fold_model_dir = os.path.join(output_dir, "model", f"fold_{fold_idx}")
+        os.makedirs(fold_eval_dir, exist_ok=True)
+        os.makedirs(fold_model_dir, exist_ok=True)
+
+        torch.save(best_model_state, os.path.join(fold_model_dir, "crnn2d_model.pt"))
+
+        # Save audio predictions CSV
+        model.eval()
+        csv_rows = []
+        with torch.no_grad():
+            for X, y, fids in test_loader:
+                X = X.to(device)
+                logits = model(X)
+                probs = torch.sigmoid(logits).cpu().numpy().flatten()
+                preds = (probs >= 0.5).astype(int)
+                for fid, pred, tgt in zip(fids, preds, y.numpy().flatten()):
+                    fid_val = fid.item() if isinstance(fid, torch.Tensor) else fid
+                    csv_rows.append({'File': fid_val, 'Target': tgt, 'Prediction': pred})
+        
+        csv_df = pd.DataFrame(csv_rows)
+        csv_path = os.path.join(fold_eval_dir, f"{exp_name}_test.csv")
+        csv_df.to_csv(csv_path, index=False)
+
+        print(f"  Fold {fold_idx} Test Results: "
+              f"SMALL [Rec: {test_metrics['rec_small']:.1f}%, Prec: {test_metrics['prec_small']:.1f}%, F1: {test_metrics['f1_small']:.1f}%] | "
+              f"LARGE [Rec: {test_metrics['rec_large']:.1f}%, Prec: {test_metrics['prec_large']:.1f}%, F1: {test_metrics['f1_large']:.1f}%] | "
+              f"ACC: {test_metrics['acc']:.1f}% | SP: {test_metrics['sp']:.1f}%")
+
+    print("\n" + "=" * 75)
+    print(f" === 10-FOLD SUMMARY: {exp_name} ===")
+    print("=" * 75)
+    summary_rows = []
+    metrics_keys = ['rec_small', 'prec_small', 'f1_small', 'rec_large', 'prec_large', 'f1_large', 'acc', 'bal_acc', 'sp']
+    for k in metrics_keys:
+        vals = [r[k] for r in results]
+        mean = np.mean(vals)
+        std = np.std(vals)
+        print(f"  {k:<12}: {mean:6.2f}% +- {std:5.2f}%")
+        summary_rows.append({'metric': k, 'mean': mean, 'std': std})
+    print("=" * 75 + "\n")
+
+    summary_df = pd.DataFrame(summary_rows)
+    summary_df.to_csv(os.path.join(output_dir, "metrics_summary.csv"), index=False)
+    print(f"[Done] Resultados e modelos salvos em: {output_dir}\n")
+
+
+if __name__ == "__main__":
+    main()
