@@ -738,7 +738,6 @@
             \scriptsize
             \begin{itemize}
                 \setlength{\itemsep}{1pt}
-                \item \textbf{Base MEL (256-D):} Fornece a pot\^{e}ncia e envelope hidrodin\^{a}mico.
                 \item \textbf{LOFAR-PCA8 (8-D):} Injeta apenas as 8 raias harm\^{o}nicas de cavita\c{c}\~{a}o/diesel mais energ\'{e}ticas.
             \end{itemize}
         \end{block}
@@ -749,33 +748,36 @@
             \begin{itemize}
                 \setlength{\itemsep}{1pt}
                 \item Vetor compacto (264-D) permite proje\c{c}\~{a}o Nystr\"{o}m r\'{a}pida ($m=6000$).
-                \item Alta precis\~{a}o ($>83\%$) impede falsos alarmes ao confirmar se o navio \'{e} realmente LARGE.
+                \item Alta precis\~{a}o ($>83\%$) previne falsos alarmes ao confirmar se o navio \'{e} realmente LARGE.
             \end{itemize}
         \end{block}
     \end{columns}
 \end{frame}
 
 \begin{frame}{Arquitetura do Especialista SL: Fus\~{a}o H\'{i}brida (MEL-256 + LOFAR-PCA8)}
-    \footnotesize
-    O especialista bin\'{a}rio combina a pot\^{e}ncia do envelope cont\'{i}nuo com as raias discretas de cavita\c{c}\~{a}o:
-    
-    \vspace{0.08cm}
     \centering
-    \includegraphics[width=0.78\textwidth,height=0.52\textheight,keepaspectratio]{imgs/fusao_hibrida_mel_lofar_pt.jpg}
+    \includegraphics[width=0.83\textwidth,height=0.44\textheight,keepaspectratio]{imgs/fusao_hibrida_mel_lofar_pt.jpg}
     
-    \vspace{0.05cm}
+    \vspace{0.02cm}
     \begin{columns}[t]
         \column{0.49\textwidth}
-        \begin{block}{\scriptsize 1. Sinergia Espectral (Vetor de 264-D)}
-            \tiny
-            \textbf{MEL (256-D):} Fornece a energia hidrodin\^{a}mica e o envelope global.\\
-            \textbf{LOFAR-PCA (8-D):} Adiciona as 8 raias harm\^{o}nicas dominantes do motor diesel.
+        \begin{block}{\small 1. Fus\~{a}o de Caracter\'{i}sticas (264-D)}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{2pt}
+                \item \textbf{Vetor Combinado:} Concatena\c{c}\~{a}o direta de \textbf{MEL (256-D)} com \textbf{LOFAR-PCA (8-D)}.
+                \item \textbf{Papel do PCA-8:} Comprime o LOFAR de 1.024 para as 8 componentes mais informativas, evitando sobreajuste e excesso de ru\'{i}do.
+            \end{itemize}
         \end{block}
         
         \column{0.49\textwidth}
-        \begin{block}{\scriptsize 2. Filtragem}
-            \tiny
-            O PCA reduz os 1.024 bins esparsos para 8 atributos cr\'{i}ticos, descartando ru\'{i}do e elevando a precis\~{a}o em LARGE para $\mathbf{83,8\%}$ no SVM Nystr\"{o}m ($m=6000$).
+        \begin{block}{\small 2. Roteamento em Cascata}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{2pt}
+                \item \textbf{Acionamento:} Ativado \textbf{apenas} se o modelo base prediz a classe \textbf{LARGE}.
+                \item \textbf{Resgate para SMALL:} O especialista bin\'{a}rio reavalia o \'{a}udio; se n\~{a}o confirmar LARGE, reclassifica como \textbf{SMALL} (resgatando 31 \'{a}udios).
+            \end{itemize}
         \end{block}
     \end{columns}
 \end{frame}
