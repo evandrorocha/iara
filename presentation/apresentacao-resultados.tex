@@ -83,11 +83,36 @@
 %===========================================
 \begin{frame}{Agenda da Apresenta\c{c}\~{a}o}
   \footnotesize
+  \setbeamercolor{block title}{bg=darkblue,fg=white}
+  \setbeamercolor{block body}{bg=peeblue!8,fg=black}
+  \setbeamertemplate{section in toc}{%
+    \vspace{0.14cm}%
+    \leavevmode%
+    \tikz[baseline=-0.65ex]\node[circle,fill=peeblue,text=white,inner sep=0pt,font=\tiny\bfseries,minimum size=1.35em]{\inserttocsectionnumber};%
+    \hspace{0.35em}%
+    \inserttocsection\par%
+  }
   \begin{columns}[t]
-      \column{0.50\textwidth}
-      \tableofcontents[sections={1-6}]
-      \column{0.50\textwidth}
-      \tableofcontents[sections={7-11}]
+      \begin{column}{0.48\textwidth}
+          \begin{block}{\small\textbf{I. Fundamenta\c{c}\~{a}o e Baselines}}
+              \tableofcontents[sections={1-3}]
+          \end{block}
+          \vspace{0.25cm}
+          \begin{block}{\small\textbf{II. Proposta SVM Nystr\"{o}m}}
+              \tableofcontents[sections={4-6}]
+          \end{block}
+      \end{column}
+      \begin{column}{0.48\textwidth}
+          \begin{block}{\small\textbf{III. An\'{a}lise e Robustez Operacional}}
+              \tableofcontents[sections={7-9}]
+          \end{block}
+          \vspace{0.25cm}
+          \begin{block}{\small\textbf{IV. Arquitetura Avan\c{c}ada e S\'{i}ntese}}
+              \tableofcontents[sections={10-11}]
+              \vspace{0.36cm}
+              \phantom{x}
+          \end{block}
+      \end{column}
   \end{columns}
 \end{frame}
 
@@ -97,34 +122,105 @@
 \section{Contexto e Dataset IARA}
 
 
-\begin{frame}{O Dataset IARA (Silva et al., 2025)}
-    \small
-    O \textbf{IARA} \'{e} a maior base p\'{u}blica para classifica\c{c}\~{a}o ac\'{u}stica submarina na costa brasileira (PMPAS-BS / Petrobras):
+\begin{frame}{Acervo e Cole\c{c}\~{o}es do Dataset IARA (Silva et al., 2025)}
+    \footnotesize
+    O \textbf{IARA} re\'{u}ne $129\text{h } 34\text{min}$ de grava\c{c}\~{o}es reais na Bacia de Santos (PMPAS-BS / Petrobras):
     
-    \vspace{0.2cm}
-    \begin{columns}
-        \column{0.52\textwidth}
-        \textbf{Base Total vs. Benchmark:}
-        \begin{itemize}
-            \item \textbf{Base Completa IARA:} \textbf{1.825 grava\c{c}\~{o}es} ($129\text{ h } 34\text{ min}$, $\sim 50\text{ GB}$) divididas em 8 cole\c{c}\~{o}es (Observat\'{o}rios e Gliders).
-            \item \textbf{Benchmark Multiclasse:} \textbf{639 \'{a}udios} ($>64\text{ h}$) com alvos únicos e identificados via AIS.
-            \item \textbf{4 Classes Reais}:
-            \begin{itemize}
-                \item \textbf{SMALL}, \textbf{MEDIUM}, \textbf{LARGE}, \textbf{BACKGROUND}.
-            \end{itemize}
-        \end{itemize}
+    \vspace{0.08cm}
+    \begin{columns}[t]
+        \column{0.55\textwidth}
+        \begin{table}[h]
+        \centering
+        \resizebox{\textwidth}{!}{%
+        \begin{tabular}{llccl}
+        \toprule
+        \textbf{Plataforma} & \textbf{Cole\c{c}\~{a}o} & \textbf{\'{A}udios} & \textbf{CPA} & \textbf{Descri\c{c}\~{a}o Ac\'{u}stica} \\
+        \midrule
+        \multirow{5}{*}{\textbf{UO}} 
+         & \textbf{A} & 456 & In  & Dist\^{a}ncia $<250\text{ m}$ (aproxima\c{c}\~{a}o) \\
+         & \textbf{B} & 199 & Out & Dist\^{a}ncia $<250\text{ m}$ (afastamento) \\
+         & \textbf{C} & 341 & In  & Dist\^{a}ncia $250-500\text{ m}$ \\
+         & \textbf{D} & 449 & Out & Dist\^{a}ncia $250-500\text{ m}$ \\
+         & \textbf{E} & 261 & --- & Ru\'{i}do ambiente mar\'{i}timo puro \\
+        \midrule
+        \multicolumn{2}{l}{\textbf{Subtotal UO (OS)}} & $\mathbf{1.706}$ & \multicolumn{2}{l}{\textbf{Base oficial dos experimentos}} \\
+        \midrule
+        \multirow{3}{*}{\textbf{Gliders}} 
+         & \textbf{F} & 35  & In  & Plataforma m\'{o}vel (alto-mar) \\
+         & \textbf{G} & 37  & Out & Plataforma m\'{o}vel (alto-mar) \\
+         & \textbf{H} & 47  & --- & Ru\'{i}do ambiente em \'{a}guas profundas \\
+        \midrule
+        \multicolumn{2}{l}{\textbf{Subtotal Gliders}} & $\mathbf{119}$ & \multicolumn{2}{l}{0 SMALL, 3 MEDIUM (invi\'{a}vel p/ SP)} \\
+        \midrule
+        \multicolumn{2}{l}{\textbf{Total Geral IARA}} & $\mathbf{1.825}$ & \multicolumn{2}{l}{$129\text{h } 34\text{min}$ ($\sim 50\text{ GB}$ de dados) } \\
+        \bottomrule
+        \end{tabular}%
+        }
+        \end{table}
         
-        \column{0.48\textwidth}
-        \begin{block}{Protocolo $5\times2$cv (10 Folds)}
-            \textbf{Exclusive Ships on Test}:
-            A parti\c{c}\~{a}o \'{e} estritamente dividida no n\'{i}vel de \textbf{ID de arquivo f\'{i}sico original} (639 \'{a}udios $\times 10 = 6.390$ testes). Nenhuma janela de um mesmo navio reside simultaneamente em treino e teste (\textit{zero data leakage}).
+        \column{0.45\textwidth}
+        \begin{block}{\small Por que Usar Apenas UO (1.706)?}
+            \scriptsize
+            \begin{itemize}
+                \item \textbf{Estabilidade F\'{i}sica}: UO \'{e} fixo no leito marinho ($\sim 2.000\text{ m}$). Canal ac\'{u}stico constante, sem ru\'{i}do de propuls\~{a}o pr\'{o}prio.
+                \item \textbf{Inviabilidade dos Gliders}: O Glider n\~{a}o possui grava\c{c}\~{o}es de SMALL (0\%) e apenas 3 de MEDIUM, zerando matematicamente o \'{I}ndice SP.
+            \end{itemize}
+        \end{block}
+        
+        \vspace{0.06cm}
+        \begin{block}{\small Curadoria Rigorosa}
+            \scriptsize
+            Alvos \'{u}nicos na zona de exclus\~{a}o ($2\text{ km}$), validados via AIS com comprimento f\'{i}sico para rotula\c{c}\~{a}o precisa.
         \end{block}
     \end{columns}
 \end{frame}
 
-\begin{frame}{Distribui\c{c}\~{a}o das Classes Ac\'{u}sticas e Desbalanceamento}
+\begin{frame}{Protocolo Experimental $5\times2\text{cv}$: Treino, Valida\c{c}\~{a}o e Teste}
+    \footnotesize
+    Como as \textbf{1.706 grava\c{c}\~{o}es de UO} s\~{a}o particionadas no protocolo oficial (Silva et al., 2025):
+    
+    \vspace{0.08cm}
+    \begin{columns}[t]
+        \column{0.50\textwidth}
+        \begin{block}{\small A Divis\~{a}o dos 1.706 \'{A}udios em 3 Conjuntos}
+            \scriptsize
+            Em cada itera\c{c}\~{a}o, os 1.706 \'{a}udios s\~{a}o divididos em duas metades:
+            \begin{itemize}
+                \item \textbf{50\% Treino (853 \'{a}udios):}
+                Ajuste dos pesos e par\^{a}metros dos modelos.
+                \item \textbf{50\% Avalia\c{c}\~{a}o (853 \'{a}udios):}
+                Fatia de 853 particionada em:
+                \begin{itemize}
+                    \scriptsize
+                    \item \textbf{Valida\c{c}\~{a}o (214 \'{a}udios $\mathbf{\approx 12,5\%}$ do total):} $25\%$ da avalia\c{c}\~{a}o p/ \textit{early stopping} em redes (MLP, CNN).
+                    \item \textbf{Teste Final (639 \'{a}udios $\mathbf{\approx 37,5\%}$ do total):} $75\%$ da avalia\c{c}\~{a}o p/ avalia\c{c}\~{a}o cega oficial.
+                \end{itemize}
+            \end{itemize}
+        \end{block}
+        
+        \column{0.50\textwidth}
+        \begin{block}{\small Balan\c{c}o Amostral por Fold}
+            \centering
+            \vspace{0.02cm}
+            $\underbrace{853}_{\text{Treino (50\%)}} + \underbrace{214}_{\text{Val (12,5\%)}} + \underbrace{\mathbf{639}}_{\textbf{Teste (37,5\%)}} = \mathbf{1.706\text{ UO (100\%)}}$\\
+            \vspace{0.02cm}
+        \end{block}
+        
+        \vspace{0.03cm}
+        \begin{block}{\small Protocolo $5\times2\text{cv}$ (10 Folds de Teste)}
+            \scriptsize
+            \begin{itemize}
+                \item \textbf{Exclusive Ships on Test}: Divis\~{a}o estratificada por navio f\'{i}sico (ID de arquivo). Nenhum navio de teste est\'{a} no treino (\textit{zero data leakage}).
+                \item \textbf{Volume de Teste}: $639\text{ \'{a}udios} \times 10\text{ folds} = \mathbf{6.390\text{ avalia\c{c}\~{o}es}}$.
+                \item Matrizes de confus\~{a}o e \'{I}ndice SP consolidados sobre essas 6.390 predi\c{c}\~{o}es de teste.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Distribui\c{c}\~{a}o das Classes na Parti\c{c}\~{a}o de Teste (639 \'{A}udios)}
     \small
-    O dataset \'{e} composto por 639 grava\c{c}\~{o}es de \'{a}udio f\'{i}sicas, apresentando desbalanceamento natural entre categorias:
+    Em cada um dos 10 folds, o conjunto de teste avaliado \'{e} composto por 639 grava\c{c}\~{o}es de UO, apresentando desbalanceamento natural entre categorias:
     
     \vspace{0.1cm}
     \begin{table}[h]
@@ -132,14 +228,14 @@
     \resizebox{0.92\textwidth}{!}{%
     \begin{tabular}{llcccl}
     \toprule
-    \textbf{Classe Ac\'{u}stica} & \textbf{Porte F\'{i}sico} & \textbf{\'{A}udios \'{U}nicos} & \textbf{Propor\c{c}\~{a}o (\%)} & \textbf{Testes ($5\times2\text{cv}$)} & \textbf{Assinatura Predominante} \\
+    \textbf{Classe Ac\'{u}stica} & \textbf{Porte F\'{i}sico} & \textbf{\'{A}udios no Teste / Fold} & \textbf{Propor\c{c}\~{a}o (\%)} & \textbf{Testes ($5\times2\text{cv}$)} & \textbf{Assinatura Predominante} \\
     \midrule
     \textbf{SMALL}      & $< 50\text{ m}$        & $178$ & $27,9\%$ & $1.780$ & Lanchas, botes (baixa SNR, motores r\'{a}pidos) \\
     \textbf{MEDIUM}     & $50-100\text{ m}$      & $149$ & $23,3\%$ & $1.490$ & Rebocadores, barcos de apoio e pesca \\
     \textbf{LARGE}      & $> 100\text{ m}$       & $214$ & $\mathbf{33,5\%}$ & $2.140$ & Petroleiros, cargueiros (raias puras, cavita\c{c}\~{a}o) \\
     \textbf{BACKGROUND} & Sem alvos              & $98$  & $\mathbf{15,3\%}$ & $980$   & Ru\'{i}do ambiente mar\'{i}timo natural \\
     \midrule
-    \textbf{Total}      & ---                    & $\mathbf{639}$ & $\mathbf{100,0\%}$ & $\mathbf{6.390}$ & $>64$ horas de grava\c{c}\~{o}es reais \\
+    \textbf{Total}      & ---                    & $\mathbf{639}$ & $\mathbf{100,0\%}$ & $\mathbf{6.390}$ & $>64$ horas de grava\c{c}\~{o}es de teste \\
     \bottomrule
     \end{tabular}%
     }
@@ -148,7 +244,7 @@
     \vspace{0.1cm}
     \begin{block}{Impacto do Desbalanceamento no Treinamento}
         \begin{itemize}
-            \item A classe \textbf{LARGE} representa um ter\c{c}o do dataset ($33,5\%$), enquanto \textbf{BACKGROUND} corresponde a apenas $15,3\%$.
+            \item A classe \textbf{LARGE} representa um ter\c{c}o do teste ($33,5\%$), enquanto \textbf{BACKGROUND} corresponde a apenas $15,3\%$.
             \item Devido \`{a} disparidade energ\'{e}tica e amostral, modelos ing\^{e}nuos tendem a negligenciar classes minorit\'{a}rias, justificando o uso mandat\'{o}rio do \textbf{\'{I}ndice SP} como m\'{e}trica de avalia\c{c}\~{a}o.
         \end{itemize}
     \end{block}
@@ -426,13 +522,10 @@
         \textbf{Destaques do Comportamento Observado:}
         \begin{itemize}
             \item \textbf{MEL:} Alta cobertura operacional ($76,1\%$).
-            \item \textbf{LOFAR:} Precis\~{a}o extrema sob alto consenso ($>90\%$).
+            \item \textbf{LOFAR:} Alta Precis\~{a}o  sob alto consenso ($>90\%$).
         \end{itemize}
         
         \column{0.5\textwidth}
-        \begin{alertblock}{Superconfian\c{c}a da CNN Profunda}
-            A CNN manteve $54\%$ de cobertura sob $t \ge 0,9$, mas sua acur\'{a}cia estagnou em apenas $74,4\%$ (erros confiantes da Softmax). O SVM calibrou de forma consistente a incerteza.
-        \end{alertblock}
     \end{columns}
 \end{frame}
 
@@ -629,10 +722,10 @@
     SVM MEL Puro & MEL (256-D) & 4000 & $74,2 \pm 2,5$ & Boa energia global, mas perde raias do motor \\
     SVM LOFAR Puro & LOFAR (1024-D) & 4000 & $71,8 \pm 3,1$ & Alta esparsidade; ru\'{i}do em barcos pequenos \\
     \midrule
-    SVM H\'{i}brido PCA-4 & MEL-256 + PCA-4 (260-D) & 6000 & $78,5 \pm 2,1$ & Poucas componentes para capturar o diesel \\
-    SVM H\'{i}brido PCA-16 & MEL-256 + PCA-16 (272-D) & 6000 & $80,4 \pm 1,9$ & Leve excesso de vari\^{a}ncia espectral \\
+    SVM H\'{i}brido (PCA-4) & MEL-256 + LOFAR-PCA4 (260-D) & 6000 & $78,5 \pm 2,1$ & Poucas componentes para capturar o diesel \\
+    SVM H\'{i}brido (PCA-16) & MEL-256 + LOFAR-PCA16 (272-D) & 6000 & $80,4 \pm 1,9$ & Leve excesso de vari\^{a}ncia espectral \\
     \midrule
-    \textbf{Melhor Especialista SL} & \textbf{MEL-256 + PCA-8 (264-D)} & \textbf{6000} & $\mathbf{83,8 \pm 1,4}$ & \textbf{Equil\'{i}brio \'{O}timo (ElasticNet, $C=1.0$)} \\
+    \textbf{Melhor Especialista SL} & \textbf{MEL-256 + LOFAR-PCA8 (264-D)} & \textbf{6000} & $\mathbf{83,8 \pm 1,4}$ & \textbf{Equil\'{i}brio \'{O}timo: MEL + LOFAR Compacto} \\
     \bottomrule
     \end{tabular}%
     }
@@ -658,6 +751,31 @@
                 \item Vetor compacto (264-D) permite proje\c{c}\~{a}o Nystr\"{o}m r\'{a}pida ($m=6000$).
                 \item Alta precis\~{a}o ($>83\%$) impede falsos alarmes ao confirmar se o navio \'{e} realmente LARGE.
             \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Arquitetura do Especialista SL: Fus\~{a}o H\'{i}brida (MEL-256 + LOFAR-PCA8)}
+    \footnotesize
+    O especialista bin\'{a}rio combina a pot\^{e}ncia do envelope cont\'{i}nuo com as raias discretas de cavita\c{c}\~{a}o:
+    
+    \vspace{0.08cm}
+    \centering
+    \includegraphics[width=0.78\textwidth,height=0.52\textheight,keepaspectratio]{imgs/fusao_hibrida_mel_lofar_pt.jpg}
+    
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.49\textwidth}
+        \begin{block}{\scriptsize 1. Sinergia Espectral (Vetor de 264-D)}
+            \tiny
+            \textbf{MEL (256-D):} Fornece a energia hidrodin\^{a}mica e o envelope global.\\
+            \textbf{LOFAR-PCA (8-D):} Adiciona as 8 raias harm\^{o}nicas dominantes do motor diesel.
+        \end{block}
+        
+        \column{0.49\textwidth}
+        \begin{block}{\scriptsize 2. Filtragem}
+            \tiny
+            O PCA reduz os 1.024 bins esparsos para 8 atributos cr\'{i}ticos, descartando ru\'{i}do e elevando a precis\~{a}o em LARGE para $\mathbf{83,8\%}$ no SVM Nystr\"{o}m ($m=6000$).
         \end{block}
     \end{columns}
 \end{frame}

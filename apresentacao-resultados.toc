@@ -1,12 +1,12 @@
 \babel@toc {brazil}{}\relax 
 \beamer@sectionintoc {1}{Contexto e Dataset IARA}{3}{0}{1}
-\beamer@sectionintoc {2}{Representa\c {c}\~{o}es Espectrais}{6}{0}{2}
-\beamer@sectionintoc {3}{Reprodu\c {c}\~{a}o dos Baselines}{7}{0}{3}
-\beamer@sectionintoc {4}{A Proposta com SVM Nystr\"{o}m}{8}{0}{4}
-\beamer@sectionintoc {5}{Evolu\c {c}\~{a}o Experimental: SVM em MEL}{10}{0}{5}
-\beamer@sectionintoc {6}{Hiperpar\^{a}metros e Limites do SVM}{11}{0}{6}
-\beamer@sectionintoc {7}{Incerteza e Op\c {c}\~{a}o de Rejei\c {c}\~{a}o}{12}{0}{7}
-\beamer@sectionintoc {8}{Robustez ao CPA}{13}{0}{8}
-\beamer@sectionintoc {9}{S\'{i}ntese e Matrizes de Confus\~{a}o}{14}{0}{9}
-\beamer@sectionintoc {10}{Estrat\'{e}gia de SVM em Cascata}{16}{0}{10}
-\beamer@sectionintoc {11}{Discuss\~{a}o e Pr\'{o}ximos Passos}{23}{0}{11}
+\beamer@sectionintoc {2}{Representa\c {c}\~{o}es Espectrais}{7}{0}{2}
+\beamer@sectionintoc {3}{Reprodu\c {c}\~{a}o dos Baselines}{8}{0}{3}
+\beamer@sectionintoc {4}{A Proposta com SVM Nystr\"{o}m}{9}{0}{4}
+\beamer@sectionintoc {5}{Evolu\c {c}\~{a}o Experimental: SVM em MEL}{11}{0}{5}
+\beamer@sectionintoc {6}{Hiperpar\^{a}metros e Limites do SVM}{12}{0}{6}
+\beamer@sectionintoc {7}{Incerteza e Op\c {c}\~{a}o de Rejei\c {c}\~{a}o}{13}{0}{7}
+\beamer@sectionintoc {8}{Robustez ao CPA}{14}{0}{8}
+\beamer@sectionintoc {9}{S\'{i}ntese e Matrizes de Confus\~{a}o}{15}{0}{9}
+\beamer@sectionintoc {10}{Estrat\'{e}gia de SVM em Cascata}{17}{0}{10}
+\beamer@sectionintoc {11}{Discuss\~{a}o e Pr\'{o}ximos Passos}{25}{0}{11}
