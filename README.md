@@ -11,6 +11,7 @@ The repository contains PyTorch code for reading the archive in different config
 
 - **data/:** This directory serves as the default location to store raw and processed data.
 - **notebooks/:** Explore demonstrations and tutorials in Jupyter notebooks.
+- **reports/:** Technical reports and Architecture Decision Records (ADRs), including [decisao_metodo_svm.md](reports/decisao_metodo_svm.md) and [decisao_metodo_demon.md](reports/decisao_metodo_demon.md).
 - **src/:** Contains the code organized as a pip package. It includes functionality for reading data, separating folds, and training models
 - **test_scripts/:** Utilize scripts for development and testing of features within the pip package.
 - **training_scripts/:** Access scripts used for training, generating plots, and creating tables presented in the final article.
