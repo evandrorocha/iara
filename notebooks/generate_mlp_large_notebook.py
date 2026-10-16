@@ -1,0 +1,456 @@
+"""
+Script de geração do notebook 16: notebooks/16_analise_complementaridade_mlp_large.ipynb
+Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no MLP para a Classe LARGE (Dataset IARA).
+"""
+
+import os
+import json
+
+def create_notebook(filename="notebooks/16_analise_complementaridade_mlp_large.ipynb"):
+    cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
+                "### Notebook 16: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no MLP — Classe LARGE\n",
+                "\n",
+                "**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)\n",
+                "**Data:** Outubro de 2026\n",
+                "\n",
+                "---\n",
+                "\n",
+                "## Resumo Executivo da Investigação com Redes Neurais (MLP)\n",
+                "\n",
+                "A classe **`LARGE`** (embarcações de grande porte: navios mercantes, graneleiros, petroleiros e porta-contêineres, $> 150\\text{ m}$ até mais de $300\\text{ m}$) foi avaliada em todas as **2.140 instâncias de teste** nos 10 folds oficiais do protocolo $5\\times2$cv com a arquitetura **MLP PyTorch `[32, 16]`** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).\n",
+                "\n",
+                "O objetivo é confrontar os resultados do classificador SVM (Notebook 13) com os da rede neural para verificar se a superioridade de consenso em cargueiros e o domínio de resgates pelo DEMON se reproduzem em uma arquitetura de representação latente profunda.\n",
+                "\n",
+                "### Principais Descobertas no MLP:\n",
+                "1. **Teto Teórico do Oráculo MLP Atinge $88{,}83\\%$ (1.901 / 2.140 cargueiros):**\n",
+                "   - O Oráculo do MLP em `LARGE` supera o do SVM ($88{,}18\\%$), alcançando o maior teto de todo o dataset IARA.\n",
+                "   - O erro comum irrecuperável cai para apenas **$11{,}17\\%$ (239 áudios)**.\n",
+                "2. **A Mais Alta Taxa de Unanimidade do Dataset ($42{,}99\\%$):**\n",
+                "   - No MLP, **$43\\%$ de todos os cargueiros (920 áudios)** são acertados simultaneamente pelas 4 entradas, superando o SVM ($36{,}92\\%$).\n",
+                "   - Quando somamos alto consenso ($\\\\ge 3/4$), **$65{,}56\\%$ dos cargueiros (1.403 áudios)** são identificados com robustez extrema.\n",
+                "3. **DEMON Confirma a Hegemonia Absoluta em Resgates Exclusivos ($117$ cargueiros):**\n",
+                "   - Assim como no SVM (onde resgatou 83 navios), o **DEMON no MLP lidera com folga os resgates exclusivos**, salvando sozinho **$117$ navios ($5{,}47\\%$)** que LOFAR, MEL e HHT erraram simultaneamente.\n",
+                "4. **A Votação por Maioria Simples ($\\\\ge 2/4$) Supera o Melhor Modelo Isolado:**\n",
+                "   - Um ensemble cego por maioria atinge **$78{,}08\\%$ ($1.671$ áudios)**, superando o LOFAR isolado ($74{,}72\\%$) em **$+3{,}36$ pontos percentuais**.\n",
+                "5. **Convergência Estrutural SVM vs. MLP:**\n",
+                "   - Tanto no SVM quanto no MLP, a hierarquia física de consenso permanece idêntica: `SMALL` ($5\text{--}7\\%$) $\\\\ll$ `MEDIUM` ($27\text{--}30\\%$) $\\\\ll$ `LARGE` ($37\text{--}43\\%$)."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 1. Configuração do Ambiente e Imports\n",
+                "import os\n",
+                "import numpy as np\n",
+                "import pandas as pd\n",
+                "import matplotlib.pyplot as plt\n",
+                "try:\n",
+                "    from IPython.display import display\n",
+                "except ImportError:\n",
+                "    display = print\n",
+                "\n",
+                "# Estilização publication-ready (sem dependência externa)\n",
+                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
+                "plt.rcParams.update({\n",
+                "    'font.family': 'sans-serif',\n",
+                "    'font.size': 11,\n",
+                "    'axes.labelsize': 12,\n",
+                "    'axes.titlesize': 13,\n",
+                "    'xtick.labelsize': 10,\n",
+                "    'ytick.labelsize': 10,\n",
+                "    'figure.titlesize': 15,\n",
+                "    'figure.dpi': 150\n",
+                "})\n",
+                "\n",
+                "print(\"Ambiente configurado com sucesso! Bibliotecas prontas.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 2. Metodologia Experimental e Base de Dados de Teste\n",
+                "\n",
+                "Avaliação exaustiva sobre todas as **2.140 instâncias de teste** onde a classe real comprovada era **`LARGE` (Classe 2)** nos 10 folds oficiais do protocolo $5\\times2$cv com **MLP PyTorch `[32, 16]`** nas 4 representações:\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 2. Dados Consolidados das Predições do MLP na Classe LARGE\n",
+                "total_lrg = 2140\n",
+                "\n",
+                "# Desempenho individual no MLP\n",
+                "hits_data = {\n",
+                "    'Representacao': ['DEMON (253-D)', 'HHT Puro (256-D)', 'MEL (256-D)', 'LOFAR (1024-D)', 'ORÁCULO MLP (União 4 Modos)'],\n",
+                "    'Acertos': [1373, 1450, 1473, 1599, 1901],\n",
+                "    'Recall_Pct': [64.16, 67.76, 68.83, 74.72, 88.83]\n",
+                "}\n",
+                "df_hits = pd.DataFrame(hits_data)\n",
+                "\n",
+                "# Grau de consenso no MLP\n",
+                "consensus_data = {\n",
+                "    'Nivel_Consenso': [\n",
+                "        '4 de 4 (Unanimidade / Independente)',\n",
+                "        '3 de 4 (Alto Consenso)',\n",
+                "        '2 de 4 (Consenso Parcial / Dividido)',\n",
+                "        '1 de 4 (Frágil / Resgate Exclusivo)',\n",
+                "        '0 de 4 (Erro Comum / Incorrigível)'\n",
+                "    ],\n",
+                "    'Audios': [920, 483, 268, 230, 239],\n",
+                "    'Pct_Total_Large': [42.99, 22.57, 12.52, 10.75, 11.17],\n",
+                "    'Pct_Dentro_Oraculo': [48.39, 25.41, 14.10, 12.10, np.nan]\n",
+                "}\n",
+                "df_consensus = pd.DataFrame(consensus_data)\n",
+                "\n",
+                "# Resgates exclusivos por representação no MLP\n",
+                "exclusive_data = {\n",
+                "    'Representacao': ['MEL Exclusivo', 'HHT Exclusivo', 'LOFAR Exclusivo', 'DEMON Exclusivo'],\n",
+                "    'Audios_Salvos': [30, 37, 46, 117],\n",
+                "    'Percentual': [1.40, 1.73, 2.15, 5.47]\n",
+                "}\n",
+                "df_exclusive = pd.DataFrame(exclusive_data)\n",
+                "\n",
+                "# Efeito Reverso em Relação ao Baseline LOFAR (1.599 acertos, 541 erros)\n",
+                "reverse_data = {\n",
+                "    'Destino_Troca': ['Para MEL', 'Para HHT', 'Para DEMON'],\n",
+                "    'Mantem_do_LOFAR': [1369, 1331, 1153],\n",
+                "    'Perde_do_LOFAR (Efeito Reverso)': [230, 268, 446],\n",
+                "    'Pct_Perda_Acertos (%)': [14.38, 16.76, 27.89],\n",
+                "    'Resgata_Erros_LOFAR': [104, 119, 220],\n",
+                "    'Pct_Resgate_Erros (%)': [19.22, 22.00, 40.67],\n",
+                "    'Saldo_Liquido_Audios': [-126, -149, -226]\n",
+                "}\n",
+                "df_reverse = pd.DataFrame(reverse_data)\n",
+                "\n",
+                "# Padrão de confusão quando erra em LARGE no MLP\n",
+                "confusion_pattern_data = {\n",
+                "    'Representacao': ['LOFAR (541 erros)', 'MEL (667 erros)', 'DEMON (767 erros)', 'HHT (690 erros)'],\n",
+                "    'Confundido_SMALL_Pct': [50.28, 40.78, 50.85, 41.59],\n",
+                "    'Confundido_MEDIUM_Pct': [39.37, 47.68, 27.77, 37.68],\n",
+                "    'Confundido_AMBIENTAL_Pct': [10.35, 11.54, 21.38, 20.72]\n",
+                "}\n",
+                "df_confusion_pattern = pd.DataFrame(confusion_pattern_data)\n",
+                "\n",
+                "display(df_hits)\n",
+                "display(df_consensus)\n",
+                "display(df_reverse)"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 3. O Efeito Oráculo no MLP: Desempenho Isolado vs. Teto Teórico\n",
+                "\n",
+                "Assim como no SVM, o **LOFAR lidera o desempenho individual com $74{,}72\\%$ de recall (1.599 acertos)**.\n",
+                "\n",
+                "No entanto, o **Oráculo MLP atinge impressionantes $88{,}83\\%$ de recall (1.901 acertos em 2.140 cargueiros)**:\n",
+                "- Um ganho de **$+14{,}1$ pontos percentuais** sobre o LOFAR isolado.\n",
+                "- O erro comum (onde as 4 redes erram simultaneamente) cai para apenas **$11{,}17\\%$ (239 áudios)**, o menor de todo o dataset."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 3. Gráfico: Desempenho Isolado vs Teto Teórico do Oráculo em LARGE (MLP)\n",
+                "plt.figure(figsize=(10, 5.5))\n",
+                "colors = ['#95a5a6', '#9b59b6', '#2980b9', '#e67e22', '#27ae60']\n",
+                "bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)\n",
+                "bars[-1].set_hatch('//')\n",
+                "\n",
+                "plt.axhline(88.83, color='#27ae60', linestyle='--', lw=1.5, alpha=0.7, label='Teto do Oráculo MLP (88.83%)')\n",
+                "plt.axhline(74.72, color='#e67e22', linestyle=':', lw=1.5, alpha=0.7, label='Melhor Isolado LOFAR (74.72%)')\n",
+                "\n",
+                "plt.title('Recall MLP na Classe LARGE: Modelos Isolados vs. Teto Teórico do Oráculo', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Recall em LARGE (%)')\n",
+                "plt.ylim(0, 105)\n",
+                "\n",
+                "for bar in bars:\n",
+                "    h = bar.get_height()\n",
+                "    plt.annotate(f'{h:.1f}%', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=10.5, fontweight='bold', color='#111')\n",
+                "\n",
+                "plt.legend(loc='upper left', frameon=True)\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 4. Análise de Grau de Consenso e Risco do Efeito Reverso em LARGE (MLP)\n",
+                "\n",
+                "### 4.1 A Pirâmide de Consenso no MLP\n",
+                "- **Unanimidade (4/4 certas): $920$ áudios ($42{,}99\\%$)** — a mais alta do dataset;\n",
+                "- **Alto Consenso (3/4 certas): $483$ áudios ($22{,}57\\%$)**;\n",
+                "- **Consenso Dividido (2/4 certas): $268$ áudios ($12{,}52\\%$)**;\n",
+                "- **Resgate Exclusivo (1/4 certa): $230$ áudios ($10{,}75\\%$)**;\n",
+                "- **Erro Comum (0/4 certas): $239$ áudios ($11{,}17\\%$)**.\n",
+                "\n",
+                "### 4.2 O Efeito Reverso a partir do LOFAR (1.599 Acertos)\n",
+                "- **Chavear para MEL:** Perde $230$ e ganha $104$ (saldo líquido: $-126$ áudios);\n",
+                "- **Chavear para HHT:** Perde $268$ e ganha $119$ (saldo: $-149$ áudios);\n",
+                "- **Chavear para DEMON:** Perde $446$ e ganha $220$ (saldo: $-226$ áudios).\n",
+                "\n",
+                "Novamente, trocar cegamente do LOFAR para outra representação reduz os acertos globais em cargueiros.\n",
+                "\n",
+                "### 4.3 O Sucesso da Votação por Maioria em LARGE (MLP)\n",
+                "- **Unanimidade (4/4):** $42{,}99\\%$ ($920$ áudios);\n",
+                "- **Maioria Estrita (\\\\ge 3/4):** $65{,}56\\%$ ($1.403$ áudios);\n",
+                "- **Maioria Simples / Empate (\\\\ge 2/4):** **$78{,}08\\%$ ($1.671$ áudios)** $\\rightarrow$ **Supera o LOFAR isolado ($74{,}72\\%$) em $+3{,}36$ p.p.!**\n",
+                "- **Oráculo (\\\\ge 1/4):** **$88{,}83\\%$ ($1.901$ áudios)**."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 4. Visualização do Grau de Consenso e do Efeito Reverso em LARGE (MLP)\n",
+                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))\n",
+                "\n",
+                "# Painel 1: Pirâmide de Consenso dos 2.140 Áudios\n",
+                "labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo/Frágil)', '0 Entradas\\n(Erro Comum)']\n",
+                "counts_cons = [920, 483, 268, 230, 239]\n",
+                "pcts_cons = [42.99, 22.57, 12.52, 10.75, 11.17]\n",
+                "colors_cons = ['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d']\n",
+                "\n",
+                "bars1 = ax1.bar(labels_cons, counts_cons, color=colors_cons, edgecolor='black', linewidth=0.8, width=0.55)\n",
+                "ax1.set_title('Grau de Consenso MLP em LARGE (Total: 2.140 Áudios no 5x2cv)', fontweight='bold', pad=12)\n",
+                "ax1.set_ylabel('Quantidade de Áudios de LARGE')\n",
+                "ax1.set_ylim(0, 1050)\n",
+                "\n",
+                "for bar, pct in zip(bars1, pcts_cons):\n",
+                "    h = bar.get_height()\n",
+                "    ax1.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=9.5, fontweight='bold')\n",
+                "\n",
+                "# Painel 2: Simulação do Efeito Reverso a partir do LOFAR (1.599 Acertos no MLP)\n",
+                "destinos = ['Para MEL', 'Para HHT', 'Para DEMON']\n",
+                "perdas = [230, 268, 446]\n",
+                "resgates = [104, 119, 220]\n",
+                "x = np.arange(len(destinos))\n",
+                "w = 0.35\n",
+                "\n",
+                "r1 = ax2.bar(x - w/2, perdas, w, label='Perde Acertos do LOFAR (Efeito Reverso)', color='#c0392b', alpha=0.9, edgecolor='black')\n",
+                "r2 = ax2.bar(x + w/2, resgates, w, label='Resgata dos Erros do LOFAR (Ganhos)', color='#27ae60', alpha=0.9, edgecolor='black')\n",
+                "\n",
+                "ax2.set_title('Balanço do Efeito Reverso no MLP ao Trocar de Entrada a partir do LOFAR', fontweight='bold', pad=12)\n",
+                "ax2.set_ylabel('Quantidade de Áudios de LARGE')\n",
+                "ax2.set_xticks(x)\n",
+                "ax2.set_xticklabels(destinos, fontweight='bold', fontsize=11)\n",
+                "ax2.set_ylim(0, 520)\n",
+                "ax2.legend(loc='upper right', frameon=True)\n",
+                "\n",
+                "for rect in r1:\n",
+                "    h = rect.get_height()\n",
+                "    ax2.annotate(f'-{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
+                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#900')\n",
+                "\n",
+                "for rect in r2:\n",
+                "    h = rect.get_height()\n",
+                "    ax2.annotate(f'+{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
+                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#006400')\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 5. Resgates Exclusivos no MLP em LARGE: O Domínio do DEMON\n",
+                "\n",
+                "Em **$230$ áudios de `LARGE` ($10{,}75\\%$)**, três entradas falharam e apenas uma rede neural acertou o cargueiro:\n",
+                "\n",
+                "1. **DEMON Isolado (117 navios salvos exclusivamente — $5{,}47\\%$):**\n",
+                "   - É o **maior resgatador exclusivo de todo o estudo com MLP**!\n",
+                "   - O DEMON extrai as frequências de rotação de eixo e cadência de pás de motores 2 tempos ultralentos ($< 2\\text{ Hz}$), imunes ao espalhamento acústico que confunde o LOFAR e o MEL.\n",
+                "2. **LOFAR Puro (46 navios salvos exclusivamente — $2{,}15\\%$):**\n",
+                "   - Raias tônicas estreitas em frequências de geradores e bombas.\n",
+                "3. **HHT Puro (37 navios salvos exclusivamente — $1{,}73\\%$):**\n",
+                "   - Decomposições instantâneas pontuais de cavitação transitória.\n",
+                "4. **MEL Isolado (30 navios salvos exclusivamente — $1{,}40\\%$):**\n",
+                "   - Energia espectral agregada de descarga pesada."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 5. Gráfico: Resgates Exclusivos na Classe LARGE (MLP)\n",
+                "plt.figure(figsize=(9, 4.5))\n",
+                "colors_excl = ['#2980b9', '#9b59b6', '#e67e22', '#16a085']\n",
+                "bars_excl = plt.barh(df_exclusive['Representacao'], df_exclusive['Audios_Salvos'], color=colors_excl, height=0.5, edgecolor='black', linewidth=0.8)\n",
+                "\n",
+                "plt.title('Resgates Exclusivos MLP na Classe LARGE (Total: 230 Áudios Únicos)', fontweight='bold', pad=12)\n",
+                "plt.xlabel('Número de Áudios Salvos Exclusivamente')\n",
+                "plt.xlim(0, 150)\n",
+                "\n",
+                "for idx, (bar, pct) in enumerate(zip(bars_excl, df_exclusive['Percentual'])):\n",
+                "    w = bar.get_width()\n",
+                "    tag = \"  <-- CAMPEÃO DE RESGATES EM LARGE\" if idx == 3 else \"\"\n",
+                "    plt.annotate(f'{w} áudios ({pct:.1f}%){tag}', xy=(w, bar.get_y() + bar.get_height()/2),\n",
+                "                 xytext=(5, 0), textcoords=\"offset points\", ha='left', va='center',\n",
+                "                 fontsize=9.5, fontweight='bold', color='#111' if idx != 3 else '#117864')\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 6. Padrões de Erro em LARGE: Para Onde Cada Entrada Envia o Cargueiro no MLP?\n",
+                "\n",
+                "| Entrada | Principal Erro | Porcentagem do Erro | Segundo Maior Erro | Diagnóstico Mecânico |\n",
+                "| :--- | :---: | :---: | :---: | :--- |\n",
+                "| **LOFAR** | **`SMALL`** | **$50{,}28\\%$** | `MEDIUM` ($39{,}37\\%$) | Cargueiros sem raias tônicas proeminentes têm a energia de alta frequência assimilada pelo ruído de propulsores de lanchas. |\n",
+                "| **MEL** | **`MEDIUM`** | **$47{,}68\\%$** | `SMALL` ($40{,}78\\%$) | Faixas contínuas de exaustão sobrepostas à assinatura de rebocadores pesados. |\n",
+                "| **DEMON** | **`SMALL`** | **$50{,}85\\%$** | `MEDIUM` ($27{,}77\\%$) | Quando a modulação demodulada perde o pico de eixo, o residual assemelha-se a cavitação aleatória. |\n",
+                "| **HHT** | **`SMALL`** | **$41{,}59\\%$** | `MEDIUM` ($37{,}68\\%$) | Dispersão de energia entre as primeiras IMFs. |"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 6. Gráfico: Destino do Erro em LARGE por Representação (MLP)\n",
+                "plt.figure(figsize=(10, 5.5))\n",
+                "reps = df_confusion_pattern['Representacao']\n",
+                "sml_err = df_confusion_pattern['Confundido_SMALL_Pct']\n",
+                "med_err = df_confusion_pattern['Confundido_MEDIUM_Pct']\n",
+                "amb_err = df_confusion_pattern['Confundido_AMBIENTAL_Pct']\n",
+                "\n",
+                "w = 0.52\n",
+                "p1 = plt.bar(reps, sml_err, w, label='Confundido com SMALL (Lanchas)', color='#3498db', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
+                "p2 = plt.bar(reps, med_err, w, bottom=sml_err, label='Confundido com MEDIUM (Rebocadores)', color='#f39c12', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
+                "p3 = plt.bar(reps, amb_err, w, bottom=np.array(sml_err)+np.array(med_err), label='Confundido com AMBIENTAL (Ruído)', color='#95a5a6', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
+                "\n",
+                "plt.title('Padrão de Erro MLP na Classe LARGE: Para onde cada entrada envia o cargueiro? (%)', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Distribuição Percentual dos Erros (%)')\n",
+                "plt.ylim(0, 118)\n",
+                "plt.legend(loc='upper right', frameon=True)\n",
+                "\n",
+                "for i in range(len(reps)):\n",
+                "    plt.text(i, sml_err[i]/2, f'{sml_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
+                "    plt.text(i, sml_err[i] + med_err[i]/2, f'{med_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
+                "    if amb_err[i] > 4:\n",
+                "        plt.text(i, sml_err[i] + med_err[i] + amb_err[i]/2, f'{amb_err[i]:.1f}%', ha='center', va='center', fontsize=8.5, fontweight='bold', color='white')\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 7. Painel Consolidado de Descoberta Científica (MLP)\n",
+                "\n",
+                "Abaixo exibimos o painel visual oficial de 4 quadrantes para a classe `LARGE` com o modelo MLP:"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 7. Exibição do Gráfico Oficial Consolidado salvo em disco\n",
+                "from IPython.display import Image, display\n",
+                "\n",
+                "img_path = 'reports/analise_complementaridade_mlp_large_oraculo.png'\n",
+                "if os.path.exists(img_path):\n",
+                "    display(Image(filename=img_path))\n",
+                "else:\n",
+                "    print(f\"Imagem {img_path} não encontrada. Execute 'scratch/generate_mlp_predictions_and_analysis.py' para gerá-la.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 8. Comparativo Definitivo: SVM Nyström (Notebook 13) vs. MLP PyTorch (Notebook 16)\n",
+                "\n",
+                "| Dimensão Analítica | SVM Nyström (Notebook 13) | MLP PyTorch (Notebook 16) | Conclusão Científica |\n",
+                "| :--- | :---: | :---: | :--- |\n",
+                "| **Total de Cargueiros ($5\\times2$cv)** | $2.140$ áudios | $2.140$ áudios | Avaliação rigorosa idêntica. |\n",
+                "| **Melhor Modelo Isolado** | **$76{,}31\\%$** (LOFAR) | **$74{,}72\\%$** (LOFAR) | O LOFAR é o especialista supremo de cargueiros em ambas as famílias. |\n",
+                "| **Teto do Oráculo** | **$88{,}18\\%$** ($1.887$) | **$88{,}83\\%$** ($1.901$) | **Estabilidade perfeita:** $\\approx 88\text{--}89\\%$ de teto em ambas as arquiteturas! |\n",
+                "| **Taxa de Unanimidade (4/4)** | $36{,}92\\%$ ($790$) | **$42{,}99\\%$** ($920$) | Consenso unânime ainda mais forte na representação latente do MLP. |\n",
+                "| **Erro Comum Incorrigível** | $11{,}82\\%$ ($253$) | **$11{,}17\\%$** ($239$) | Apenas $11\\%$ de perda irreparável. |\n",
+                "| **Campeão de Resgates Exclusivos** | **DEMON** ($83$ navios) | **DEMON** ($117$ navios) | **Validação definitiva:** O DEMON é indispensável para detectar navios pesados quando o Fourier falha. |\n",
+                "| **Votação Simples (\\\\ge 2/4)** | $77{,}34\\%$ ($+1{,}03$ p.p.) | **$78{,}08\\%$** ($+3{,}36$ p.p.) | A maioria simples supera o melhor modelo individual em ambas as famílias! |\n",
+                "\n",
+                "---\n",
+                "\n",
+                "## 9. Conclusão Final do Estudo de Consenso Multi-Entrada\n",
+                "\n",
+                "A replicação da análise nas duas famílias algorítmicas (SVM e MLP) sobre as 3 classes de embarcações consolida uma lei física fundamental da acústica submarina no IARA:\n",
+                "\n",
+                "1. **A hierarquia de fragilidade acústica é invariante ao classificador:**\n",
+                "   - Lanchas (`SMALL`) têm consenso nulo ($5\text{--}7\\%$ de unanimidade), dependendo criticamente de resgate multimodal;\n",
+                "   - Cargueiros (`LARGE`) têm consenso massivo ($37\text{--}43\\%$ de unanimidade), onde a maioria simples já basta para superar o melhor modelo isolado;\n",
+                "2. **O DEMON é a salvaguarda acústica dos cargueiros:**\n",
+                "   - Tanto no SVM quanto no MLP, o DEMON é o campeão absoluto de resgates em `LARGE`, provando que o envelope de modulação de cavitação é ortogonal ao espectrograma tradicional;\n",
+                "3. **Teto de Desempenho Global ($85\text{--}88\\%$):**\n",
+                "   - O gargalo do sonar passivo no IARA não reside no algoritmo classificador (SVM vs. MLP alcançam tetos praticamente idênticos), mas sim na **necessidade de fusão seletiva e complementar das representações acústicas**."
+            ]
+        }
+    ]
+
+    nb_data = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "codemirror_mode": {"name": "ipython", "version": 3},
+                "file_extension": ".py",
+                "mimetype": "text/x-python",
+                "name": "python",
+                "nbconvert_exporter": "python",
+                "pygments_lexer": "ipython3",
+                "version": "3.10.12"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 4
+    }
+
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(nb_data, f, indent=2, ensure_ascii=False)
+    print(f"Notebook gerado com sucesso em '{filename}'!")
+
+if __name__ == "__main__":
+    create_notebook()

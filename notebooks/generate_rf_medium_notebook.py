@@ -1,0 +1,320 @@
+"""
+Script de geração do notebook 18: notebooks/18_analise_complementaridade_rf_medium.ipynb
+Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest para a Classe MEDIUM (Dataset IARA).
+"""
+
+import os
+import json
+
+def create_notebook(filename="notebooks/18_analise_complementaridade_rf_medium.ipynb"):
+    cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
+                "### Notebook 18: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest — Classe MEDIUM\n",
+                "\n",
+                "**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)\n",
+                "**Data:** Outubro de 2026\n",
+                "\n",
+                "---\n",
+                "\n",
+                "## Resumo Executivo da Investigação com Random Forest (RF)\n",
+                "\n",
+                "A classe **`MEDIUM`** (rebocadores e navios de apoio offshore de $50\\\\text{ m}$ a $100\\\\text{ m}$) foi avaliada em todas as **1.490 instâncias de teste** nos 10 folds oficiais do protocolo $5\\\\times2$cv com a arquitetura **Random Forest (100 árvores com balanceamento de classes)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).\n",
+                "\n",
+                "O objetivo é confrontar os resultados do classificador SVM (Notebook 12) e do MLP (Notebook 15) com os do Random Forest para avaliar a estabilidade do consenso em navios de porte intermediário e o padrão de confusão com lanchas rápidas.\n",
+                "\n",
+                "### Principais Descobertas no Random Forest:\n",
+                "1. **Teto Teórico do Oráculo RF Atinge $77{,}85\\\\%$ (1.160 / 1.490 rebocadores):**\n",
+                "   - O Oráculo do Random Forest em `MEDIUM` proporciona um salto de **$+19{,}1$ pontos percentuais** sobre o melhor modelo isolado (MEL com $58{,}72\\\\%$).\n",
+                "   - O erro comum irrecuperável é de **$22{,}15\\\\%$ (330 áudios)**.\n",
+                "2. **A Unanimidade em MEDIUM se Mantém Estável ($26{,}78\\\\%$ — 399 áudios):**\n",
+                "   - Assim como no SVM ($27{,}05\\\\%$) e no MLP ($29{,}93\\\\%$), cerca de mais de um quarto dos rebocadores são classificados corretamente pelas 4 representações de forma independente da transformada.\n",
+                "3. **MEL e HHT Lideram os Resgates Exclusivos no RF:**\n",
+                "   - O **MEL salva sozinho 99 rebocadores ($6{,}64\\\\%$)** e o **HHT salva 93 ($6{,}24\\\\%$)**, demonstrando que transformadas espectrais diretas e tempo-frequência contínua superam o DEMON na caracterização de propulsão de apoio offshore.\n",
+                "4. **A Confusão Extrema `MEDIUM` $\\\\rightarrow$ `SMALL` no Random Forest:**\n",
+                "   - No Random Forest, quando o modelo erra em `MEDIUM`, **mais de $65\\\\%$ a $72\\\\%$ dos erros vão para `SMALL`** (ex: no MEL, $72{,}03\\\\%$ dos erros vão para `SMALL`). As árvores de decisão particionam a rotação de motores diesel de média rotação em nós muito próximos aos de propulsores de lanchas pesadas."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 1. Configuração do Ambiente e Imports\n",
+                "import os\n",
+                "import numpy as np\n",
+                "import pandas as pd\n",
+                "import matplotlib.pyplot as plt\n",
+                "try:\n",
+                "    from IPython.display import display\n",
+                "except ImportError:\n",
+                "    display = print\n",
+                "\n",
+                "# Estilização publication-ready (sem dependência externa)\n",
+                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
+                "plt.rcParams.update({\n",
+                "    'font.family': 'sans-serif',\n",
+                "    'font.size': 11,\n",
+                "    'axes.labelsize': 12,\n",
+                "    'axes.titlesize': 13,\n",
+                "    'xtick.labelsize': 10,\n",
+                "    'ytick.labelsize': 10,\n",
+                "    'figure.titlesize': 15,\n",
+                "    'figure.dpi': 150\n",
+                "})\n",
+                "\n",
+                "print(\"Ambiente configurado com sucesso! Bibliotecas prontas.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 2. Metodologia Experimental e Base de Dados de Teste\n",
+                "\n",
+                "Avaliação sobre todos os **1.490 testes** onde a classe real comprovada era **`MEDIUM` (Classe 1)** sob o protocolo oficial $5\\\\times2$cv nos 10 folds com modelos **Random Forest (100 árvores, balanced)**:\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 2. Dados Consolidados das Predições do Random Forest na Classe MEDIUM\n",
+                "total_med = 1490\n",
+                "\n",
+                "# Desempenho individual no RF\n",
+                "hits_data = {\n",
+                "    'Representacao': ['DEMON (253-D)', 'LOFAR (1024-D)', 'HHT Puro (256-D)', 'MEL (256-D)', 'ORÁCULO RF (União 4 Modos)'],\n",
+                "    'Acertos': [520, 821, 840, 875, 1160],\n",
+                "    'Recall_Pct': [34.90, 55.10, 56.38, 58.72, 77.85]\n",
+                "}\n",
+                "df_hits = pd.DataFrame(hits_data)\n",
+                "\n",
+                "# Grau de consenso no RF\n",
+                "consensus_data = {\n",
+                "    'Nivel_Consenso': [\n",
+                "        '4 de 4 (Unanimidade / Independente)',\n",
+                "        '3 de 4 (Alto Consenso)',\n",
+                "        '2 de 4 (Consenso Parcial / Dividido)',\n",
+                "        '1 de 4 (Frágil / Resgate Exclusivo)',\n",
+                "        '0 de 4 (Erro Comum / Incorrigível)'\n",
+                "    ],\n",
+                "    'Audios': [399, 239, 221, 301, 330],\n",
+                "    'Pct_Total_Medium': [26.78, 16.04, 14.83, 20.20, 22.15],\n",
+                "    'Pct_Dentro_Oraculo': [34.40, 20.60, 19.05, 25.95, np.nan]\n",
+                "}\n",
+                "df_consensus = pd.DataFrame(consensus_data)\n",
+                "\n",
+                "# Resgates exclusivos por representação no RF\n",
+                "exclusive_data = {\n",
+                "    'Representacao': ['DEMON Exclusivo', 'LOFAR Exclusivo', 'HHT Exclusivo', 'MEL Exclusivo'],\n",
+                "    'Audios_Salvos': [34, 75, 93, 99],\n",
+                "    'Percentual': [2.28, 5.03, 6.24, 6.64]\n",
+                "}\n",
+                "df_exclusive = pd.DataFrame(exclusive_data)\n",
+                "\n",
+                "# Efeito Reverso em Relação ao Baseline MEL (875 acertos, 615 erros)\n",
+                "reverse_data = {\n",
+                "    'Destino_Troca': ['Para LOFAR', 'Para HHT', 'Para DEMON'],\n",
+                "    'Mantem_do_MEL': [671, 677, 446],\n",
+                "    'Perde_do_MEL (Efeito Reverso)': [204, 198, 429],\n",
+                "    'Pct_Perda_Acertos (%)': [23.31, 22.63, 49.03],\n",
+                "    'Resgata_Erros_MEL': [150, 163, 74],\n",
+                "    'Pct_Resgate_Erros (%)': [24.39, 26.50, 12.03],\n",
+                "    'Saldo_Liquido_Audios': [-54, -35, -355]\n",
+                "}\n",
+                "df_reverse = pd.DataFrame(reverse_data)\n",
+                "\n",
+                "# Padrão de confusão quando erra em MEDIUM no RF\n",
+                "confusion_pattern_data = {\n",
+                "    'Representacao': ['MEL (615 erros)', 'LOFAR (669 erros)', 'HHT (650 erros)', 'DEMON (970 erros)'],\n",
+                "    'Confundido_SMALL_Pct': [72.03, 65.77, 64.62, 67.32],\n",
+                "    'Confundido_LARGE_Pct': [27.64, 33.78, 31.54, 27.42],\n",
+                "    'Confundido_AMBIENTAL_Pct': [0.33, 0.45, 3.85, 5.26]\n",
+                "}\n",
+                "df_confusion_pattern = pd.DataFrame(confusion_pattern_data)\n",
+                "\n",
+                "display(df_hits)\n",
+                "display(df_consensus)\n",
+                "display(df_reverse)"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 3. O Efeito Oráculo no Random Forest: Recall Individual vs. Teto Teórico\n",
+                "\n",
+                "O classificador Random Forest atinge **$58{,}72\\\\%$ de recall em `MEDIUM`** com o MEL e **$56{,}38\\\\%$** com o HHT.\n",
+                "\n",
+                "Contudo, a combinação das 4 entradas via **Oráculo RF** salta para **$77{,}85\\\\%$ (1.160 acertos)**:\n",
+                "- Um ganho de **$+19{,}1$ pontos percentuais** sobre o MEL isolado;\n",
+                "- O erro comum (onde as 4 florestas erram simultaneamente) é de **$22{,}15\\\\%$ (330 áudios)**."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 3. Gráfico: Desempenho Isolado vs Teto Teórico do Oráculo no RF em MEDIUM\n",
+                "plt.figure(figsize=(10, 5.5))\n",
+                "colors = ['#95a5a6', '#e67e22', '#9b59b6', '#2980b9', '#27ae60']\n",
+                "bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)\n",
+                "bars[-1].set_hatch('//')\n",
+                "\n",
+                "plt.axhline(77.85, color='#27ae60', linestyle='--', lw=1.5, alpha=0.7, label='Teto do Oráculo RF (77.85%)')\n",
+                "plt.axhline(58.72, color='#2980b9', linestyle=':', lw=1.5, alpha=0.7, label='Melhor Isolado MEL (58.72%)')\n",
+                "\n",
+                "plt.title('Recall Random Forest na Classe MEDIUM: Modelos Isolados vs. Teto Teórico do Oráculo', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Recall em MEDIUM (%)')\n",
+                "plt.ylim(0, 100)\n",
+                "\n",
+                "for bar in bars:\n",
+                "    h = bar.get_height()\n",
+                "    plt.annotate(f'{h:.1f}%', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=10.5, fontweight='bold', color='#111')\n",
+                "\n",
+                "plt.legend(loc='upper left', frameon=True)\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 4. Análise de Grau de Consenso em MEDIUM no Random Forest\n",
+                "\n",
+                "A pirâmide de consenso em `MEDIUM`:\n",
+                "- **Unanimidade (4/4 certas): $399$ áudios ($26{,}78\\\\%$)** — taxa estável com as outras famílias;\n",
+                "- **Alto Consenso (3/4 certas): $239$ áudios ($16{,}04\\\\%$)**;\n",
+                "- **Consenso Dividido (2/4 certas): $221$ áudios ($14{,}83\\\\%$)**;\n",
+                "- **Resgate Exclusivo (1/4 certa): $301$ áudios ($20{,}20\\\\%$)**;\n",
+                "- **Erro Comum (0/4 certas): $330$ áudios ($22{,}15\\\\%$)**.\n",
+                "\n",
+                "### Votação por Consenso em MEDIUM (RF):\n",
+                "- **Unanimidade (4/4):** $26{,}78\\\\%$ ($399$ áudios);\n",
+                "- **Maioria Estrita ($\\\\ge 3/4$):** $42{,}82\\\\%$ ($638$ áudios);\n",
+                "- **Maioria Simples / Empate ($\\\\ge 2/4$):** $57{,}65\\\\%$ ($859$ áudios);\n",
+                "- **Oráculo ($\\\\ge 1/4$):** **$77{,}85\\\\%$ ($1.160$ áudios)**."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 4. Visualização do Grau de Consenso no RF\n",
+                "plt.figure(figsize=(9, 5))\n",
+                "labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo/Frágil)', '0 Entradas\\n(Erro Comum)']\n",
+                "counts_cons = [399, 239, 221, 301, 330]\n",
+                "pcts_cons = [26.78, 16.04, 14.83, 20.20, 22.15]\n",
+                "colors_cons = ['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d']\n",
+                "\n",
+                "bars = plt.bar(labels_cons, counts_cons, color=colors_cons, edgecolor='black', linewidth=0.8, width=0.55)\n",
+                "plt.title('Grau de Consenso RF em MEDIUM (Total: 1.490 Áudios no 5x2cv)', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Quantidade de Áudios de MEDIUM')\n",
+                "plt.ylim(0, 480)\n",
+                "\n",
+                "for bar, pct in zip(bars, pcts_cons):\n",
+                "    h = bar.get_height()\n",
+                "    plt.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=9.5, fontweight='bold')\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 5. Resgates Exclusivos e Padrão de Erro no Random Forest\n",
+                "\n",
+                "### Resgates Exclusivos em MEDIUM:\n",
+                "- **MEL:** Salva $99$ rebocadores ($6{,}64\\\\%$) — campeão em MEDIUM;\n",
+                "- **HHT:** Salva $93$ rebocadores ($6{,}24\\\\%$);\n",
+                "- **LOFAR:** Salva $75$ rebocadores ($5{,}03\\\\%$);\n",
+                "- **DEMON:** Salva $34$ rebocadores ($2{,}28\\\\%$).\n",
+                "\n",
+                "### Padrão de Erro Unidirecional Maciço para SMALL:\n",
+                "- **MEL:** **$72{,}03\\\\%$ dos erros vão para `SMALL`**;\n",
+                "- **DEMON:** **$67{,}32\\\\%$ dos erros vão para `SMALL`**;\n",
+                "- **LOFAR:** **$65{,}77\\\\%$ dos erros vão para `SMALL`**;\n",
+                "- **HHT:** **$64{,}62\\\\%$ dos erros vão para `SMALL`**.\n",
+                "O Random Forest amplifica o viés de confundir rebocadores com lanchas, mostrando que em árvores de decisão os níveis de ruído ambiente e de marulho induzem o algoritmo a atribuir assinaturas acústicas intermediárias à classe `SMALL`."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 5. Exibição do Gráfico Oficial Consolidado salvo em disco\n",
+                "from IPython.display import Image, display\n",
+                "\n",
+                "img_path = 'reports/analise_complementaridade_rf_medium_oraculo.png'\n",
+                "if os.path.exists(img_path):\n",
+                "    display(Image(filename=img_path))\n",
+                "else:\n",
+                "    print(f\"Imagem {img_path} não encontrada. Execute 'scratch/generate_rf_predictions_and_analysis.py' para gerá-la.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 6. Comparativo Trilateral em MEDIUM: SVM Nyström vs. MLP PyTorch vs. Random Forest\n",
+                "\n",
+                "| Dimensão Analítica | SVM Nyström (Notebook 12) | MLP PyTorch (Notebook 15) | Random Forest (Notebook 18) | Diagnóstico Científico |\n",
+                "| :--- | :---: | :---: | :---: | :--- |\n",
+                "| **Melhor Modelo Isolado** | $60{,}40\\\\%$ (MEL / LOFAR) | **$64{,}09\\\\%$ (MEL)** | $58{,}72\\\\%$ (MEL) | O MLP continua sendo o melhor classificador contínuo em `MEDIUM`. |\n",
+                "| **Teto do Oráculo** | $83{,}69\\\\%$ ($1.247$) | **$84{,}90\\\\%$ ($1.265$)** | $77{,}85\\\\%$ ($1.160$) | O RF tem teto inferior em MEDIUM devido à forte atração gravitacional por `SMALL`. |\n",
+                "| **Taxa de Unanimidade (4/4)** | $27{,}05\\\\%$ ($403$) | **$29{,}93\\\\%$ ($446$)** | $26{,}78\\\\%$ ($399$) | **Convergência total:** unanimidade em torno de $27\text{--}30\\\\%$ nas 3 famílias. |\n",
+                "| **Erro Comum Incorrigível** | $16{,}31\\\\%$ ($243$) | **$15{,}10\\\\%$ ($225$)** | $22{,}15\\\\%$ ($330$) | O RF apresenta maior perda intrínseca em rebocadores. |\n",
+                "| **Votação Simples ($\\\\ge 2/4$)** | $64{,}63\\\\%$ ($+4{,}2$ p.p.) | **$65{,}84\\\\%$ ($+1{,}75$ p.p.)** | $57{,}65\\\\%$ | SVM e MLP superam modelos isolados por votação simples em `MEDIUM`. |"
+            ]
+        }
+    ]
+
+    nb_data = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "codemirror_mode": {"name": "ipython", "version": 3},
+                "file_extension": ".py",
+                "mimetype": "text/x-python",
+                "name": "python",
+                "nbconvert_exporter": "python",
+                "pygments_lexer": "ipython3",
+                "version": "3.10.12"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 4
+    }
+
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(nb_data, f, indent=2, ensure_ascii=False)
+    print(f"Notebook gerado com sucesso em '{filename}'!")
+
+if __name__ == "__main__":
+    create_notebook()

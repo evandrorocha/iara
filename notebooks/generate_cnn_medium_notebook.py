@@ -1,0 +1,431 @@
+"""
+Script de geração do notebook 21: notebooks/21_analise_complementaridade_cnn_medium.ipynb
+Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso na CNN 2D para a Classe MEDIUM (Dataset IARA).
+"""
+
+import os
+import json
+
+def create_notebook(filename="notebooks/21_analise_complementaridade_cnn_medium.ipynb"):
+    cells = [
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
+                "### Notebook 21: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso na CNN 2D — Classe MEDIUM\n",
+                "\n",
+                "**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)\n",
+                "**Data:** Outubro de 2026\n",
+                "\n",
+                "---\n",
+                "\n",
+                "## Resumo Executivo da Investigação com Redes Convolucionais 2D (CNN)\n",
+                "\n",
+                "A classe **`MEDIUM`** (rebocadores e navios de apoio offshore de $50\\text{ m}$ a $100\\text{ m}$) foi avaliada em todas as **1.490 instâncias de teste** nos 10 folds oficiais do protocolo $5\\times2$cv com a arquitetura **CNN 2D PyTorch (GPU RTX 5060 Ti, blocos $32 \\times D$)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).\n",
+                "\n",
+                "O objetivo é confrontar os resultados de SVM (Notebook 12), MLP (Notebook 15) e Random Forest (Notebook 18) com as representações convolucionais bidimensionais em navios de porte intermediário.\n",
+                "\n",
+                "### Principais Descobertas na CNN 2D:\n",
+                "1. **O Maior Teto Teórico de MEDIUM de Todas as 4 Famílias ($89{,}13\\%$ — 1.328 / 1.490 rebocadores):**\n",
+                "   - O Oráculo da CNN 2D supera expressivamente o MLP ($84{,}90\\%$), o SVM ($83{,}69\\%$) e o Random Forest ($77{,}85\\%$).\n",
+                "   - O erro comum irrecuperável é de apenas **$10{,}87\\%$ (162 áudios)** — a menor perda intrínseca em rebocadores de todo o estudo.\n",
+                "2. **Queda Drástica da Unanimidade Acústica ($5{,}70\\%$ — Apenas 85 áudios):**\n",
+                "   - Enquanto modelos tabulares/vetoriais apresentavam cerca de $27\\%$ a $30\\%$ de unanimidade em MEDIUM, os filtros convolucionais 2D especializam-se em padrões espaço-temporais tão heterogêneos entre as entradas que apenas **85 de 1.490 rebocadores** são acertados pelas 4 CNNs simultaneamente.\n",
+                "3. **MEL e DEMON Lideram os Resgates Exclusivos ($14{,}56\\%$ e $7{,}25\\%$):**\n",
+                "   - O **MEL 2D salva sozinho 217 rebocadores ($14{,}56\\%$)**, seguido pelo **DEMON com 108 rebocadores ($7{,}25\\%$)**.\n",
+                "   - No total, **$423$ rebocadores ($28{,}39\\%$)** dependem exclusivamente de uma única representação.\n",
+                "4. **Severo Efeito Reverso no Chaveamento:**\n",
+                "   - Chavear ingenuamente da representação líder (MEL) para o LOFAR perde **660 acertos ($66{,}94\\%$)** resgatando apenas $150$ ($29{,}76\\%$ dos erros), gerando um saldo negativo de $-510$ áudios."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 1. Configuração do Ambiente e Imports\n",
+                "import os\n",
+                "import numpy as np\n",
+                "import pandas as pd\n",
+                "import matplotlib.pyplot as plt\n",
+                "try:\n",
+                "    from IPython.display import display\n",
+                "except ImportError:\n",
+                "    display = print\n",
+                "\n",
+                "# Estilização publication-ready (sem dependência externa)\n",
+                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
+                "plt.rcParams.update({\n",
+                "    'font.family': 'sans-serif',\n",
+                "    'font.size': 11,\n",
+                "    'axes.labelsize': 12,\n",
+                "    'axes.titlesize': 13,\n",
+                "    'xtick.labelsize': 10,\n",
+                "    'ytick.labelsize': 10,\n",
+                "    'figure.titlesize': 15,\n",
+                "    'figure.dpi': 150\n",
+                "})\n",
+                "\n",
+                "print(\"Ambiente configurado com sucesso! Bibliotecas prontas.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 2. Metodologia Experimental e Base de Dados de Teste\n",
+                "\n",
+                "Avaliação exaustiva sobre todas as **1.490 instâncias de teste** onde a classe real comprovada era **`MEDIUM` (Classe 1)** nos 10 folds oficiais do protocolo $5\\times2$cv com a arquitetura **CNN 2D PyTorch** nas 4 representações (**MEL, LOFAR, HHT e DEMON**):\n"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 2. Dados Consolidados das Predições da CNN 2D na Classe MEDIUM\n",
+                "total_med = 1490\n",
+                "\n",
+                "# Desempenho individual na CNN\n",
+                "hits_data = {\n",
+                "    'Representacao': ['LOFAR (1024-D)', 'HHT Puro (256-D)', 'DEMON (253-D)', 'MEL (256-D)', 'ORÁCULO CNN (União 4 Modos)'],\n",
+                "    'Acertos': [476, 583, 698, 986, 1328],\n",
+                "    'Recall_Pct': [31.95, 39.13, 46.85, 66.17, 89.13]\n",
+                "}\n",
+                "df_hits = pd.DataFrame(hits_data)\n",
+                "\n",
+                "# Grau de consenso na CNN\n",
+                "consensus_data = {\n",
+                "    'Nivel_Consenso': [\n",
+                "        '4 de 4 (Unanimidade / Independente)',\n",
+                "        '3 de 4 (Alto Consenso)',\n",
+                "        '2 de 4 (Consenso Parcial / Dividido)',\n",
+                "        '1 de 4 (Frágil / Resgate Exclusivo)',\n",
+                "        '0 de 4 (Erro Comum / Incorrigível)'\n",
+                "    ],\n",
+                "    'Audios': [85, 340, 480, 423, 162],\n",
+                "    'Pct_Total_Medium': [5.70, 22.82, 32.21, 28.39, 10.87],\n",
+                "    'Pct_Dentro_Oraculo': [6.40, 25.60, 36.14, 31.85, np.nan]\n",
+                "}\n",
+                "df_consensus = pd.DataFrame(consensus_data)\n",
+                "\n",
+                "# Resgates exclusivos por representação na CNN\n",
+                "exclusive_data = {\n",
+                "    'Representacao': ['HHT Exclusivo', 'LOFAR Exclusivo', 'DEMON Exclusivo', 'MEL Exclusivo'],\n",
+                "    'Audios_Salvos': [45, 53, 108, 217],\n",
+                "    'Percentual': [3.02, 3.56, 7.25, 14.56]\n",
+                "}\n",
+                "df_exclusive = pd.DataFrame(exclusive_data)\n",
+                "\n",
+                "# Efeito Reverso em Relação ao Baseline MEL (986 acertos, 504 erros)\n",
+                "reverse_data = {\n",
+                "    'Destino_Troca': ['Para LOFAR', 'Para HHT', 'Para DEMON'],\n",
+                "    'Mantem_do_MEL': [326, 450, 488],\n",
+                "    'Perde_do_MEL (Efeito Reverso)': [660, 536, 498],\n",
+                "    'Pct_Perda_Acertos (%)': [66.94, 54.36, 50.51],\n",
+                "    'Resgata_Erros_MEL': [150, 133, 210],\n",
+                "    'Pct_Resgate_Erros (%)': [29.76, 26.39, 41.67],\n",
+                "    'Saldo_Liquido_Audios': [-510, -403, -288]\n",
+                "}\n",
+                "df_reverse = pd.DataFrame(reverse_data)\n",
+                "\n",
+                "# Padrão de confusão quando erra em MEDIUM na CNN\n",
+                "confusion_pattern_data = {\n",
+                "    'Representacao': ['MEL (504 erros)', 'LOFAR (1014 erros)', 'HHT (907 erros)', 'DEMON (792 erros)'],\n",
+                "    'Confundido_SMALL_Pct': [59.52, 61.64, 27.34, 32.07],\n",
+                "    'Confundido_LARGE_Pct': [30.75, 29.68, 44.98, 41.04],\n",
+                "    'Confundido_AMBIENTAL_Pct': [9.72, 8.68, 27.67, 26.89]\n",
+                "}\n",
+                "df_confusion_pattern = pd.DataFrame(confusion_pattern_data)\n",
+                "\n",
+                "display(df_hits)\n",
+                "display(df_consensus)\n",
+                "display(df_reverse)"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 3. O Efeito Oráculo na CNN 2D: Recall Individual vs. Teto Teórico\n",
+                "\n",
+                "A CNN 2D atinge **$66{,}17\\%$ de recall em `MEDIUM`** com o MEL e **$46{,}85\\%$** com o DEMON.\n",
+                "\n",
+                "Contudo, a combinação das 4 entradas via **Oráculo CNN** salta para impressionantes **$89{,}13\\%$ (1.328 acertos)**:\n",
+                "- Um ganho de **$+22{,}96$ pontos percentuais** sobre o MEL isolado;\n",
+                "- O erro comum (onde as 4 CNNs erram simultaneamente) é de apenas **$10{,}87\\%$ (162 áudios)**;\n",
+                "- Este é o **maior teto teórico para a classe MEDIUM** entre todas as 4 famílias de modelos (superando MLP $84{,}90\\%$, SVM $83{,}69\\%$ e RF $77{,}85\\%$)."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 3. Gráfico: Desempenho Isolado vs Teto Teórico do Oráculo na CNN em MEDIUM\n",
+                "plt.figure(figsize=(10, 5.5))\n",
+                "colors = ['#e67e22', '#9b59b6', '#95a5a6', '#2980b9', '#27ae60']\n",
+                "bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)\n",
+                "bars[-1].set_hatch('//')\n",
+                "\n",
+                "plt.axhline(89.13, color='#27ae60', linestyle='--', lw=1.5, alpha=0.7, label='Teto do Oráculo CNN (89.13%)')\n",
+                "plt.axhline(66.17, color='#2980b9', linestyle=':', lw=1.5, alpha=0.7, label='Melhor Isolado MEL (66.17%)')\n",
+                "\n",
+                "plt.title('Recall CNN 2D na Classe MEDIUM: Modelos Isolados vs. Teto Teórico do Oráculo', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Recall em MEDIUM (%)')\n",
+                "plt.ylim(0, 100)\n",
+                "\n",
+                "for bar in bars:\n",
+                "    h = bar.get_height()\n",
+                "    plt.annotate(f'{h:.1f}%', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=10.5, fontweight='bold', color='#111')\n",
+                "\n",
+                "plt.legend(loc='upper left', frameon=True)\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 4. Análise de Grau de Consenso em MEDIUM na CNN 2D\n",
+                "\n",
+                "A pirâmide de consenso da CNN 2D em `MEDIUM` revela um fenômeno fascinante:\n",
+                "- **Unanimidade (4/4 certas): Apenas $85$ áudios ($5{,}70\\%$)**;\n",
+                "- **Alto Consenso (3/4 certas): $340$ áudios ($22{,}82\\%$)**;\n",
+                "- **Consenso Dividido (2/4 certas): $480$ áudios ($32{,}21\\%$)**;\n",
+                "- **Resgate Exclusivo (1/4 certa): $423$ áudios ($28{,}39\\%$)**;\n",
+                "- **Erro Comum (0/4 certas): $162$ áudios ($10{,}87\\%$)**.\n",
+                "\n",
+                "### Votação por Consenso em MEDIUM (CNN 2D):\n",
+                "- **Unanimidade (4/4):** $5{,}70\\%$ ($85$ áudios);\n",
+                "- **Maioria Estrita (\\ge 3/4):** $28{,}52\\%$ ($425$ áudios);\n",
+                "- **Maioria Simples / Empate (\\ge 2/4):** $60{,}74\\%$ ($905$ áudios);\n",
+                "- **Oráculo (\\ge 1/4):** **$89{,}13\\%$ ($1.328$ áudios)**."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 4. Visualização do Grau de Consenso na CNN\n",
+                "plt.figure(figsize=(9, 5))\n",
+                "labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo/Frágil)', '0 Entradas\\n(Erro Comum)']\n",
+                "counts_cons = [85, 340, 480, 423, 162]\n",
+                "pcts_cons = [5.70, 22.82, 32.21, 28.39, 10.87]\n",
+                "colors_cons = ['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d']\n",
+                "\n",
+                "bars = plt.bar(labels_cons, counts_cons, color=colors_cons, edgecolor='black', linewidth=0.8, width=0.55)\n",
+                "plt.title('Grau de Consenso CNN 2D em MEDIUM (Total: 1.490 Áudios no 5x2cv)', fontweight='bold', pad=12)\n",
+                "plt.ylabel('Quantidade de Áudios de MEDIUM')\n",
+                "plt.ylim(0, 560)\n",
+                "\n",
+                "for bar, pct in zip(bars, pcts_cons):\n",
+                "    h = bar.get_height()\n",
+                "    plt.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=9.5, fontweight='bold')\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 5. Resgates Exclusivos e Padrão de Erro na CNN 2D\n",
+                "\n",
+                "### Resgates Exclusivos em MEDIUM:\n",
+                "- **MEL:** Salva sozinho **$217$ rebocadores ($14{,}56\\%$)** — a mais dominante especialização individual em MEDIUM;\n",
+                "- **DEMON:** Salva sozinho **$108$ rebocadores ($7{,}25\\%$)**;\n",
+                "- **LOFAR:** Salva sozinho **$53$ rebocadores ($3{,}56\\%$)**;\n",
+                "- **HHT:** Salva sozinho **$45$ rebocadores ($3{,}02\\%$)**.\n",
+                "\n",
+                "### Padrões de Confusão em MEDIUM na CNN:\n",
+                "- **MEL e LOFAR:** Quando erram, confundem **predominantemente com `SMALL` (~$60\\%$)** e cerca de $30\\%$ com `LARGE`;\n",
+                "- **DEMON e HHT:** Apresentam comportamento invertido — confundem **mais com `LARGE` ($41\\%$ a $45\\%$)** e possuem confusão substancial com `AMBIENTAL` (~$27\\%$)."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 5. Gráfico de Resgates Exclusivos e Padrão de Confusão\n",
+                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(14, 5.5))\n",
+                "\n",
+                "# Resgates Exclusivos\n",
+                "colors_exc = ['#9b59b6', '#e67e22', '#95a5a6', '#2980b9']\n",
+                "bars_exc = ax1.bar(df_exclusive['Representacao'], df_exclusive['Audios_Salvos'], color=colors_exc, edgecolor='black', linewidth=0.8, width=0.55)\n",
+                "ax1.set_title('Resgates Exclusivos por Entrada na CNN (MEDIUM)', fontweight='bold', pad=12)\n",
+                "ax1.set_ylabel('Áudios Salvos Exclusivamente')\n",
+                "ax1.set_ylim(0, 260)\n",
+                "\n",
+                "for bar, pct in zip(bars_exc, df_exclusive['Percentual']):\n",
+                "    h = bar.get_height()\n",
+                "    ax1.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                 fontsize=9.5, fontweight='bold')\n",
+                "\n",
+                "# Padrão de Confusão (Stacked Bar)\n",
+                "reps = ['MEL', 'LOFAR', 'HHT', 'DEMON']\n",
+                "sml_errs = [59.52, 61.64, 27.34, 32.07]\n",
+                "lrg_errs = [30.75, 29.68, 44.98, 41.04]\n",
+                "amb_errs = [9.72, 8.68, 27.67, 26.89]\n",
+                "\n",
+                "x = np.arange(len(reps))\n",
+                "width = 0.5\n",
+                "\n",
+                "ax2.bar(x, sml_errs, width, label='Confundido com SMALL', color='#e74c3c', edgecolor='black')\n",
+                "ax2.bar(x, lrg_errs, width, bottom=sml_errs, label='Confundido com LARGE', color='#34495e', edgecolor='black')\n",
+                "ax2.bar(x, amb_errs, width, bottom=np.array(sml_errs) + np.array(lrg_errs), label='Confundido com AMBIENTAL', color='#2ecc71', edgecolor='black')\n",
+                "\n",
+                "ax2.set_xticks(x)\n",
+                "ax2.set_xticklabels(reps)\n",
+                "ax2.set_title('Distribuição de Erros ao Classificar MEDIUM na CNN', fontweight='bold', pad=12)\n",
+                "ax2.set_ylabel('Proporção de Erros (%)')\n",
+                "ax2.set_ylim(0, 105)\n",
+                "ax2.legend(loc='lower right', frameon=True)\n",
+                "\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 6. Efeito Reverso em MEDIUM: O Risco de Chaveamento Baseado em Entrada\n",
+                "\n",
+                "O chaveamento dinâmico entre representações introduz um risco severo: **a perda de áudios que o modelo baseline já classificava corretamente**.\n",
+                "\n",
+                "Tomando o **MEL** como baseline ($986$ acertos e $504$ erros):\n",
+                "- **Chavear para LOFAR:** Perde **$660$ rebocadores certos ($66{,}94\\%$)** e resgata apenas $150$ erros ($29{,}76\\%$), resultando em saldo negativo de **$-510$**;\n",
+                "- **Chavear para HHT:** Perde **$536$ rebocadores certos ($54{,}36\\%$)** e resgata apenas $133$ erros ($26{,}39\\%$), resultando em saldo negativo de **$-403$**;\n",
+                "- **Chavear para DEMON:** Perde **$498$ rebocadores certos ($50{,}51\\%$)** e resgata $210$ erros ($41{,}67\\%$), com saldo negativo de **$-288$**.\n",
+                "\n",
+                "Portanto, **nenhum chaveamento estático ou oráculo imperfeito é capaz de superar o MEL isolado sem controle estrito de perdas**."
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 6. Visualização do Efeito Reverso na CNN em MEDIUM\n",
+                "fig, ax = plt.subplots(figsize=(9, 5))\n",
+                "\n",
+                "x = np.arange(len(df_reverse['Destino_Troca']))\n",
+                "width = 0.35\n",
+                "\n",
+                "bars1 = ax.bar(x - width/2, df_reverse['Perde_do_MEL (Efeito Reverso)'], width, label='Perde do MEL (Efeito Reverso)', color='#c0392b', edgecolor='black')\n",
+                "bars2 = ax.bar(x + width/2, df_reverse['Resgata_Erros_MEL'], width, label='Resgata dos Erros do MEL', color='#27ae60', edgecolor='black')\n",
+                "\n",
+                "ax.set_title('Efeito Reverso do Chaveamento na CNN a partir do Baseline MEL (MEDIUM)', fontweight='bold', pad=12)\n",
+                "ax.set_xticks(x)\n",
+                "ax.set_xticklabels(df_reverse['Destino_Troca'])\n",
+                "ax.set_ylabel('Quantidade de Áudios')\n",
+                "ax.set_ylim(0, 750)\n",
+                "\n",
+                "for bar in bars1:\n",
+                "    h = bar.get_height()\n",
+                "    ax.annotate(f'-{h}', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                fontsize=10, fontweight='bold', color='#c0392b')\n",
+                "\n",
+                "for bar in bars2:\n",
+                "    h = bar.get_height()\n",
+                "    ax.annotate(f'+{h}', xy=(bar.get_x() + bar.get_width()/2, h),\n",
+                "                xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
+                "                fontsize=10, fontweight='bold', color='#27ae60')\n",
+                "\n",
+                "ax.legend(frameon=True)\n",
+                "plt.tight_layout()\n",
+                "plt.show()"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 7. Figura Consolidada Oficial e Painel Visual (CNN 2D)\n",
+                "\n",
+                "Abaixo, carregamos o painel consolidado oficial de 4 gráficos gerado para a classe `MEDIUM` na CNN 2D:"
+            ]
+        },
+        {
+            "cell_type": "code",
+            "execution_count": None,
+            "metadata": {},
+            "outputs": [],
+            "source": [
+                "# 7. Exibição da Figura Oficial do Relatório\n",
+                "from IPython.display import Image, display\n",
+                "\n",
+                "img_path = 'reports/analise_complementaridade_cnn_medium_oraculo.png'\n",
+                "if not os.path.exists(img_path):\n",
+                "    img_path = '../' + img_path\n",
+                "if os.path.exists(img_path):\n",
+                "    display(Image(filename=img_path, width=950))\n",
+                "else:\n",
+                "    print(f\"Imagem oficial '{img_path}' ainda não encontrada no caminho relativo.\")"
+            ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "## 8. Comparativo Quadrilateral em MEDIUM: SVM vs. MLP vs. RF vs. CNN 2D\n",
+                "\n",
+                "| Dimensão Analítica | SVM Nyström (NB 12) | MLP PyTorch (NB 15) | Random Forest (NB 18) | CNN 2D (NB 21) | Diagnóstico Científico |\n",
+                "| :--- | :---: | :---: | :---: | :---: | :--- |\n",
+                "| **Melhor Modelo Isolado** | $58{,}72\\%$ (MEL) | $59{,}73\\%$ (MEL) | $58{,}72\\%$ (MEL) | **$66{,}17\\%$ (MEL)** | A CNN estabelece a liderança isolada absoluta em rebocadores. |\n",
+                "| **Teto do Oráculo** | $83{,}69\\%$ ($1.247$) | $84{,}90\\%$ ($1.265$) | $77{,}85\\%$ ($1.160$) | **$89{,}13\\%$ ($1.328$)** | A CNN atinge o maior teto de MEDIUM de todas as 4 famílias. |\n",
+                "| **Taxa de Unanimidade (4/4)** | $27{,}05\\%$ ($403$) | **$29{,}93\\%$ ($446$)** | $26{,}78\\%$ ($399$) | **$5{,}70\\%$ ($85$)** | Apenas 85 rebocadores são consensuais nas 4 CNNs; ortogonalidade extrema. |\n",
+                "| **Erro Comum Incorrigível** | $16{,}31\\%$ ($243$) | $15{,}10\\%$ ($225$) | $22{,}15\\%$ ($330$) | **$10{,}87\\%$ ($162$)** | A CNN deixa escapar apenas 162 rebocadores no teto teórico conjunto. |\n",
+                "| **Campeão de Resgates Exclusivos** | LOFAR ($106$) | LOFAR ($102$) | MEL ($99$) | **MEL ($217$)** | O MEL na CNN resgata mais que o dobro de qualquer outro modelo. |\n",
+                "| **Votação Simples (\\ge 2/4)** | $63{,}49\\%$ | **$65{,}23\\%$** | $57{,}65\\%$ | $60{,}74\\%$ | MLP lidera na votação majoritária graças à maior unanimidade de base. |"
+            ]
+        }
+    ]
+
+    nb_data = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {
+                "display_name": "Python 3",
+                "language": "python",
+                "name": "python3"
+            },
+            "language_info": {
+                "codemirror_mode": {"name": "ipython", "version": 3},
+                "file_extension": ".py",
+                "mimetype": "text/x-python",
+                "name": "python",
+                "nbconvert_exporter": "python",
+                "pygments_lexer": "ipython3",
+                "version": "3.10.12"
+            }
+        },
+        "nbformat": 4,
+        "nbformat_minor": 4
+    }
+
+    os.makedirs(os.path.dirname(filename), exist_ok=True)
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(nb_data, f, indent=2, ensure_ascii=False)
+    print(f"Notebook gerado com sucesso em '{filename}'!")
+
+if __name__ == "__main__":
+    create_notebook()
