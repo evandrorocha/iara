@@ -58,6 +58,11 @@ A Tabela 1 consolida as métricas globais obtidas na partição de teste para to
 | **MLP (Puro)** | DEMON | **52.12 ± 2.70** | **52.10 ± 2.65** | **52.10 ± 2.65** | **MLP PyTorch [32, 16] (Melhor DEMON)** |
 | **CNN (Puro)** | DEMON | 35.72 ± 12.63 | 42.47 ± 1.88 | 42.47 ± 1.88 | CNN 2D PyTorch [64, 32] (GPU) |
 | *---* | *---* | *---* | *---* | *---* | *---* |
+| **RF (Puro)** | HHT | **58.14 ± 1.79** | **59.94 ± 1.48** | **59.94 ± 1.48** | **Random Forest no HHT (256-D)** |
+| **MLP (Puro)** | HHT | **56.14 ± 1.52** | **56.37 ± 1.29** | **56.37 ± 1.29** | **MLP PyTorch no HHT (256-D)** |
+| **SVM (m=6000) (elasticnet)** | HHT | **53.63 ± 4.40** | **55.63 ± 2.81** | **55.63 ± 2.81** | **SVM Nyström no HHT (256-D)** |
+| **CNN (Puro)** | HHT | 46.10 ± 4.14 | 46.92 ± 2.13 | 46.92 ± 2.13 | CNN 2D PyTorch no HHT (32x256) |
+| *---* | *---* | *---* | *---* | *---* | *---* |
 | **MLP Fusão (MEL + DEMON)** | MULTIMODAL | **66.99 ± 1.67** | **66.18 ± 1.71** | **66.18 ± 1.71** | **Abordagem A (509-D: MEL-256 + DEMON-253)** |
 | **SVM (m=6000) Fusão (MEL + DEMON)** | MULTIMODAL | **64.85 ± 1.90** | **64.55 ± 1.62** | **64.55 ± 1.62** | **Proposto (SVM m=6000 na Fusão 509-D)** |
 | **RF Fusão (MEL + DEMON)** | MULTIMODAL | **62.05 ± 1.73** | **61.99 ± 1.63** | **61.99 ± 1.63** | **Random Forest na Fusão 509-D** |
