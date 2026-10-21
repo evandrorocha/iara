@@ -85,7 +85,7 @@ O gráfico comparativo comprobatório encontra-se armazenado em [scratch/demon_c
 
 ## 6. Resultados Experimentais da Etapa A: DEMON Isolado no $5\times2$cv
 
-Todos os **1.706 áudios de UO** (Coleções A, B, C, D e E) foram extraídos e armazenados em cache padronizado (`data/iara_processed/demon_features/`). A avaliação seguiu rigorosamente o protocolo oficial de $5\times 2$ validação cruzada (10 folds independentes com particionamento estrito por `Ship ID`, garantindo zero vazamento de dados).
+Todos os **1.706 áudios de UO** (Coleções A, B, C, D e E) foram extraídos e armazenados em cache padronizado (`data/iara_processed/demon_features/`). A avaliação seguiu rigorosamente o protocolo oficial de $5\times 2$ validação cruzada (10 folds com particionamento por gravação, `ID`, como no artigo; janelas de uma gravação nunca ficam em treino e teste ao mesmo tempo, mas o mesmo navio, `Ship ID`, pode ter gravações nos dois).
 
 O classificador avaliado foi o **SVM Nyström** com núcleo RBF aproximado, penalidade ElasticNet e regularização balanceada, avaliado por votação majoritária por áudio (*audio-level majority voting*).
 

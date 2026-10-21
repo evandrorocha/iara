@@ -3,7 +3,7 @@
 **Data:** Outubro de 2026  
 **Autor:** Evandro Rocha (UFRJ / COPPE / PEE)  
 **Dataset:** IARA (1.825 áudios reais de tráfego marítimo na Bacia de Santos)  
-**Protocolo:** Validação Cruzada $5\times2\text{cv}$ Oficial (10 Folds estratificados com isolamento estrito de navios por `Ship ID`)  
+**Protocolo:** Validação Cruzada $5\times2\text{cv}$ Oficial (10 folds estratificados, particionados por gravação `ID` como no artigo; o mesmo navio, `Ship ID`, pode ter gravações em treino e teste)  
 **Notebook Demonstrativo:** [notebooks/24_sistema_gating_frontend.ipynb](file:///c:/Users/ev_ro/git/IARA/notebooks/24_sistema_gating_frontend.ipynb)  
 
 ---

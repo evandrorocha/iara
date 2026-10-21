@@ -10,7 +10,7 @@ O objetivo é responder empiricamente:
 3. **Como o DEMON se compara diretamente com as baselines do artigo original (Random Forest, MLP e CNN avaliados em MEL e LOFAR)?**
 
 ### Protocolo Experimental Oficial
-* **Validação Cruzada:** $5\times2$cv estrito (10 folds independentes com particionamento por `Ship ID`, garantindo zero vazamento de embarcações entre treino e teste).
+* **Validação Cruzada:** $5\times2$cv (10 folds) com particionamento por **gravação** (`ID`, `exclusive_header='ID'`), como no artigo: janelas de uma mesma gravação nunca ficam em treino e teste ao mesmo tempo, mas o **mesmo navio (`Ship ID`) pode ter gravações nos dois** — 63,5% das gravações de navio no teste têm o mesmo navio no treino.
 * **Nível de Decisão:** Votação majoritária temporal por áudio (*audio-level majority voting*).
 * **Métrica Primária:** Índice SP Oficial (média harmônica/geométrica balanceada dos recalls por classe):
   $$\text{SP} = \sqrt{\overline{\text{Recall}} \times \text{GMean}(\text{Recall})} \times 100$$

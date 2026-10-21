@@ -147,7 +147,7 @@ Para avaliar a **HHT como uma categoria de representação independente** (atuan
 
 ## 9. Avaliação Experimental Rigorosa nos 10 Folds Oficiais (Protocolo 5x2cv)
 
-Após a extração massiva bem-sucedida dos **1.706 áudios UO** do dataset IARA (Coleções A, B, C, D, E) com 256 bins uniformes ($1{,}0\text{ a }1000\text{ Hz}$), executou-se a avaliação comparativa exaustiva nos 10 folds do protocolo oficial $5\times2$cv com particionamento estrito por `Ship ID` e votação majoritária por áudio (*Majority Voting*).
+Após a extração massiva bem-sucedida dos **1.706 áudios UO** do dataset IARA (Coleções A, B, C, D, E) com 256 bins uniformes ($1{,}0\text{ a }1000\text{ Hz}$), executou-se a avaliação comparativa exaustiva nos 10 folds do protocolo oficial $5\times2$cv com particionamento por gravação (`ID`, como no artigo; o mesmo navio, `Ship ID`, pode ter gravações em treino e teste) e votação majoritária por áudio (*Majority Voting*).
 
 Foram avaliadas quatro arquiteturas sob as tarefas de **4 Classes** (`SMALL`, `MEDIUM`, `LARGE`, `AMBIENTAL`) e **3 Classes** (apenas embarcações, excluindo a classe ambiental).
 
