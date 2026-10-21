@@ -1,8 +1,33 @@
-results/
-data/
+# --- Dados e resultados ---------------------------------------------------------------------
+# Áudio bruto (data/iara, ~105 GB, dataset público), features (data/iara_processed/*/, data_processed/)
+# e modelos treinados (results/trainings/**/model, ~81 GB) ficam fora do git.
+# Versionados: as predições em results/predicoes/ (gzip, ver scripts/predicoes.py) e os pickles de
+# resultados (pequenos) em data/iara_processed/.
+/data/*
+!/data/iara_processed/
+/data/iara_processed/*
+!/data/iara_processed/*.pkl
+/data/iara_processed/cache_*.pkl
+!/data/iara_processed/cache_gating_metafeatures.pkl
+# pickles de 15/10 que não correspondem mais às predições atuais (o SVM m=4000 HHT/DEMON não reproduz)
+/data/iara_processed/medium_complementarity_analysis.pkl
+/data/iara_processed/large_complementarity_analysis.pkl
+/results/*
+!/results/predicoes/
 data_processed/
 results_/
 test_not_commit/
+
+# Artefatos de compilação LaTeX
+presentation/*.aux
+presentation/*.nav
+presentation/*.out
+presentation/*.snm
+presentation/*.toc
+presentation/*.synctex.gz
+reports/*.aux
+reports/*.out
+reports/*.toc
 
 
 # Byte-compiled / optimized / DLL files

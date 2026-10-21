@@ -1,0 +1,1 @@
+" \Scripts de geração e módulos auxiliares para os notebooks do IARA.\\n
