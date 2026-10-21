@@ -1,6 +1,7 @@
 """
 Evaluation of Random Forest (100 trees, balanced) on Multimodal Fusion (MEL + DEMON - 509-D)
-under the official 10-fold 5x2cv protocol with Ship ID isolation.
+under the official 10-fold 5x2cv protocol (split by recording `ID`; the same ship may be in train and test).
+Window-level predictions are saved in results/trainings/multirep/<exp>/ (results_writer.py).
 Outputs metrics for both 4-Class and 3-Class tasks.
 """
 
@@ -14,6 +15,8 @@ import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 import sklearn.metrics as sk_metrics
 import scipy.stats as scipy_stats
+
+from results_writer import ResultsWriter
 
 
 def compute_sp_index(targets, preds, num_classes=4):
@@ -75,6 +78,11 @@ def evaluate_rf(feature_cache, folds, num_classes=4, n_estimators=100):
     print("\n" + "=" * 80, flush=True)
     print(f"AVALIAÇÃO: Random Forest (100 árvores) na FUSÃO MEL+DEMON [{problem_name}]", flush=True)
     print("=" * 80, flush=True)
+    writer = ResultsWriter(
+        f"rf_mel5s-demon_n{n_estimators}_balanced_{num_classes}c", script=__file__,
+        params={"model": "RandomForestClassifier", "representation": "mel5s-demon", "dim": 509,
+                "window": "5.12 s (MEL alinhado ao DEMON)", "n_estimators": n_estimators, "max_depth": None,
+                "class_weight": "balanced", "random_state": 42, "num_classes": num_classes})
 
     fold_accs, fold_sps, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
@@ -95,6 +103,9 @@ def evaluate_rf(feature_cache, folds, num_classes=4, n_estimators=100):
         )
         rf.fit(X_train, y_train)
         win_preds = rf.predict(X_test)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=rf.predict_proba(X_test))
 
         file_preds = defaultdict(list)
         file_targets = {}

@@ -25,10 +25,25 @@ Usage (inside Docker container):
 import time
 import typing
 import argparse
+import itertools
 import os
 import sys
+import types
 
 import pandas as pd
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+
+for _mod_name in ['overrides', 'tikzplotlib', 'librosa']:
+    try:
+        __import__(_mod_name)
+    except ImportError:
+        _m = types.ModuleType(_mod_name)
+        if _mod_name == 'overrides':
+            _m.override = lambda f: f
+        sys.modules[_mod_name] = _m
 
 import iara.utils
 import iara.records
@@ -41,8 +56,6 @@ import iara.processing.manager as iara_manager
 import iara.processing.analysis as iara_proc
 
 from iara.default import DEFAULT_DIRECTORIES
-
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from svm import SVMNystroemHybridTrainer, HybridAudioFileProcessor
 
 
@@ -64,6 +77,42 @@ def classify_row_small_large(row) -> int:
     return base     # 0 for SMALL
 
 
+def filter_4class_split_to_small_large(split_df: pd.DataFrame) -> pd.DataFrame:
+    """Filter a 4-class split DataFrame to keep only SMALL (0) and LARGE (2),
+    remapping LARGE (2) -> 1 for binary classification."""
+    filtered = split_df[split_df['Target'].isin([0, 2])].copy()
+    filtered['Target'] = filtered['Target'].map({0: 0, 2: 1}).astype(int)
+    return filtered
+
+
+class AlignedSmallLargeConfig(iara_exp.Config):
+    """Config that computes 5x2cv splits on the full 4-class default_collection() first,
+    then filters each fold's (trn_set, val_set, test_set) to SMALL (0) and LARGE (2 -> 1).
+    Guarantees 0% test leakage relative to the 4-class splits.
+    """
+    def split_datasets(self) -> typing.List[typing.Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]]:
+        full_config = iara_exp.Config(
+            name=self.name,
+            dataset=iara_default.default_collection(),
+            dataset_processor=self.dataset_processor,
+            output_base_dir=os.path.dirname(self.output_base_dir),
+            input_type=self.input_type,
+            test_ratio=self.test_ratio,
+            exclusive_ships_on_test=self.exclusive_ships_on_test,
+            exclusive_header=self.exclusive_header,
+            target_header=self.target_header,
+        )
+        full_splits = full_config.split_datasets()
+        return [
+            (
+                filter_4class_split_to_small_large(trn_4c),
+                filter_4class_split_to_small_large(val_4c),
+                filter_4class_split_to_small_large(test_4c),
+            )
+            for trn_4c, val_4c, test_4c in full_splits
+        ]
+
+
 def main(
     folds: typing.List[int],
     n_components: int = 6000,
@@ -73,6 +122,7 @@ def main(
     penalty: str = 'elasticnet',
     l1_ratio: float = 0.15,
     class_weight: typing.Union[str, None] = 'balanced',
+    override: bool = False,
 ):
     output_base_dir = f"{DEFAULT_DIRECTORIES.training_dir}/tests"
     directories = DEFAULT_DIRECTORIES
@@ -127,7 +177,17 @@ def main(
         name_parts.append(f'C{C}')
     exp_name = '_'.join(name_parts)
 
-    config = iara_exp.Config(
+    # 1. Split on full 4-class default_collection() FIRST to align fold_0..fold_9
+    full_4class_config = iara_exp.Config(
+        name=exp_name,
+        dataset=iara_default.default_collection(),
+        dataset_processor=dp,
+        output_base_dir=output_base_dir,
+        input_type=input_type
+    )
+    full_4class_splits = full_4class_config.split_datasets()
+
+    config = AlignedSmallLargeConfig(
         name=exp_name,
         dataset=binary_collection,
         dataset_processor=dp,
@@ -152,19 +212,66 @@ def main(
     )
 
     manager = iara_exp.Manager(config, trainer)
-    result_grid = manager.run(folds=folds, override=False)
+    if override and os.path.exists(config.output_base_dir):
+        iara.utils.backup_folder(base_dir=config.output_base_dir,
+                                 time_str_format=iara_exp.Config.TIME_STR_FORMAT)
+    os.makedirs(config.output_base_dir, exist_ok=True)
+    config_file = os.path.join(config.output_base_dir, f"{config.name}.json")
+    if override or not os.path.exists(config_file):
+        try:
+            config.save(config.output_base_dir)
+        except OSError:
+            pass
 
-    for (eval_subset, eval_strategy), result_dict in result_grid.items():
-        if eval_subset == iara_trn.Subset.ALL:
-            continue
+    eval_subsets = [iara_trn.Subset.TRN, iara_trn.Subset.VAL, iara_trn.Subset.TEST]
+
+    for i_fold in folds:
+        trn_4c, val_4c, test_4c = full_4class_splits[i_fold]
+        trn_set = filter_4class_split_to_small_large(trn_4c)
+        val_set = filter_4class_split_to_small_large(val_4c)
+        test_set = filter_4class_split_to_small_large(test_4c)
+
+        # Strict zero-leakage verification against 4-class test set
+        overlap = set(trn_set['ID']) & set(test_4c['ID'])
+        assert len(overlap) == 0, f"Leakage detected in fold {i_fold}: {len(overlap)} overlapping IDs!"
+
+        print(f"--- Fold {i_fold}: trn={len(trn_set)} (SMALL={(trn_set['Target']==0).sum()}, LARGE={(trn_set['Target']==1).sum()}), "
+              f"val={len(val_set)}, test={len(test_set)} [0% overlap with 4-class test_set] ---")
+
+        manager.fit(
+            i_fold=i_fold,
+            trn_dataset_ids=trn_set['ID'].to_list(),
+            val_dataset_ids=val_set['ID'].to_list()
+        )
+
+        id_set = {
+            iara_trn.Subset.TRN: trn_set,
+            iara_trn.Subset.VAL: val_set,
+            iara_trn.Subset.TEST: test_set,
+        }
+        for eval_subset, eval_strategy in itertools.product(eval_subsets, iara_trn.EvalStrategy):
+            manager.eval(
+                i_fold=i_fold,
+                eval_subset=eval_subset,
+                eval_strategy=eval_strategy,
+                dataset_ids=id_set[eval_subset]['ID'].to_list()
+            )
+
+    for eval_subset, eval_strategy in itertools.product(eval_subsets, iara_trn.EvalStrategy):
+        result_dict = manager.compile_results(
+            eval_subset=eval_subset,
+            eval_strategy=eval_strategy,
+            trainer_list=manager.trainer_list,
+            folds=folds
+        )
         for trainer_id, results in result_dict.items():
-            for i_fold, result in enumerate(results):
+            for idx, result in enumerate(results):
                 grid.add(
                     params={
                         'eval_strategy': eval_strategy,
                         'eval_subset': eval_subset,
                     },
-                    i_fold=i_fold,
+                    i_fold=folds[idx],
                     target=result['Target'],
                     prediction=result['Prediction']
                 )
@@ -221,6 +328,10 @@ if __name__ == '__main__':
         '--no_balanced', action='store_true', default=False,
         help='Disable balanced class weighting. Balanced is the default.'
     )
+    parser.add_argument(
+        '--override', action='store_true', default=False,
+        help='Backup existing experiment folder and retrain from scratch.'
+    )
 
     args = parser.parse_args()
 
@@ -251,6 +362,7 @@ if __name__ == '__main__':
         penalty=args.penalty,
         l1_ratio=args.l1_ratio,
         class_weight=class_weight,
+        override=args.override,
     )
 
     end_time = time.time()

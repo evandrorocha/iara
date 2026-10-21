@@ -9,7 +9,37 @@ Covers:
 """
 
 import os
+import sys
 import json
+
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import iara_results as R  # noqa: E402  (módulo único de métricas)
+
+REPO_ROOT = R.ROOT
+
+# Experimentos HHT em results/trainings/multirep (scratch/eval_hht_models_5x2cv.py)
+EXP_RF_4C, EXP_RF_3C = 'rf_hht_n100_balanced_4c', 'rf_hht_n100_balanced_3c'
+EXP_MLP_4C, EXP_MLP_3C = 'mlp_hht_h32-16_e30_noseed_4c', 'mlp_hht_h32-16_e30_noseed_3c'
+EXP_SVM_4C, EXP_SVM_3C = 'svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_4c', 'svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_3c'
+EXP_CNN_4C, EXP_CNN_3C = 'cnn2d_hht_w32_b32_e25_4c', 'cnn2d_hht_w32_b32_e25_3c'
+EXP_MLP_SEED = 'mlp_hht_h32-16_e30_4c'          # semente 42 (gate), outro experimento
+EXP_RF_LOFAR = 'rf_lofar5s_n100_balanced_4c'     # RF LOFAR local (cache de 5,12 s)
+HHT_EXPS_4C = [(EXP_RF_4C, '4c'), (EXP_MLP_4C, '4c'), (EXP_SVM_4C, '4c'), (EXP_CNN_4C, '4c')]
+HHT_EXPS_3C = [(EXP_RF_3C, '3c'), (EXP_MLP_3C, '3c'), (EXP_SVM_3C, '3c'), (EXP_CNN_3C, '3c')]
+
+
+def pt(x, nd=2):
+    return f"{x:.{nd}f}".replace('.', ',')
+
+
+def fmtc(ms, nd=2):
+    return f"{pt(ms[0], nd)} ± {pt(ms[1], nd)}"
+
+
+def pval(p):
+    return 'p < 0,001' if p < 0.001 else f"p = {pt(p, 3)}"
 
 def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
     cells = [
@@ -30,7 +60,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "   - `A-0004.wav`: **LARGE** (*Sinoglory*, 322m, graneleiro pesado de grande porte);\n",
                 "   - `E-1446.wav`: **AMBIENTAL** (Ruído de fundo marinho puro).\n",
                 "4. **Diagnóstico dos Fenômenos Observados:** Fenômeno de *Mode Mixing* (mistura de modos), modos induzidos por ruído no EMD e estabilidade espectral.\n",
-                "5. **A Solução Moderna — VMD (Variational Mode Decomposition):** Como a decomposição modal variacional resolveu o *mode mixing* e travou com precisão cirúrgica na frequência de rotação da hélice ($9{,}98\\text{ Hz} \\approx 600\\text{ RPM}$).\n",
+                "5. **VMD (Variational Mode Decomposition) sobre a envoltória demodulada:** frequências centrais dos modos encontradas pelo VMD no áudio SMALL (valores na Seção 5, calculados na execução) e o que se pode — e o que não se pode — concluir delas.\n",
                 "6. **Diretrizes para Machine Learning:** Justificativa da dimensionalidade recomendada de **$256\\text{ bins}$** e perspectivas para classificação supervisionada.\n"
             ]
         },
@@ -128,10 +158,10 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "\n",
                 "| Categoria | Tipo de Processamento | Base Matemática | Faixa Espectral Típica | Alvo Físico Primário |\n",
                 "| :--- | :---: | :--- | :---: | :--- |\n",
-                "| **LOFAR** | *Representação* | STFT (Fourier) + TPSW | $0\\text{--}1000\\text{ Hz}$ | Raias tônicas estreitas de eixos, bombas e motores diesel. |\n",
-                "| **MEL** | *Representação* | STFT em Escala Mel | $0\\text{--}11025\\text{ Hz}$ | Energia contínua audível de cavitação e combustão. |\n",
+                "| **LOFAR** | *Representação* | STFT (Fourier) + TPSW | $7{,}8\\text{--}8000\\text{ Hz}$ (1024 bins, $\\Delta f = 7{,}81$ Hz) | Raias tônicas estreitas de eixos, bombas e motores diesel. |\n",
+                "| **MEL** | *Representação* | STFT em Escala Mel | $0\\text{--}8\\text{ kHz}$ (após decimação para 16 kHz) | Energia contínua audível de cavitação e combustão. |\n",
                 "| **HHT Pura** | *Representação* | **EMD + Hilbert (Adaptativo)** | $0\\text{--}1000\\text{ Hz}$ | **Modos intrínsecos de oscilação e frequências instantâneas.** |\n",
-                "| **DEMON** | *Pipeline Físico* | Chebyshev + Envelope + STFT | $0\\text{--}25\\text{ Hz}$ | Frequência fundamental do hélice e passagem de pás. |\n"
+                "| **DEMON** | *Pipeline Físico* | Chebyshev + Envelope + STFT | $0{,}39\\text{--}25\\text{ Hz}$ | Frequência fundamental do hélice e passagem de pás. |\n"
             ]
         },
         {
@@ -140,7 +170,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "source": [
                 "## 3. Teste Cego: Extração da HHT Pura nos 4 Áudios Canônicos\n",
                 "\n",
-                "Carregamos as 4 gravações reais representativas e aplicamos a HHT pura diretamente no sinal de pressão acústica (decimado para $f_s = 2000\\text{ Hz}$, cobrindo a banda de $1\\text{ a }1000\\text{ Hz}$, com resolução de **256 bins**):\n"
+                "Carregamos as 4 gravações reais representativas e aplicamos a HHT pura diretamente no sinal de pressão acústica (decimado para $f_s = 2000\\text{ Hz}$, cobrindo a banda de $1\\text{ a }1000\\text{ Hz}$). No teste cego diagnótico abaixo, utilizamos alta resolução espectral (**500 bins**, `win_len=2.56s`, `hop=1.28s` e `MAX_ITERATION=100`). Na extração massiva do dataset completo (`cache_hht.pkl`, **256 bins**), utilizamos `win_len=2.56s` com `hop=5.12s` e `MAX_ITERATION=30` para garantir escalabilidade computacional sobre todas as 1.706 gravações. **Atenção:** com passo (5,12 s) igual ao dobro da janela (2,56 s), a extração massiva analisa só metade do áudio: 2,56 s de cada 5,12 s são descartados (`scratch/extract_all_hht.py`).\n"
             ]
         },
         {
@@ -156,7 +186,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "    ('ÁUDIO D (AMBIENTAL: Fundo do Mar)', os.path.join(ROOT_DIR, 'data/iara/E/E-1446.wav'), '#7f7f7f'),\n",
                 "]\n",
                 "\n",
-                "def extract_hht_pure(filepath, duration_sec=10.0, fs_target=2000, n_bins=256, max_freq_hz=1000.0):\n",
+                "def extract_hht_pure(filepath, duration_sec=10.0, fs_target=2000, n_bins=500, max_freq_hz=1000.0):\n",
                 "    fs, data = wavfile.read(filepath)\n",
                 "    if data.ndim > 1: data = data[:, 0]\n",
                 "    data = data.astype(np.float32)\n",
@@ -183,7 +213,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "    \n",
                 "    hms_accum = np.zeros(n_bins)\n",
                 "    emd = EMD()\n",
-                "    emd.MAX_ITERATION = 50\n",
+                "    emd.MAX_ITERATION = 100\n",
                 "    dt = 1.0 / actual_fs\n",
                 "    \n",
                 "    first_imfs = None\n",
@@ -194,7 +224,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "        imfs = emd(w_sig)\n",
                 "        if first_imfs is None: first_imfs = imfs\n",
                 "        \n",
-                "        for imf in imfs[:8]:\n",
+                "        for imf in imfs:\n",
                 "            analytic = scipy_sig.hilbert(imf)\n",
                 "            amp = np.abs(analytic)\n",
                 "            phase = np.unwrap(np.angle(analytic))\n",
@@ -228,9 +258,9 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "    }\n",
                 "\n",
                 "hht_results = {}\n",
-                "print(\"Executando teste cego de HHT Pura (256 bins, 0--1000 Hz)...\\n\")\n",
+                "print(\"Executando teste cego de HHT Pura (500 bins, MAX_ITERATION=100, 0--1000 Hz)...\\n\")\n",
                 "for label, path, color in canonical_samples:\n",
-                "    res = extract_hht_pure(path, duration_sec=10.0, n_bins=256)\n",
+                "    res = extract_hht_pure(path, duration_sec=10.0, n_bins=500)\n",
                 "    hht_results[label] = (res, color)\n",
                 "    print(f\"--> {label}:\")\n",
                 "    print(f\"    Pico Dominante: {res['peak_freq']:.1f} Hz | Centróide: {res['centroid']:.1f} Hz | Rolloff 85%: {res['rolloff']:.1f} Hz | Tempo: {res['time_elapsed']:.2f}s\")"
@@ -282,7 +312,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "outputs": [],
             "source": [
                 "fig, axes = plt.subplots(4, 1, figsize=(14, 11), sharex=True)\n",
-                "fig.suptitle(\"Teste Cego: Espectro Marginal de Hilbert (HHT Pura - 256 Bins, 0--1000 Hz)\", fontsize=14, fontweight='bold', y=0.99)\n",
+                "fig.suptitle(\"Teste Cego: Espectro Marginal de Hilbert (HHT Pura - 500 Bins, 0--1000 Hz)\", fontsize=14, fontweight='bold', y=0.99)\n",
                 "\n",
                 "for i, (label, (res, color)) in enumerate(hht_results.items()):\n",
                 "    ax = axes[i]\n",
@@ -356,23 +386,7 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                "## 4. Diagnóstico Físico e Acústico dos Resultados\n",
-                "\n",
-                "1. **Assinatura de LARGE (Áudio C — *Sinoglory*):**\n",
-                "   - Possui o centróide espectral mais alto ($425{,}1\\text{ Hz}$) e o maior rolloff ($591{,}6\\text{ Hz}$), impulsionado pela grande quantidade de maquinário pesado a bordo (motores auxiliares, geradores a diesel e bombas de lastro entre $450\\text{ e }550\\text{ Hz}$).\n",
-                "   - **Exibe um pico subsônico nítido em $18\\text{ Hz}$**, coerente com o eixo de propulsão lento de grandes cargueiros de mais de 300 metros.\n",
-                "\n",
-                "2. **Assinatura de MEDIUM (Áudio B — *Maersk Pacer*):**\n",
-                "   - Apresenta um pico isolado e persistente em **$139{,}1\\text{ Hz}$**, refletindo a rotação de trabalho de motores diesel médios de 4 tempos típicos de apoio offshore.\n",
-                "\n",
-                "3. **Assinatura de SMALL (Áudio A — *Pilot 10*):**\n",
-                "   - Energia concentrada entre $150\\text{ e }350\\text{ Hz}$ com pico em $231{,}2\\text{ Hz}$. Não exibe nenhuma linha subsônica abaixo de $50\\text{ Hz}$ devido ao casco leve de alumínio e hélice pequena rápida.\n",
-                "\n",
-                "4. **Assinatura de AMBIENTAL (Áudio D — Fundo do Mar):**\n",
-                "   - Menor frequência de rolloff ($473{,}5\\text{ Hz}$) e ausência completa de tônicas mecânicas estruturadas.\n",
-                "\n",
-                "--- \n",
-                "\n",
+                "@@SECTION4@@",
                 "### 4.1. Limitações Críticas Identificadas no EMD de Huang\n",
                 "* **Mode Mixing (Mistura de Modos):** O ruído de banda larga marinho causa quebra na interpolação de splines cúbicas, fazendo com que uma mesma oscilação física vaze entre múltiplas IMFs.\n",
                 "* **Modos Falsos no Ruído Gaussiano:** Em ruído ambiental puro, o algoritmo de *sifting* força a extração de oscilações locais até o resíduo ser monótono, criando picos espúrios que não existem fisicamente.\n"
@@ -382,9 +396,11 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "cell_type": "markdown",
             "metadata": {},
             "source": [
-                "## 5. A Solução Moderna: VMD (Variational Mode Decomposition)\n",
+                "## 5. A Solução Moderna: VMD (Variational Mode Decomposition) sobre a Envoltória de Cavitação\n",
                 "\n",
-                "Para solucionar a mistura de modos do EMD, avaliamos o **VMD** (*Dragomiretskiy & Zosso*, IEEE Trans. Signal Process., 2014) sobre o sinal de envelope de modulação de `SMALL` (`A-0002.wav`).\n",
+                "Como alternativa ao EMD, que sofre de mistura de modos (*mode mixing*), avaliamos o **VMD** (*Dragomiretskiy & Zosso*, IEEE Trans. Signal Process., 2014) atuando especificamente sobre a **envoltória de cavitação demodulada** de `SMALL` (`A-0002.wav`).\n",
+                "\n",
+                "Diferente da HHT pura de banda larga ($0\\text{--}1000\\text{ Hz}$ sem demodulação avaliada na Seção 3), o código da célula a seguir aplica primeiro um **filtro passa-faixa Chebyshev II ($1\\text{--}2\\text{ kHz}$)** seguido de **retificação e decimação da envoltória de Hilbert para $50\\text{ Hz}$** (pipeline físico de demodulação de cavitação), e então executa o VMD ($K=4$ modos, $\\alpha=2000$) sobre essa envoltória demodulada. As frequências centrais obtidas são impressas pela célula e interpretadas logo abaixo dela.\n",
                 "\n",
                 "O VMD formula a decomposição como um **problema variacional convexo bem-posto**, determinando simultaneamente as bandas e as frequências centrais $\\omega_k$ de cada modo:\n",
                 "\n",
@@ -399,13 +415,13 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "metadata": {},
             "outputs": [],
             "source": [
-                "# Teste do VMD no áudio SMALL\n",
+                "# Teste do VMD na envoltória de cavitação demodulada do áudio SMALL\n",
                 "small_wav = os.path.join(ROOT_DIR, 'data/iara/A/A-0002.wav')\n",
                 "fs_s, data_s = wavfile.read(small_wav)\n",
                 "if data_s.ndim > 1: data_s = data_s[:, 0]\n",
                 "seg_s = data_s[:int(30 * fs_s)].astype(np.float32)\n",
                 "\n",
-                "# Demodulação para extrair envoltória\n",
+                "# Demodulação na banda de cavitação (1-2 kHz) -> Envoltória decimada para 50 Hz\n",
                 "nyq = fs_s / 2.0\n",
                 "N, wc = scipy_sig.cheb2ord([1000/nyq, 2000/nyq], [700/nyq, 2300/nyq], 0.5, 40.0)\n",
                 "sos = scipy_sig.cheby2(N, rs=40, Wn=wc, btype='bandpass', output='sos')\n",
@@ -417,18 +433,27 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "env_dec = env_dec - np.mean(env_dec)\n",
                 "env_dec /= np.max(np.abs(env_dec))\n",
                 "\n",
-                "# Executa VMD com K=4 modos e alpha=2000\n",
+                "# Executa VMD com K=4 modos e alpha=2000 sobre a envoltória demodulada\n",
                 "u, u_hat, omega = VMD(env_dec, alpha=2000, tau=0, K=4, DC=0, init=1, tol=1e-7)\n",
                 "vmd_freqs_hz = omega[-1] * fs_dem\n",
                 "vmd_freqs_rpm = vmd_freqs_hz * 60.0\n",
                 "\n",
-                "print(\"=== RESULTADO DO VMD EM SMALL (Pilot 10, 11m) ===\")\n",
+                "print(\"=== RESULTADO DO VMD NA ENVOLTÓRIA DEMODULADA DE SMALL (Pilot 10, 11m) ===\")\n",
                 "for m in range(len(vmd_freqs_hz)):\n",
                 "    print(f\"  Modo {m+1}: {vmd_freqs_hz[m]:.2f} Hz ({vmd_freqs_rpm[m]:.1f} RPM)\")\n",
                 "\n",
-                "print(\"\\n[FÍSICA COMPROVADA] O Modo 2 travou em 9,98 Hz (~600 RPM) e o Modo 3 em 19,99 Hz (~1200 RPM),\")\n",
-                "print(\"correspondendo exatamente à rotação do propulsor e à frequência de passagem das pás!\")"
+                "f_modos = sorted(vmd_freqs_hz)\n",
+                "f_osc = [f for f in f_modos if f >= 1.0]  # descarta o modo quase-DC\n",
+                "if len(f_osc) >= 2:\n",
+                "    razoes = ', '.join(f'{f / f_osc[0]:.2f}' for f in f_osc)\n",
+                "    print(f\"\\nModos oscilatórios (>= 1 Hz): {', '.join(f'{f:.2f}' for f in f_osc)} Hz; razão para o menor: {razoes}\")\n",
+                "print(\"Obs.: sem RPM medido do Pilot 10, a associação dos modos à rotação do eixo / passagem de pás é hipótese, não comprovação.\")"
             ]
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": ["@@VMD_INTERP@@"]
         },
         {
             "cell_type": "markdown",
@@ -438,33 +463,125 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
                 "\n",
                 "1. **Autonomia da HHT:**\n",
                 "   A HHT Pura é uma categoria independente que substitui a FFT do LOFAR na decomposição adaptativa de sinais hidroacústicos.\n",
-                "2. **Dimensionalidade Recomendada:**\n",
-                "   Adotamos **$N_{\\text{bins}} = 256$** como padrão oficial da HHT (resolução de $\\approx 3{,}91\\text{ Hz/bin}$), garantindo:\n",
+                "2. **Dimensionalidade Recomendada e Parâmetros de Extração Massiva (`cache_hht.pkl`):**\n",
+                "   Adotamos **$N_{\\text{bins}} = 256$** como padrão oficial da HHT (grade de 1 a 1000 Hz, resolução de $999/255 \\approx 3{,}92\\text{ Hz/bin}$), garantindo:\n",
                 "   - Paridade dimensional com o MEL ($256\\text{-D}$);\n",
                 "   - Filtragem natural de microflutuações da frequência instantânea;\n",
-                "   - Condicionamento numérico ótimo para SVM Nyström, MLP e Random Forest.\n"
+                "   - Na extração em larga escala para os **1.706 áudios** (`cache_hht.pkl`, 256 bins), adotamos janelas de `win_len=2.56s` com passo `hop=5.12s` e `MAX_ITERATION=30` no EMD para viabilizar a escalabilidade computacional em todo o acervo. **Com isso metade de cada gravação (2,56 s a cada 5,12 s) não entra nas features**; o desempenho da Seção 7 refere-se a essa extração subamostrada.\n"
             ]
         },
+        "@@SECTION7@@"
+    ]
+
+    # ------------------------------------------------------------------------------------------
+    # Números do markdown: calculados aqui, executando as MESMAS células de código do notebook
+    # (teste cego HHT e VMD) e lendo os experimentos 5x2cv via iara_results.
+    # ------------------------------------------------------------------------------------------
+    code_src = [''.join(c['source']) for c in cells if isinstance(c, dict) and c['cell_type'] == 'code']
+    ns = {}
+    cwd = os.getcwd()
+    os.chdir(REPO_ROOT)
+    try:
+        import matplotlib
+        matplotlib.use('Agg')
+        exec(code_src[0], ns)   # setup
+        exec(code_src[1], ns)   # teste cego (HHT pura nos 4 áudios)
+        vmd_code = next(c for c in code_src if 'VMD(env_dec' in c)
+        exec(vmd_code, ns)
+    finally:
+        os.chdir(cwd)
+    import matplotlib.pyplot as _plt
+    _plt.close('all')
+
+    res = {lab.split('(')[1].split(':')[0]: r for lab, (r, _) in ns['hht_results'].items()}
+    order = ['SMALL', 'MEDIUM', 'LARGE', 'AMBIENTAL']
+
+    def band(r, lo, hi):
+        fg, h = r['freq_grid'], r['hms']
+        return h[(fg >= lo) & (fg <= hi)].sum() / h.sum() * 100
+
+    def sub_peak(r, lo=5.0, hi=50.0):
+        fg, h = r['freq_grid'], r['hms']
+        m = (fg >= lo) & (fg <= hi)
+        j = np.argmax(h[m])
+        return fg[m][j], h[m][j]
+
+    cen_rank = sorted(order, key=lambda c: -res[c]['centroid'])
+    rol_rank = sorted(order, key=lambda c: -res[c]['rolloff'])
+    lf, la = sub_peak(res['LARGE'])
+    sf, sa = sub_peak(res['SMALL'])
+    sec4 = [
+        "## 4. Diagnóstico dos Resultados do Teste Cego\n",
+        "\n",
+        "*(Valores abaixo calculados na geração do notebook executando as mesmas células acima; conferir com a tabela da Seção 3.1. "
+        "São 10 s centrais de **uma** gravação por classe: servem para ilustrar o método, não para caracterizar as classes.)*\n",
+        "\n",
+        "| Áudio | Pico dominante | Centróide | Rolloff 85% | Energia < 50 Hz | Energia 150–350 Hz | Energia 450–550 Hz |\n",
+        "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n",
+    ]
+    for c in order:
+        r = res[c]
+        sec4.append(f"| {c} | {pt(r['peak_freq'], 1)} Hz | {pt(r['centroid'], 1)} Hz | {pt(r['rolloff'], 1)} Hz | "
+                    f"{pt(band(r, 1, 50), 1)}% | {pt(band(r, 150, 350), 1)}% | {pt(band(r, 450, 550), 1)}% |\n")
+    sec4 += [
+        "\n",
+        f"1. **Centróide e rolloff:** a ordem do centróide é {' > '.join(cen_rank)} e a do rolloff é {' > '.join(rol_rank)}. "
+        f"O LARGE (*Sinoglory*) tem o pico dominante em {pt(res['LARGE']['peak_freq'], 1)} Hz; atribuí-lo a maquinário auxiliar específico "
+        "(geradores, bombas) é hipótese, sem medida de bordo que a confirme.\n",
+        f"2. **Faixa subsônica (5–50 Hz):** no LARGE o máximo local está em {pt(lf, 1)} Hz, com {pt(la * 100, 0)}% da energia do pico global "
+        f"do HMS; no SMALL o máximo local nessa faixa está em {pt(sf, 1)} Hz, com {pt(sa * 100, 0)}%. "
+        f"A energia abaixo de 50 Hz é {pt(band(res['SMALL'], 1, 50), 1)}% no SMALL e {pt(band(res['LARGE'], 1, 50), 1)}% no LARGE: "
+        "portanto **não** se sustenta dizer que o SMALL \"não exibe linha subsônica\".\n",
+        f"3. **MEDIUM (*Maersk Pacer*):** pico dominante em {pt(res['MEDIUM']['peak_freq'], 1)} Hz. A leitura como rotação de motor diesel médio é hipótese.\n",
+        f"4. **AMBIENTAL (fundo do mar):** rolloff de {pt(res['AMBIENTAL']['rolloff'], 1)} Hz "
+        + ("(o menor dos quatro)" if rol_rank[-1] == 'AMBIENTAL' else "") +
+        f" e pico dominante em {pt(res['AMBIENTAL']['peak_freq'], 1)} Hz: o EMD também gera picos no ruído de fundo (ver 4.1).\n",
+        "\n",
+        "--- \n",
+        "\n",
+    ]
+
+    fm = sorted(ns['vmd_freqs_hz'])
+    fo = [f for f in fm if f >= 1.0]
+    vmd_interp = [
+        "### Leitura do resultado do VMD\n",
+        "\n",
+        f"* Frequências centrais dos {len(fm)} modos (ordem crescente): " + ", ".join(f"{pt(f)} Hz" for f in fm) + ".\n",
+        (f"* Descartando o modo quase-DC, os modos oscilatórios ({', '.join(pt(f) + ' Hz' for f in fo)}) estão em razões "
+         + ", ".join(pt(f / fo[0]) for f in fo) + " em relação ao menor, isto é, formam uma série próxima de múltiplos de "
+         + pt(fo[0]) + " Hz.\n") if len(fo) >= 2 else "* Menos de dois modos oscilatórios acima de 1 Hz.\n",
+        "* Isso é **compatível** com uma modulação periódica da envoltória (rotação do eixo e/ou passagem de pás), mas **não a comprova**: "
+        "não há RPM medido do *Pilot 10* para comparar, o VMD foi aplicado em só 30 s de uma gravação e $K=4$ foi fixado a priori. "
+        "Também não se mediu aqui a mistura de modos do EMD na mesma envoltória, então não se pode afirmar que o VMD \"resolveu\" o *mode mixing*.\n",
+    ]
+
+    # Seção 7 -------------------------------------------------------------------------------
+    S7 = {e: R.summary(e, m) for e, m in HHT_EXPS_4C + HHT_EXPS_3C + [(EXP_RF_LOFAR, '4c'), (EXP_MLP_SEED, '4c')]}
+    cnn_folds = R.fold_metrics(EXP_CNN_4C, '4c')
+    best4 = max(HHT_EXPS_4C, key=lambda em: S7[em[0]]['SP'][0])[0]
+    best3 = max(HHT_EXPS_3C, key=lambda em: S7[em[0]]['SP'][0])[0]
+    second4 = sorted(HHT_EXPS_4C, key=lambda em: -S7[em[0]]['SP'][0])[1][0]
+    second3 = sorted(HHT_EXPS_3C, key=lambda em: -S7[em[0]]['SP'][0])[1][0]
+    f_b4 = R.f_test_5x2(best4, second4)
+    f_b3 = R.f_test_5x2(best3, second3, mode_a='3c', mode_b='3c')
+    f_rf_lofar = R.f_test_5x2(EXP_RF_4C, EXP_RF_LOFAR)
+    names = {EXP_RF_4C: 'RF', EXP_MLP_4C: 'MLP', EXP_SVM_4C: 'SVM m=6000', EXP_CNN_4C: 'CNN 2D',
+             EXP_RF_3C: 'RF', EXP_MLP_3C: 'MLP', EXP_SVM_3C: 'SVM m=6000', EXP_CNN_3C: 'CNN 2D'}
+
+    sec7 = [
         {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
                 "## 7. Avaliação Experimental nos 10 Folds Oficiais (Protocolo 5x2cv)\n",
                 "\n",
-                "A extração massiva de HHT (256 bins) foi realizada para todos os **1.706 áudios UO** do dataset IARA.\n",
-                "Abaixo consolidamos o desempenho dos 4 modelos avaliados sob o protocolo oficial de 10 folds ($5\\times2$cv com isolamento estrito por `Ship ID` e votação majoritária por áudio):\n",
+                "A extração massiva de HHT (`cache_hht.pkl`, 256 bins de 1 a 1000 Hz, `win_len=2.56s`, `hop=5.12s` — metade de cada áudio descartada —, `MAX_ITERATION=30`) foi feita para os **1.706 áudios UO** do IARA. "
+                "Os modelos foram avaliados por `scratch/eval_hht_models_5x2cv.py` nos 10 folds oficiais do $5\\times2$cv (particionamento estratificado **por gravação**, `exclusive_header='ID'`, como no artigo; o mesmo navio pode aparecer em treino e teste), com voto majoritário por arquivo.\n",
                 "\n",
-                "| Modelo / Arquitetura | Tarefa | Acurácia Global (ACC) | Índice SP Oficial | Recall SMALL | Recall MEDIUM | Recall LARGE | Recall AMBIENTAL |\n",
-                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |\n",
-                "| **Random Forest (100 árvores)** | **4 Classes** | **59,94% ± 1,48%** | **58,14% ± 1,79%** | **54,83%** | 46,64% | **73,83%** | 59,08% |\n",
-                "| **MLP PyTorch [32, 16] (GPU)** | **4 Classes** | **56,37% ± 1,29%** | **56,14% ± 1,52%** | 28,15% | **56,85%** | **68,41%** | **80,61%** |\n",
-                "| **SVM Nyström ($m=6000$, RBF)** | **4 Classes** | **55,63% ± 2,81%** | **53,63% ± 4,40%** | **44,49%** | 44,30% | 67,15% | 67,96% |\n",
-                "| **CNN 2D PyTorch [64, 32] (GPU)** | **4 Classes** | 46,92% ± 2,13% | 46,10% ± 4,14% | 21,80% | 48,32% | 54,81% | 73,16% |\n",
-                "| *---* | *---* | *---* | *---* | *---* | *---* | *---* | *---* |\n",
-                "| **Random Forest (100 árvores)** | **3 Classes** | **60,43% ± 1,53%** | **58,27% ± 1,86%** | **55,56%** | 47,32% | **73,60%** | — |\n",
-                "| **MLP PyTorch [32, 16] (GPU)** | **3 Classes** | **59,70% ± 2,08%** | **58,76% ± 2,33%** | 46,07% | **63,96%** | 68,08% | — |\n",
-                "| **SVM Nyström ($m=6000$, RBF)** | **3 Classes** | **56,93% ± 3,24%** | **52,82% ± 5,48%** | 39,78% | 59,60% | 69,35% | — |\n",
-                "| **CNN 2D PyTorch [64, 32] (GPU)** | **3 Classes** | 52,35% ± 2,32% | 49,82% ± 2,73% | 47,81% | 41,28% | 63,83% | — |\n"
+                "A tabela é calculada na execução por `notebooks/iara_results.py` a partir de `results/trainings/multirep/<exp>/eval/fold_k/`. **ACC = acurácia balanceada** (média dos recalls); `ACC_micro` = fração de arquivos corretos.\n",
+                "* **4 classes**: modelo treinado e avaliado com SMALL, MEDIUM, LARGE e BACKGROUND.\n",
+                "* **3 classes**: modelo **retreinado** sem BACKGROUND (experimentos `*_3c`).\n",
+                "* O MLP é a versão sem semente fixa (`" + EXP_MLP_4C + "`), a do script deste notebook. A versão com semente 42 usada no gate (`" + EXP_MLP_SEED + "`) dá SP " + fmtc(S7[EXP_MLP_SEED]['SP']) + ".\n",
             ]
         },
         {
@@ -473,17 +590,80 @@ def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
             "metadata": {},
             "outputs": [],
             "source": [
-                "# Exibe o gráfico comparativo consolidado de todas as representações\n",
-                "import os\n",
-                "from IPython.display import Image, display\n",
-                "img_path = '../reports/comparacao_hht_modelos.png'\n",
-                "if os.path.exists(img_path):\n",
-                "    display(Image(filename=img_path))\n",
-                "else:\n",
-                "    print('Gráfico disponível em reports/comparacao_hht_modelos.png')"
+                "import os, sys\n",
+                "from IPython.display import display\n",
+                "for _p in ('.', 'notebooks'):\n",
+                "    if os.path.exists(os.path.join(_p, 'iara_results.py')) and os.path.abspath(_p) not in sys.path:\n",
+                "        sys.path.insert(0, os.path.abspath(_p))\n",
+                "import iara_results as R\n",
+                "\n",
+                "linhas_4c = [\n",
+                "    ('Random Forest (100 árvores) — 4C', '" + EXP_RF_4C + "', '4c'),\n",
+                "    ('MLP PyTorch [32, 16] — 4C', '" + EXP_MLP_4C + "', '4c'),\n",
+                "    ('SVM Nyström (m=6000, RBF) — 4C', '" + EXP_SVM_4C + "', '4c'),\n",
+                "    ('CNN 2D PyTorch [64, 32] — 4C (COLAPSADA)', '" + EXP_CNN_4C + "', '4c'),\n",
+                "]\n",
+                "linhas_3c = [\n",
+                "    ('Random Forest (100 árvores) — 3C', '" + EXP_RF_3C + "', '3c'),\n",
+                "    ('MLP PyTorch [32, 16] — 3C', '" + EXP_MLP_3C + "', '3c'),\n",
+                "    ('SVM Nyström (m=6000, RBF) — 3C', '" + EXP_SVM_3C + "', '3c'),\n",
+                "    ('CNN 2D PyTorch [64, 32] — 3C', '" + EXP_CNN_3C + "', '3c'),\n",
+                "]\n",
+                "display(R.table(linhas_4c, metrics=('SP', 'ACC', 'ACC_micro')))\n",
+                "display(R.table(linhas_3c, metrics=('SP', 'ACC', 'ACC_micro')))\n",
+                "\n",
+                "cnn = R.fold_metrics('" + EXP_CNN_4C + "', '4c')\n",
+                "print('CNN 2D 4C, SP por fold:', cnn['SP'].round(1).tolist())\n",
+                "print('CNN 2D 4C, recall SMALL por fold:', cnn['R_SMALL'].round(1).tolist())\n",
+                "print()\n",
+                "print('F-test 5x2cv (SP):')\n",
+                "for a, b, m in [('" + best4 + "', '" + second4 + "', '4c'), ('" + best3 + "', '" + second3 + "', '3c'),\n",
+                "                ('" + EXP_RF_4C + "', '" + EXP_RF_LOFAR + "', '4c')]:\n",
+                "    F, p = R.f_test_5x2(a, b, mode_a=m, mode_b=m)\n",
+                "    print(f'  {a} vs {b}: F = {F:.2f}, p = {p:.3f}')\n",
+                "print('RF LOFAR local (cache LOFAR de 5,12 s):', R.fmt(R.summary('" + EXP_RF_LOFAR + "')['SP']))"
             ]
-        }
+        },
+        {
+            "cell_type": "markdown",
+            "metadata": {},
+            "source": [
+                "### 7.1 Leitura dos resultados\n",
+                "\n",
+                "*(Números calculados dos CSVs na geração; conferir com a saída acima.)*\n",
+                "\n",
+                f"1. **4 classes:** o melhor HHT é o {names[best4]} (SP {fmtc(S7[best4]['SP'])}), seguido do {names[second4]} (SP {fmtc(S7[second4]['SP'])}); "
+                + ("a diferença é significativa" if f_b4[1] < 0.05 else "a diferença **não** é significativa") + f" (F-test 5×2cv, {pval(f_b4[1])}).\n",
+                f"2. **3 classes (retreinado):** o melhor é o {names[best3]} (SP {fmtc(S7[best3]['SP'])}), seguido do {names[second3]} (SP {fmtc(S7[second3]['SP'])}); "
+                + ("diferença significativa" if f_b3[1] < 0.05 else "diferença **não** significativa") + f" ({pval(f_b3[1])}).\n",
+                f"3. **CNN 2D colapsada:** em 4 classes o SP é {fmtc(S7[EXP_CNN_4C]['SP'])}, com SP por fold de {pt(cnn_folds['SP'].min(), 1)} a {pt(cnn_folds['SP'].max(), 1)} "
+                f"e recall de SMALL por fold de {pt(cnn_folds['R_SMALL'].min(), 1)} a {pt(cnn_folds['R_SMALL'].max(), 1)}%. "
+                "Com `hop=5.12s`, uma imagem de 32 janelas cobre ~164 s: com passo de 16 janelas, cada gravação (de 2 a 5 min) gera só 1 ou 2 imagens, e as que têm menos de 32 janelas são completadas por *wrap padding* — pouquíssimas amostras de treino para uma CNN. "
+                "Esse modelo não deve servir de baseline nem de argumento contra CNNs em HHT.\n",
+                f"4. **HHT × LOFAR no mesmo classificador:** o RF com HHT (SP {fmtc(S7[EXP_RF_4C]['SP'])}) fica **abaixo** do RF com LOFAR local "
+                f"(`{EXP_RF_LOFAR}`, SP {fmtc(S7[EXP_RF_LOFAR]['SP'])}; {pval(f_rf_lofar[1])}). Todos os modelos HHT ficam abaixo do MLP LOFAR do artigo "
+                f"(SP {pt(R.ARTICLE_TABLE7[('MLP', 'LOFAR')]['SP'][0])}).\n",
+            ]
+        },
     ]
+
+    def subst(c):
+        if c == "@@SECTION7@@":
+            return sec7
+        if isinstance(c, dict) and c['cell_type'] == 'markdown':
+            src = []
+            for line in c['source']:
+                if line == "@@SECTION4@@":
+                    src.extend(sec4)
+                elif line == "@@VMD_INTERP@@":
+                    src.extend(vmd_interp)
+                else:
+                    src.append(line)
+            c = dict(c, source=src)
+        return [c]
+
+    cells = [x for c in cells for x in subst(c)]
+    assert not any('@@' in ''.join(c['source']) for c in cells)
 
     notebook_dict = {
         "cells": cells,

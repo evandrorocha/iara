@@ -1,430 +1,397 @@
 """
 Script de geração do notebook 20: notebooks/20_analise_complementaridade_cnn_small.ipynb
-Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso na CNN 2D para a Classe SMALL (Dataset IARA).
-"""
+(e construtor comum dos notebooks 21 e 22 — ver build_cnn_notebook).
 
+Análise de complementaridade, efeito oráculo e grau de consenso na CNN 2D para uma classe.
+Todos os números vêm das predições em disco (notebooks/iara_results.py + notebooks/cnn_complementaridade_comum.py);
+os valores citados no markdown são calculados aqui, na geração.
+"""
 import os
+import sys
 import json
 
-def create_notebook(filename="notebooks/20_analise_complementaridade_cnn_small.ipynb"):
-    cells = [
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
-                "### Notebook 20: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso na CNN 2D — Classe SMALL\n",
-                "\n",
-                "**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)\n",
-                "**Data:** Outubro de 2026\n",
-                "\n",
-                "---\n",
-                "\n",
-                "## Resumo Executivo da Investigação com Redes Convolucionais 2D (CNN)\n",
-                "\n",
-                "A classe **`SMALL`** (embarcações de pequeno porte: lanchas rápidas e veleiros a motor com comprimento $\\\\le 15\\\\text{ m}$) foi avaliada em todas as **1.780 instâncias de teste** nos 10 folds oficiais do protocolo $5\\\\times2$cv com a arquitetura **CNN 2D PyTorch (GPU RTX 5060 Ti, blocos $32 \\\\times D$)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).\n",
-                "\n",
-                "O objetivo é confrontar os resultados de SVM (Notebook 10), MLP (Notebook 14) e Random Forest (Notebook 17) com a abordagem de representação espaço-temporal convolucional.\n",
-                "\n",
-                "### Principais Descobertas na CNN 2D:\n",
-                "1. **Teto do Oráculo Atinge $73{,}54\\\\%$ (1.309 / 1.780 lanchas):**\n",
-                "   - A combinação das 4 entradas na CNN resgata **1.309 lanchas**, superando o melhor modelo isolado (LOFAR com $47{,}02\\\\%$) em **$+26{,}5$ pontos percentuais**.\n",
-                "   - O erro comum (onde as 4 CNNs erram simultaneamente) é de **$26{,}46\\\\%$ (471 áudios)**.\n",
-                "2. **A Mais Baixa Unanimidade de Todo o Estudo ($1{,}29\\\\%$ — Apenas 23 áudios):**\n",
-                "   - Apenas **23 de 1.780 lanchas** são acertadas simultaneamente pelas 4 CNNs. Convoluções espaciais pressupõem correlação e continuidade temporal que são severamente quebradas pelo marulho caótico e transientes rápidos de propulsores leves.\n",
-                "3. **Ortogonalidade Extrema e Alta Dependência de Resgates Exclusivos ($34{,}89\\\\%$):**\n",
-                "   - Mais de um terço de todas as lanchas salvas pela CNN dependem de **apenas UMA entrada** ($621$ áudios).\n",
-                "   - O LOFAR lidera os resgates exclusivos na CNN com **254 lanchas ($14{,}27\\\\%$)**, seguido de perto pelo MEL com **211 lanchas ($11{,}85\\\\%$)**."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 1. Configuração do Ambiente e Imports\n",
-                "import os\n",
-                "import numpy as np\n",
-                "import pandas as pd\n",
-                "import matplotlib.pyplot as plt\n",
-                "try:\n",
-                "    from IPython.display import display\n",
-                "except ImportError:\n",
-                "    display = print\n",
-                "\n",
-                "# Estilização publication-ready (sem dependência externa)\n",
-                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
-                "plt.rcParams.update({\n",
-                "    'font.family': 'sans-serif',\n",
-                "    'font.size': 11,\n",
-                "    'axes.labelsize': 12,\n",
-                "    'axes.titlesize': 13,\n",
-                "    'xtick.labelsize': 10,\n",
-                "    'ytick.labelsize': 10,\n",
-                "    'figure.titlesize': 15,\n",
-                "    'figure.dpi': 150\n",
-                "})\n",
-                "\n",
-                "print(\"Ambiente configurado com sucesso! Bibliotecas prontas.\")"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 2. Metodologia Experimental e Base de Dados de Teste\n",
-                "\n",
-                "Avaliação rigorosa sobre todas as **1.780 instâncias de teste** onde a classe real comprovada era **`SMALL` (Classe 0)** sob o protocolo oficial $5\\\\times2$cv nos 10 folds com **CNN 2D PyTorch** nas 4 representações (**MEL, LOFAR, HHT e DEMON**):\n"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 2. Dados Consolidados das Predições da CNN 2D na Classe SMALL\n",
-                "total_sml = 1780\n",
-                "\n",
-                "# Desempenho individual na CNN\n",
-                "hits_data = {\n",
-                "    'Representacao': ['DEMON (253-D)', 'HHT Puro (256-D)', 'MEL (256-D)', 'LOFAR (1024-D)', 'ORÁCULO CNN (União 4 Modos)'],\n",
-                "    'Acertos': [273, 365, 728, 837, 1309],\n",
-                "    'Recall_Pct': [15.34, 20.51, 40.90, 47.02, 73.54]\n",
-                "}\n",
-                "df_hits = pd.DataFrame(hits_data)\n",
-                "\n",
-                "# Grau de consenso na CNN\n",
-                "consensus_data = {\n",
-                "    'Nivel_Consenso': [\n",
-                "        '4 de 4 (Unanimidade / Independente)',\n",
-                "        '3 de 4 (Alto Consenso)',\n",
-                "        '2 de 4 (Consenso Parcial / Dividido)',\n",
-                "        '1 de 4 (Frágil / Resgate Exclusivo)',\n",
-                "        '0 de 4 (Erro Comum / Incorrigível)'\n",
-                "    ],\n",
-                "    'Audios': [23, 160, 505, 621, 471],\n",
-                "    'Pct_Total_Small': [1.29, 8.99, 28.37, 34.89, 26.46],\n",
-                "    'Pct_Dentro_Oraculo': [1.76, 12.22, 38.58, 47.44, np.nan]\n",
-                "}\n",
-                "df_consensus = pd.DataFrame(consensus_data)\n",
-                "\n",
-                "# Resgates exclusivos por representação na CNN\n",
-                "exclusive_data = {\n",
-                "    'Representacao': ['DEMON Exclusivo', 'HHT Exclusivo', 'MEL Exclusivo', 'LOFAR Exclusivo'],\n",
-                "    'Audios_Salvos': [72, 84, 211, 254],\n",
-                "    'Percentual': [4.04, 4.72, 11.85, 14.27]\n",
-                "}\n",
-                "df_exclusive = pd.DataFrame(exclusive_data)\n",
-                "\n",
-                "# Efeito Reverso em Relação ao Baseline LOFAR (837 acertos, 943 erros)\n",
-                "reverse_data = {\n",
-                "    'Destino_Troca': ['Para MEL', 'Para HHT', 'Para DEMON'],\n",
-                "    'Mantem_do_LOFAR': [431, 199, 150],\n",
-                "    'Perde_do_LOFAR (Efeito Reverso)': [406, 638, 687],\n",
-                "    'Pct_Perda_Acertos (%)': [48.51, 76.22, 82.08],\n",
-                "    'Resgata_Erros_LOFAR': [297, 166, 123],\n",
-                "    'Pct_Resgate_Erros (%)': [31.50, 17.60, 13.04],\n",
-                "    'Saldo_Liquido_Audios': [-109, -472, -564]\n",
-                "}\n",
-                "df_reverse = pd.DataFrame(reverse_data)\n",
-                "\n",
-                "# Padrão de confusão quando erra em SMALL na CNN\n",
-                "confusion_pattern_data = {\n",
-                "    'Representacao': ['LOFAR (943 erros)', 'MEL (1052 erros)', 'HHT (1415 erros)', 'DEMON (1507 erros)'],\n",
-                "    'Confundido_MEDIUM_Pct': [51.43, 57.79, 34.28, 50.56],\n",
-                "    'Confundido_LARGE_Pct': [37.12, 26.43, 37.74, 31.06],\n",
-                "    'Confundido_AMBIENTAL_Pct': [11.45, 15.78, 27.99, 18.38]\n",
-                "}\n",
-                "df_confusion_pattern = pd.DataFrame(confusion_pattern_data)\n",
-                "\n",
-                "display(df_hits)\n",
-                "display(df_consensus)\n",
-                "display(df_reverse)"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 3. O Efeito Oráculo na CNN 2D: Recall Individual vs. Teto Teórico\n",
-                "\n",
-                "A CNN 2D atinge **$47{,}02\\\\%$ de recall em `SMALL`** com o LOFAR e **$40{,}90\\\\%$** com o MEL.\n",
-                "\n",
-                "Contudo, a combinação das 4 entradas via **Oráculo CNN** salta para **$73{,}54\\\\%$ (1.309 acertos)**:\n",
-                "- Um ganho de **$+26{,}5$ pontos percentuais** sobre o LOFAR isolado;\n",
-                "- O erro comum incorrigível é de **$26{,}46\\\\%$ (471 áudios)**."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 3. Gráfico: Desempenho Isolado vs Teto Teórico do Oráculo na CNN em SMALL\n",
-                "plt.figure(figsize=(10, 5.5))\n",
-                "colors = ['#95a5a6', '#9b59b6', '#2980b9', '#e67e22', '#27ae60']\n",
-                "bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)\n",
-                "bars[-1].set_hatch('//')\n",
-                "\n",
-                "plt.axhline(73.54, color='#27ae60', linestyle='--', lw=1.5, alpha=0.7, label='Teto do Oráculo CNN (73.54%)')\n",
-                "plt.axhline(47.02, color='#e67e22', linestyle=':', lw=1.5, alpha=0.7, label='Melhor Isolado LOFAR (47.02%)')\n",
-                "\n",
-                "plt.title('Recall CNN 2D na Classe SMALL: Modelos Isolados vs. Teto Teórico do Oráculo', fontweight='bold', pad=12)\n",
-                "plt.ylabel('Recall em SMALL (%)')\n",
-                "plt.ylim(0, 95)\n",
-                "\n",
-                "for bar in bars:\n",
-                "    h = bar.get_height()\n",
-                "    plt.annotate(f'{h:.1f}%', xy=(bar.get_x() + bar.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
-                "                 fontsize=10.5, fontweight='bold', color='#111')\n",
-                "\n",
-                "plt.legend(loc='upper left', frameon=True)\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 4. Análise de Grau de Consenso e Risco do Efeito Reverso em SMALL (CNN)\n",
-                "\n",
-                "### 4.1 Pirâmide de Consenso na CNN 2D\n",
-                "- **Unanimidade (4/4 certas): $23$ áudios ($1{,}29\\\\%$)** — extrema fragilidade transversal;\n",
-                "- **Alto Consenso (3/4 certas): $160$ áudios ($8{,}99\\\\%$)**;\n",
-                "- **Consenso Dividido (2/4 certas): $505$ áudios ($28{,}37\\\\%$)**;\n",
-                "- **Resgate Exclusivo (1/4 certa): $621$ áudios ($34{,}89\\\\%$)** — quase metade dos acertos totais dependem de apenas 1 modelo!\n",
-                "- **Erro Comum (0/4 certas): $471$ áudios ($26{,}46\\\\%$)**.\n",
-                "\n",
-                "### 4.2 Votação por Consenso em SMALL (CNN):\n",
-                "- **Unanimidade (4/4):** $1{,}29\\\\%$ ($23$ áudios);\n",
-                "- **Maioria Estrita ($\\\\ge 3/4$):** $10{,}28\\\\%$ ($183$ áudios);\n",
-                "- **Maioria Simples / Empate ($\\\\ge 2/4$):** $38{,}65\\\\%$ ($688$ áudios);\n",
-                "- **Oráculo ($\\\\ge 1/4$):** **$73{,}54\\\\%$ ($1.309$ áudios)**."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 4. Visualização do Grau de Consenso e do Efeito Reverso em SMALL (CNN)\n",
-                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))\n",
-                "\n",
-                "# Painel 1: Pirâmide de Consenso dos 1.780 Áudios\n",
-                "labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo/Frágil)', '0 Entradas\\n(Erro Comum)']\n",
-                "counts_cons = [23, 160, 505, 621, 471]\n",
-                "pcts_cons = [1.29, 8.99, 28.37, 34.89, 26.46]\n",
-                "colors_cons = ['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d']\n",
-                "\n",
-                "bars1 = ax1.bar(labels_cons, counts_cons, color=colors_cons, edgecolor='black', linewidth=0.8, width=0.55)\n",
-                "ax1.set_title('Grau de Consenso CNN em SMALL (Total: 1.780 Áudios no 5x2cv)', fontweight='bold', pad=12)\n",
-                "ax1.set_ylabel('Quantidade de Áudios de SMALL')\n",
-                "ax1.set_ylim(0, 720)\n",
-                "\n",
-                "for bar, pct in zip(bars1, pcts_cons):\n",
-                "    h = bar.get_height()\n",
-                "    ax1.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
-                "                 fontsize=9.5, fontweight='bold')\n",
-                "\n",
-                "# Painel 2: Simulação do Efeito Reverso a partir do LOFAR (837 Acertos na CNN)\n",
-                "destinos = ['Para MEL', 'Para HHT', 'Para DEMON']\n",
-                "perdas = [406, 638, 687]\n",
-                "resgates = [297, 166, 123]\n",
-                "x = np.arange(len(destinos))\n",
-                "w = 0.35\n",
-                "\n",
-                "r1 = ax2.bar(x - w/2, perdas, w, label='Perde Acertos do LOFAR (Efeito Reverso)', color='#c0392b', alpha=0.9, edgecolor='black')\n",
-                "r2 = ax2.bar(x + w/2, resgates, w, label='Resgata dos Erros do LOFAR (Ganhos)', color='#27ae60', alpha=0.9, edgecolor='black')\n",
-                "\n",
-                "ax2.set_title('Balanço do Efeito Reverso na CNN ao Trocar de Entrada a partir do LOFAR', fontweight='bold', pad=12)\n",
-                "ax2.set_ylabel('Quantidade de Áudios de SMALL')\n",
-                "ax2.set_xticks(x)\n",
-                "ax2.set_xticklabels(destinos, fontweight='bold', fontsize=11)\n",
-                "ax2.set_ylim(0, 780)\n",
-                "ax2.legend(loc='upper right', frameon=True)\n",
-                "\n",
-                "for rect in r1:\n",
-                "    h = rect.get_height()\n",
-                "    ax2.annotate(f'-{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#900')\n",
-                "\n",
-                "for rect in r2:\n",
-                "    h = rect.get_height()\n",
-                "    ax2.annotate(f'+{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#006400')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 5. Resgates Exclusivos na CNN 2D em SMALL: Domínio do LOFAR e MEL\n",
-                "\n",
-                "Em **$621$ áudios de `SMALL` ($34{,}89\\\\%$)**, três entradas falharam e apenas um modelo de CNN acertou a lancha:\n",
-                "\n",
-                "1. **LOFAR Isolado (254 lanchas salvas exclusivamente — $14{,}27\\\\%$):**\n",
-                "   - É o **campeão de resgates exclusivos na CNN em `SMALL`**!\n",
-                "   - Filtros convolucionais no LOFAR detectam linhas espectrais contínuas ao longo do tempo que o DEMON e o HHT dispersam.\n",
-                "2. **MEL Isolado (211 lanchas salvas exclusivamente — $11{,}85\\\\%$):**\n",
-                "   - O filtro convolucional 2D capta bandas de energia em alta frequência da descarga subaquática.\n",
-                "3. **HHT Puro (84 lanchas salvas exclusivamente — $4{,}72\\\\%$):**\n",
-                "   - Decomposição instantânea de aceleração.\n",
-                "4. **DEMON Isolado (72 lanchas salvas exclusivamente — $4{,}04\\\\%$):**\n",
-                "   - Modulação de rotação de pás."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 5. Gráfico: Resgates Exclusivos na Classe SMALL (CNN)\n",
-                "plt.figure(figsize=(9, 4.5))\n",
-                "colors_excl = ['#16a085', '#9b59b6', '#2980b9', '#e67e22']\n",
-                "bars_excl = plt.barh(df_exclusive['Representacao'], df_exclusive['Audios_Salvos'], color=colors_excl, height=0.5, edgecolor='black', linewidth=0.8)\n",
-                "\n",
-                "plt.title('Resgates Exclusivos CNN 2D na Classe SMALL (Total: 621 Áudios Únicos)', fontweight='bold', pad=12)\n",
-                "plt.xlabel('Número de Áudios Salvos Exclusivamente')\n",
-                "plt.xlim(0, 310)\n",
-                "\n",
-                "for idx, (bar, pct) in enumerate(zip(bars_excl, df_exclusive['Percentual'])):\n",
-                "    w = bar.get_width()\n",
-                "    tag = \"  <-- CAMPEÃO DE RESGATES EM SMALL\" if idx == 3 else \"\"\n",
-                "    plt.annotate(f'{w} áudios ({pct:.1f}%){tag}', xy=(w, bar.get_y() + bar.get_height()/2),\n",
-                "                 xytext=(5, 0), textcoords=\"offset points\", ha='left', va='center',\n",
-                "                 fontsize=9.5, fontweight='bold', color='#111' if idx != 3 else '#b03a2e')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 6. Padrões de Erro em SMALL na CNN 2D\n",
-                "\n",
-                "| Entrada | Principal Erro | Porcentagem do Erro | Segundo Maior Erro | Diagnóstico Mecânico |\n",
-                "| :--- | :---: | :---: | :---: | :--- |\n",
-                "| **MEL** | **`MEDIUM`** | **$57{,}79\\\\%$** | `LARGE` ($26{,}43\\\\%$) | Convoluções temporais suavizam picos transitórios rápidos em padrões estáveis de rebocadores. |\n",
-                "| **LOFAR** | **`MEDIUM`** | **$51{,}43\\\\%$** | `LARGE` ($37{,}12\\\\%$) | Raias tônicas espúrias de marulho são interpretadas como maquinário pesado. |\n",
-                "| **HHT** | **`LARGE`** | **$37{,}74\\\\%$** | `MEDIUM` ($34{,}28\\\\%$) | Dispersão nas primeiras IMFs é interpretada como cavitação massiva de cargueiro. |\n",
-                "| **DEMON** | **`MEDIUM`** | **$50{,}56\\\\%$** | `LARGE` ($31{,}06\\\\%$) | Na ausência de modulação limpa, a imagem 2D demodulada cai na classe intermediária. |"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 6. Gráfico: Destino do Erro em SMALL por Representação (CNN)\n",
-                "plt.figure(figsize=(10, 5.5))\n",
-                "reps = df_confusion_pattern['Representacao']\n",
-                "med_err = df_confusion_pattern['Confundido_MEDIUM_Pct']\n",
-                "lrg_err = df_confusion_pattern['Confundido_LARGE_Pct']\n",
-                "amb_err = df_confusion_pattern['Confundido_AMBIENTAL_Pct']\n",
-                "\n",
-                "w = 0.52\n",
-                "p1 = plt.bar(reps, med_err, w, label='Confundido com MEDIUM (Rebocadores)', color='#f39c12', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "p2 = plt.bar(reps, lrg_err, w, bottom=med_err, label='Confundido com LARGE (Cargueiros)', color='#2ecc71', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "p3 = plt.bar(reps, amb_err, w, bottom=np.array(med_err)+np.array(lrg_err), label='Confundido com AMBIENTAL (Ruído)', color='#95a5a6', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "\n",
-                "plt.title('Padrão de Erro CNN 2D na Classe SMALL: Para onde cada entrada envia a lancha? (%)', fontweight='bold', pad=12)\n",
-                "plt.ylabel('Distribuição Percentual dos Erros (%)')\n",
-                "plt.ylim(0, 118)\n",
-                "plt.legend(loc='upper right', frameon=True)\n",
-                "\n",
-                "for i in range(len(reps)):\n",
-                "    plt.text(i, med_err[i]/2, f'{med_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
-                "    plt.text(i, med_err[i] + lrg_err[i]/2, f'{lrg_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
-                "    if amb_err[i] > 3:\n",
-                "        plt.text(i, med_err[i] + lrg_err[i] + amb_err[i]/2, f'{amb_err[i]:.1f}%', ha='center', va='center', fontsize=8.5, fontweight='bold', color='white')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 7. Painel Consolidado de Descoberta Científica (CNN 2D)\n",
-                "\n",
-                "Abaixo exibimos o painel visual oficial de 4 quadrantes para a classe `SMALL` com o modelo CNN 2D:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 7. Exibição do Gráfico Oficial Consolidado salvo em disco\n",
-                "from IPython.display import Image, display\n",
-                "\n",
-                "img_path = 'reports/analise_complementaridade_cnn_small_oraculo.png'\n",
-                "if os.path.exists(img_path):\n",
-                "    display(Image(filename=img_path))\n",
-                "else:\n",
-                "    print(f\"Imagem {img_path} não encontrada. Execute 'scratch/plot_cnn_figures.py' para gerá-la.\")"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 8. Comparativo Quadrilateral em SMALL: SVM vs. MLP vs. RF vs. CNN 2D\n",
-                "\n",
-                "| Dimensão Analítica | SVM Nyström (NB 10) | MLP PyTorch (NB 14) | Random Forest (NB 17) | CNN 2D (NB 20) | Diagnóstico Científico |\n",
-                "| :--- | :---: | :---: | :---: | :---: | :--- |\n",
-                "| **Melhor Modelo Isolado** | $50{,}73\\\\%$ (MEL) | $46{,}35\\\\%$ (LOFAR) | **$58{,}15\\\\%$ (MEL)** | $47{,}02\\\\%$ (LOFAR) | O RF lidera com ampla vantagem em lanchas isoladas. |\n",
-                "| **Teto do Oráculo** | $83{,}99\\\\%$ ($1.495$) | $76{,}85\\\\%$ ($1.368$) | **$86{,}52\\\\%$ ($1.540$)** | $73{,}54\\\\%$ ($1.309$) | A CNN apresenta o menor teto em SMALL devido à rigidez de filtros 2D. |\n",
-                "| **Taxa de Unanimidade (4/4)** | $6{,}80\\\\%$ ($121$) | $5{,}34\\\\%$ ($95$) | **$16{,}80\\\\%$ ($299$)** | **$1{,}29\\\\%$ ($23$)** | Na CNN, o consenso é quase nulo: quase todas as lanchas dependem de resgates pontuais. |\n",
-                "| **Erro Comum Incorrigível** | $16{,}01\\\\%$ ($285$) | $23{,}15\\\\%$ ($412$) | **$13{,}48\\\\%$ ($240$)** | $26{,}46\\\\%$ ($471$) | Mais de um quarto das lanchas é perdido na CNN. |\n",
-                "| **Campeão de Resgates Exclusivos** | HHT ($207$) | DEMON ($155$) | DEMON ($178$) | **LOFAR ($254$)** | Na CNN, LOFAR e MEL salvam $465$ lanchas exclusivas somados. |\n",
-                "| **Votação Simples ($\\\\ge 2/4$)** | $55{,}17\\\\%$ | $41{,}74\\\\%$ | **$65{,}62\\\\%$** | $38{,}65\\\\%$ | Votação majoritária falha na CNN em SMALL devido à baixa unanimidade. |"
-            ]
-        }
-    ]
+import numpy as np
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import iara_results as R  # noqa: E402
+import cnn_complementaridade_comum as C  # noqa: E402
+
+CLASS_INFO = {
+    0: {"nb": 20, "desc": "embarcações de pequeno porte, comprimento < 50 m", "item": "lanchas"},
+    1: {"nb": 21, "desc": "embarcações de 50 m a 100 m (rebocadores, apoio offshore)", "item": "rebocadores"},
+    2: {"nb": 22, "desc": "embarcações de grande porte, comprimento ≥ 100 m (mercantes, graneleiros, petroleiros)", "item": "navios"},
+}
+
+
+def pc(x, nd=2):
+    """Percentual com vírgula decimal, fora de LaTeX."""
+    return f"{x:.{nd}f}".replace(".", ",") + "%"
+
+
+def th(x):
+    return f"{x:,}".replace(",", ".")
+
+
+def nm(x, nd=2):
+    return f"{x:.{nd}f}".replace(".", ",")
+
+
+def pv(p):
+    return "< 0,001" if p < 0.001 else f"{p:.3f}".replace(".", ",")
+
+
+def md(text):
+    lines = text.strip("\n").split("\n")
+    return {"cell_type": "markdown", "metadata": {}, "source": [l + "\n" for l in lines[:-1]] + [lines[-1]]}
+
+
+def code(text):
+    lines = text.strip("\n").split("\n")
+    return {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+            "source": [l + "\n" for l in lines[:-1]] + [lines[-1]]}
+
+
+def build_cnn_notebook(c, filename):
+    cls = C.CLS[c]
+    info = CLASS_INFO[c]
+    NB = info["nb"]
+    A = C.analyze(C.CNN, c)
+    n, nf = A["n"], A["n_files"]
+    base = A["base"]
+    S = {r: R.summary(e) for r, e in C.CNN.items()}
+    colt = C.collapse_table()
+    tb = {r: C.sp_lowest_index_tiebreak(e) for r, e in C.CNN.items() if r != "MEL"}
+    art_cnn_lofar = R.ARTICLE_TABLE7[("CNN", "LOFAR")]["SP"]
+    art_cnn_mel = R.ARTICLE_TABLE7[("CNN", "MEL")]["SP"]
+    frames = C.lofar_cache_frames()
+    imgs = C.images_per_file()
+    p_pad, p_one, p_two = (frames < 32).mean() * 100, ((frames >= 32) & (frames < 48)).mean() * 100, (frames >= 48).mean() * 100
+    cfg = R.config(C.CNN["LOFAR"])["params"]
+    img_s = cfg["image_windows"] * cfg["frame_step_s"]
+    fam_df, fam = C.family_table(c)
+    import pandas as pd
+    _trn = os.path.join(R.ROOT, "results", "trainings", "tests", "svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0", "eval",
+                        "fold_0", "svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0_multiclass_trn.csv")
+    _trn_files = set(pd.read_csv(_trn, usecols=["File"]).File.unique())
+    _fr = C.lofar_cache_frames_by_file()
+    n_files_trn = sum(1 for f in _trn_files if f in _fr)
+    n_img_trn = sum((1 if _fr[f] < 32 else (_fr[f] - 32) // 16 + 1) for f in _trn_files if f in _fr)
+    k4 = A["consensus"][4]
+    excl_sorted = sorted(A["exclusive"], key=A["exclusive"].get, reverse=True)
+    champ = excl_sorted[0]
+    F_vote, p_vote = A["vote_vs_best_sp"]
+    F_vr, p_vr = A["vote_vs_base_recall"]
+    collapsed = [r for r in C.REPS if r != "MEL"]
+    nfold_bad = {r: int(colt.loc[r, "folds c/ recall < 10% em alguma classe"]) for r in C.REPS}
+    rec_rng = {r: (R.fold_metrics(C.CNN[r])[f"R_{cls}"].min(), R.fold_metrics(C.CNN[r])[f"R_{cls}"].max()) for r in C.REPS}
+
+    cells = []
+    # ------------------------------------------------------------------ 0. resumo
+    col_txt = "; ".join(f"**{r}** SP {nm(S[r]['SP'][0])} ± {nm(S[r]['SP'][1])}% ({nfold_bad[r]}/10 folds com recall < 10% em alguma classe)" for r in collapsed)
+    cells.append(md(f"""
+# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
+### Notebook {NB}: Análise de Complementaridade, Efeito Oráculo e Grau de Consenso na CNN 2D — Classe {cls}
+
+**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)
+**Data:** Outubro de 2026
+
+---
+
+## Resumo Executivo
+
+A classe **`{cls}`** ({info['desc']}) é analisada nas **{th(n)} instâncias de teste** acumuladas nos 10 folds do 5×2cv oficial (as mesmas **{nf} gravações** aparecem, em média, {nm(n / nf)} vezes no teste; não são {th(n)} áudios distintos), com a CNN 2D em 4 representações (**MEL, LOFAR, HHT e DEMON**).
+
+> **Aviso principal — três das quatro CNNs colapsaram.** A CNN MEL é a do pipeline `iara` oficial (SP {nm(S['MEL']['SP'][0])} ± {nm(S['MEL']['SP'][1])}%; artigo: {nm(art_cnn_mel[0])}%). As CNNs LOFAR, HHT e DEMON são uma **CNN ad hoc** (`scratch/generate_cnn_predictions_and_analysis.py`) treinada sobre caches com média em 5,12 s: {col_txt}. A CNN LOFAR do artigo tem SP **{nm(art_cnn_lofar[0])} ± {nm(art_cnn_lofar[1])}%** (Tabela 7). Com modelos assim, a "complementaridade" abaixo mede sobretudo a **instabilidade** desses modelos (em cada fold eles favorecem uma classe diferente), e **não diz nada sobre a informação contida nas representações** LOFAR, HHT e DEMON.
+
+### Principais resultados (recalculados)
+1. **Oráculo não é um sistema realizável.** O oráculo (acerta se ao menos uma CNN acerta) chega a **{pc(A['oracle_hits'] / n * 100)}** ({th(A['oracle_hits'])} / {th(n)}), mas o esperado se os erros fossem independentes seria **{pc(A['oracle_exp'])}**: os erros são **correlacionados**, e não ortogonais. O **voto real** das 4 CNNs (pluralidade, empate sorteado) tem recall de `{cls}` de **{pc(A['vote_recall'])}**, contra {pc(A['recall'][base])} da melhor CNN isolada ({base}; F-test 5×2cv sobre o recall, p = {pv(p_vr)}). Em SP global, o voto fica em **{nm(A['vote_sp'][0])} ± {nm(A['vote_sp'][1])}%**, abaixo da CNN {A['best_sp_rep']} isolada ({nm(A['best_sp'][0])}%; p = {pv(p_vote)}{', diferença significativa' if p_vote < 0.05 else ''}).
+2. **Unanimidade:** só **{k4}** instâncias ({pc(k4 / n * 100)}) são acertadas pelas 4 CNNs, e **{A['consensus'][0]}** ({pc(A['consensus'][0] / n * 100)}) são erradas por todas. A baixa unanimidade é o esperado quando três modelos estão perto do acaso; ela não indica "especialização" de filtros.
+3. **Resgates exclusivos:** {A['consensus'][1]} instâncias ({pc(A['consensus'][1] / n * 100)}) são acertadas por uma única CNN (líder: **{champ}**, {A['exclusive'][champ]}). Elas correspondem a {A['exclusive_files']} gravações, das quais só **{A['exclusive_files_always']}** são resgate exclusivo em **todas** as suas aparições no teste: os resgates são instáveis entre folds.
+"""))
+
+    cells.append(code(r'''
+# 1. Configuração do Ambiente e Imports
+import os
+import sys
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+try:
+    from IPython.display import display
+except ImportError:
+    display = print
+
+sys.path.insert(0, os.path.abspath('.'))
+sys.path.insert(0, os.path.abspath('notebooks'))
+import iara_results as R
+import cnn_complementaridade_comum as C
+
+plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+plt.rcParams.update({
+    'font.family': 'sans-serif',
+    'font.size': 11,
+    'axes.labelsize': 12,
+    'axes.titlesize': 13,
+    'xtick.labelsize': 10,
+    'ytick.labelsize': 10,
+    'figure.titlesize': 15,
+    'figure.dpi': 150
+})
+print("Ambiente configurado. Resultados lidos de", R.ROOT)
+'''))
+
+    # ------------------------------------------------------------------ 2. metodologia + colapso
+    exps_txt = "\n".join(f"  - **{r}** — `{e}` ({'pipeline iara oficial, `results/trainings/tests/`' if r == 'MEL' else 'CNN ad hoc, `results/trainings/multirep/`'})" for r, e in C.CNN.items())
+    tb_txt = "; ".join(f"{r}: SP {nm(S[r]['SP'][0])}% → {nm(tb[r]['SP'].mean())}%, recall `{cls}` {nm(S[r][f'R_{cls}'][0])}% → {nm(tb[r][f'R_{cls}'].mean())}%" for r in collapsed)
+    cells.append(md(f"""
+## 2. Metodologia e Diagnóstico dos Modelos
+
+- **Experimentos** (predições por janela/imagem em disco, agregadas por arquivo com voto majoritário):
+{exps_txt}
+- **Protocolo:** 5×2cv oficial (10 folds); a partição é por **gravação** (`exclusive_header='ID'`). O mesmo navio pode aparecer em treino e teste.
+- **Unidade de contagem:** "instância" = (fold, gravação de teste). Os {th(n)} casos de `{cls}` vêm de {nf} gravações distintas.
+- **ACC** = acurácia balanceada (média dos recalls).
+
+### 2.1 Por que as CNNs ad hoc colapsaram
+- Cada imagem da CNN ad hoc tem {cfg['image_windows']} frames de {nm(cfg['frame_step_s'])} s, ou seja, **≈ {nm(img_s, 0)} s de áudio**, com passo de {cfg['image_stride']} frames. No cache LOFAR, **{pc(p_pad, 1)}** das gravações têm menos de 32 frames e viram uma única imagem completada por *wrap padding*; {pc(p_one, 1)} geram uma imagem sem padding; {pc(p_two, 1)} geram 2 imagens (o máximo, já que nenhuma gravação passa de {int(frames.max())} frames). Nos testes, {pc((imgs == 1).mean() * 100, 1)} dos arquivos têm 1 imagem e o restante, 2. Isso dá ≈ {th(n_img_trn)} imagens de treino no fold 0 ({n_files_trn} gravações), para uma CNN treinada do zero, por {cfg['epochs']} épocas fixas, sem validação nem *early stopping*.
+- Em cada fold o modelo tende a "escolher" uma classe: o recall de `{cls}` da CNN LOFAR varia de {nm(rec_rng['LOFAR'][0], 1)}% a {nm(rec_rng['LOFAR'][1], 1)}% entre folds; o da HHT, de {nm(rec_rng['HHT'][0], 1)}% a {nm(rec_rng['HHT'][1], 1)}%; o da DEMON, de {nm(rec_rng['DEMON'][0], 1)}% a {nm(rec_rng['DEMON'][1], 1)}%. A CNN MEL oficial fica entre {nm(rec_rng['MEL'][0], 1)}% e {nm(rec_rng['MEL'][1], 1)}%.
+- **Sensibilidade ao desempate:** com 2 imagens por arquivo os empates são frequentes. Este notebook usa a regra do pipeline `iara` (`Counter.most_common`: empate → classe da primeira imagem). O script de scratch usa `argmax(bincount)` (empate → menor índice de classe, ou seja, favorece `SMALL`). Trocando a regra: {tb_txt}. Uma métrica que muda tanto com a regra de desempate não é estável o suficiente para sustentar conclusões sobre as representações.
+"""))
+    cells.append(code(r'''
+# 2.1 Diagnóstico: métricas globais e faixa (mín–máx) por fold de cada CNN
+display(C.collapse_table())
+tb = pd.DataFrame({r: {'SP (iara: empate -> 1ª imagem)': R.summary(e)['SP'][0],
+                       'SP (script: empate -> menor índice)': C.sp_lowest_index_tiebreak(e)['SP'].mean(),
+                       'R_SMALL (iara)': R.summary(e)['R_SMALL'][0],
+                       'R_SMALL (script)': C.sp_lowest_index_tiebreak(e)['R_SMALL'].mean()}
+                   for r, e in C.CNN.items() if r != 'MEL'}).T
+display(tb.round(2))
+print('Imagens por arquivo de teste (CNN LOFAR ad hoc):', C.images_per_file().value_counts().sort_index().to_dict())
+print('CNN do artigo (Tabela 7):', {k: v['SP'] for k, v in R.ARTICLE_TABLE7.items() if k[0] == 'CNN'})
+'''))
+
+    cells.append(code(f'''
+# 2.2 Análise da classe {cls}: tabelas recalculadas das predições em disco
+CLASSE = {c}
+A = C.analyze(C.CNN, CLASSE)
+df_hits, df_consensus, df_exclusive, df_reverse, df_confusion_pattern = C.tables(A, CLASSE)
+total = A['n']
+print(f"{{total}} instâncias de teste de {cls} ({{A['n_files']}} gravações distintas)")
+display(df_hits.round(2))
+display(df_consensus.round(2))
+display(df_reverse.round(2))
+'''))
+
+    # ------------------------------------------------------------------ 3. oráculo
+    order = sorted(C.REPS, key=lambda r: A["recall"][r], reverse=True)
+    cells.append(md(f"""
+## 3. Efeito Oráculo: Recall Isolado, Teto Teórico e Voto Real
+
+- Recall isolado em `{cls}`: {", ".join(f"{r} {pc(A['recall'][r])}" for r in order)}.
+- **Oráculo (≥ 1/4): {pc(A['oracle_hits'] / n * 100)}** ({th(A['oracle_hits'])} instâncias). O oráculo usa o rótulo verdadeiro para escolher o modelo e **não é um sistema realizável**: é só um limite superior.
+- **Esperado com erros independentes:** {pc(A['oracle_exp'])} (1 − ∏(1 − rᵢ), média por fold). O oráculo observado fica {nm(A['oracle_exp'] - A['oracle_obs'])} p.p. abaixo: os erros das CNNs são correlacionados.
+- Mesmo quatro preditores ao acaso dariam um oráculo alto (com 4 classes, ≈ 1 − 0,75⁴ ≈ 68%). Por isso o "ganho do oráculo" sobre o melhor modelo isolado ({nm(A['oracle_hits'] / n * 100 - A['recall'][base])} p.p. sobre {base}) não mede complementaridade útil.
+- **Voto real** (pluralidade, empate sorteado): recall de `{cls}` = **{pc(A['vote_recall'])}** (p = {pv(p_vr)} contra {base}).
+"""))
+    cells.append(code(f'''
+# 3. Gráfico: recall isolado vs. oráculo, esperado sob independência e voto real
+plt.figure(figsize=(11, 5.5))
+colors = ['#95a5a6'] * (len(df_hits) - 3) + ['#27ae60', '#7f8c8d', '#c0392b']
+bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)
+bars[-3].set_hatch('//')
+plt.axhline(A['recall'][A['base']], color='#e67e22', linestyle=':', lw=1.5, label=f"Melhor CNN isolada: {{A['base']}} ({{A['recall'][A['base']]:.1f}}%)")
+plt.title('Recall CNN 2D na Classe {cls}: isolados, oráculo, esperado e voto real', fontweight='bold', pad=12)
+plt.ylabel('Recall em {cls} (%)')
+plt.ylim(0, 105)
+plt.xticks(rotation=15, ha='right')
+for bar in bars:
+    h = bar.get_height()
+    plt.annotate(f'{{h:.1f}}%', xy=(bar.get_x() + bar.get_width()/2, h), xytext=(0, 4), textcoords="offset points",
+                 ha='center', va='bottom', fontsize=10, fontweight='bold')
+plt.legend(loc='upper left', frameon=True)
+plt.tight_layout()
+plt.show()
+'''))
+
+    # ------------------------------------------------------------------ 4. consenso
+    cons = A["consensus"]
+    cells.append(md(f"""
+## 4. Grau de Consenso
+
+- **4/4 certas (unanimidade):** {cons[4]} ({pc(cons[4] / n * 100)});
+- **3/4:** {cons[3]} ({pc(cons[3] / n * 100)});
+- **2/4:** {cons[2]} ({pc(cons[2] / n * 100)});
+- **1/4 (resgate exclusivo):** {cons[1]} ({pc(cons[1] / n * 100)});
+- **0/4 (erro comum):** {cons[0]} ({pc(cons[0] / n * 100)}).
+
+### Regras de votação
+- **Unanimidade (4/4):** {pc(cons[4] / n * 100)};
+- **Maioria estrita (≥ 3/4):** {pc(A['ge3'] / n * 100)} ({th(A['ge3'])});
+- **"≥ 2/4":** {pc(A['ge2'] / n * 100)} ({th(A['ge2'])}). Essa contagem trata empates 2×2 como acerto, então é um oráculo parcial, não um voto;
+- **Voto real (pluralidade, empate sorteado):** {pc(A['vote_recall'])};
+- **Oráculo (≥ 1/4):** {pc(A['oracle_hits'] / n * 100)}.
+"""))
+    cells.append(code(f'''
+# 4. Visualização do grau de consenso
+plt.figure(figsize=(10, 5.5))
+labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo)', '0 Entradas\\n(Erro Comum)']
+counts_cons = df_consensus['Instancias'].values
+pcts_cons = df_consensus['Pct_Total'].values
+bars = plt.bar(labels_cons, counts_cons, color=['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d'], edgecolor='black', linewidth=0.8, width=0.55)
+plt.title(f'Grau de Consenso CNN 2D em {cls} ({{total}} instâncias de teste, {{A["n_files"]}} gravações)', fontweight='bold', pad=12)
+plt.ylabel('Instâncias de {cls}')
+plt.ylim(0, max(counts_cons) * 1.15)
+for bar, pct in zip(bars, pcts_cons):
+    h = bar.get_height()
+    plt.annotate(f'{{int(h)}} ({{pct:.1f}}%)', xy=(bar.get_x() + bar.get_width()/2, h), xytext=(0, 4), textcoords="offset points",
+                 ha='center', va='bottom', fontsize=9.5, fontweight='bold')
+plt.tight_layout()
+plt.show()
+'''))
+
+    # ------------------------------------------------------------------ 5. exclusivos + confusão
+    others = [C.CLS[j] for j in C.CLS if j != c]
+    conf_lines = "\n".join(
+        f"| **{r}** | {A['confusion'][r]['n_err']} | " + " | ".join(pc(A['confusion'][r][o]) for o in others) + " |"
+        for r in C.REPS)
+    cells.append(md(f"""
+## 5. Resgates Exclusivos e Padrão de Erro
+
+### Resgates exclusivos em `{cls}` (apenas uma CNN acerta)
+{chr(10).join(f"- **{r}:** {A['exclusive'][r]} instâncias ({pc(A['exclusive'][r] / n * 100)})" for r in excl_sorted)}
+
+No total são {cons[1]} instâncias, de {A['exclusive_files']} gravações. Só **{A['exclusive_files_always']}** gravações são resgate exclusivo em todas as suas aparições no teste; as demais dependem do fold. Nas CNNs colapsadas, um "resgate exclusivo" costuma ser apenas o fold em que o modelo passou a favorecer `{cls}`. Explicações mecânicas (raias espectrais, modulação de pás etc.) para esses resgates **não têm suporte** nestes dados e foram retiradas.
+
+### Para onde vão os erros (percentual dos erros de cada CNN)
+| Entrada | Erros | {' | '.join(others)} |
+| :--- | ---: | {' | '.join([':---:'] * len(others))} |
+{conf_lines}
+"""))
+    cells.append(code(f'''
+# 5. Resgates exclusivos e padrão de confusão
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 5.5))
+bars_excl = ax1.barh(df_exclusive['Representacao'], df_exclusive['Instancias_Salvas'], color='#2980b9', height=0.5, edgecolor='black', linewidth=0.8)
+ax1.set_title(f'Resgates Exclusivos CNN 2D em {cls} ({{int(df_exclusive.Instancias_Salvas.sum())}} instâncias, {{A["exclusive_files"]}} gravações)', fontweight='bold', pad=12)
+ax1.set_xlabel('Instâncias salvas por apenas UMA entrada')
+ax1.set_xlim(0, df_exclusive['Instancias_Salvas'].max() * 1.35)
+for bar, pct in zip(bars_excl, df_exclusive['Percentual']):
+    w = bar.get_width()
+    ax1.annotate(f'{{int(w)}} ({{pct:.1f}}%)', xy=(w, bar.get_y() + bar.get_height()/2), xytext=(5, 0), textcoords="offset points",
+                 ha='left', va='center', fontsize=9.5, fontweight='bold')
+
+reps = df_confusion_pattern['Representacao']
+cols = [c for c in df_confusion_pattern.columns if c.startswith('Confundido_')]
+bottom = np.zeros(len(reps))
+for col, color in zip(cols, ['#f39c12', '#2ecc71', '#95a5a6']):
+    vals = df_confusion_pattern[col].values
+    ax2.bar(reps, vals, 0.52, bottom=bottom, label=col.replace('Confundido_', 'Confundido com ').replace('_Pct', ''), color=color, edgecolor='black', linewidth=0.6)
+    for i, v in enumerate(vals):
+        if v > 4:
+            ax2.text(i, bottom[i] + v/2, f'{{v:.1f}}%', ha='center', va='center', fontsize=8.5, fontweight='bold', color='white')
+    bottom += vals
+ax2.set_title('Destino dos erros em {cls} por entrada (%)', fontweight='bold', pad=12)
+ax2.set_ylabel('Distribuição percentual dos erros (%)')
+ax2.set_ylim(0, 118)
+ax2.tick_params(axis='x', rotation=12)
+ax2.legend(loc='upper right', frameon=True, fontsize=8.5)
+plt.tight_layout()
+plt.show()
+'''))
+
+    # ------------------------------------------------------------------ 6. efeito reverso
+    rev_lines = "\n".join(
+        f"- **Trocar para {r}:** perde {v['lose']} acertos do {base} ({pc(v['lose_pct'])}) e resgata {v['rescue']} de seus erros ({pc(v['rescue_pct'])}); saldo **{v['net']:+d}**."
+        for r, v in A["reverse"].items())
+    cells.append(md(f"""
+## 6. Efeito Reverso: o Risco de Trocar de Entrada
+
+Tomando como base a melhor CNN isolada em `{cls}`, **{base}** ({A['hits'][base]} acertos e {n - A['hits'][base]} erros):
+{rev_lines}
+
+Nenhuma troca estática de entrada tem saldo positivo. Lembre-se, porém, de que três dos modelos de destino estão colapsados: o saldo negativo reflete a qualidade desses modelos, e não um limite das representações.
+"""))
+    cells.append(code(f'''
+# 6. Visualização do efeito reverso a partir da melhor CNN isolada
+fig, ax = plt.subplots(figsize=(9, 5))
+x = np.arange(len(df_reverse))
+width = 0.35
+lose_col = [c for c in df_reverse.columns if c.startswith('Perde_do_')][0]
+resc_col = [c for c in df_reverse.columns if c.startswith('Resgata_Erros_')][0]
+b1 = ax.bar(x - width/2, df_reverse[lose_col], width, label=f"Perde acertos do {{A['base']}}", color='#c0392b', edgecolor='black')
+b2 = ax.bar(x + width/2, df_reverse[resc_col], width, label=f"Resgata erros do {{A['base']}}", color='#27ae60', edgecolor='black')
+ax.set_title(f"Efeito reverso na CNN a partir de {{A['base']}} ({cls})", fontweight='bold', pad=12)
+ax.set_xticks(x)
+ax.set_xticklabels(df_reverse['Destino_Troca'])
+ax.set_ylabel('Instâncias')
+ax.set_ylim(0, max(df_reverse[lose_col].max(), df_reverse[resc_col].max()) * 1.2)
+for bars, sign, color in [(b1, '-', '#c0392b'), (b2, '+', '#27ae60')]:
+    for bar in bars:
+        h = bar.get_height()
+        ax.annotate(f'{{sign}}{{int(h)}}', xy=(bar.get_x() + bar.get_width()/2, h), xytext=(0, 3), textcoords="offset points",
+                    ha='center', va='bottom', fontsize=10, fontweight='bold', color=color)
+ax.legend(frameon=True)
+plt.tight_layout()
+plt.show()
+'''))
+
+    # ------------------------------------------------------------------ 7. figura
+    cells.append(md(f"""
+## 7. Figura Consolidada
+
+A figura `reports/analise_complementaridade_cnn_{cls.lower()}_oraculo.png`, gerada por `scratch/generate_cnn_predictions_and_analysis.py`, **não é mais exibida aqui**. Ela usa a regra de desempate do script (menor índice de classe), e por isso os números não batem com os deste notebook (Seção 2.1); além disso, os títulos dela falam em "Áudios Únicos" quando os valores são instâncias de fold. Os quatro painéis da figura estão nas Seções 3–5 acima, recalculados.
+"""))
+
+    # ------------------------------------------------------------------ 8. comparação entre famílias
+    fam_txt = []
+    for f, a in fam.items():
+        nn = a["n"]
+        fam_txt.append(f"| **{f}** (NB {C.FAMILY_NB[f][c]}) | {pc(a['recall'][a['base']])} ({a['base']}) | {pc(a['oracle_hits'] / nn * 100)} / {pc(a['oracle_exp'])} | {pc(a['consensus'][4] / nn * 100)} | {pc(a['consensus'][0] / nn * 100)} | {pc(a['ge2'] / nn * 100)} | {pc(a['vote_recall'])} | {nm(a['vote_sp'][0])} vs. {nm(a['best_sp'][0])} ({a['best_sp_rep']}), p = {pv(a['vote_vs_best_sp'][1])} |")
+    cnnf = fam["CNN 2D"]
+    others_f = {f: a for f, a in fam.items() if f != "CNN 2D"}
+    sig_better = [f for f, a in fam.items() if a["vote_vs_best_sp"][1] < 0.05 and a["vote_sp"][0] > a["best_sp"][0]]
+    vote_txt = ("Em nenhuma família o voto real das 4 entradas supera, com significância (F-test 5×2cv, p < 0,05), o melhor modelo isolado em SP global."
+                if not sig_better else "O voto real supera significativamente o melhor isolado em: " + ", ".join(sig_better) + ".")
+    max_unan_other = max(a["consensus"][4] / a["n"] * 100 for a in others_f.values())
+    cells.append(md(f"""
+## 8. Comparativo entre Famílias em `{cls}`: SVM vs. MLP vs. RF vs. CNN 2D
+
+Experimentos: SVM — MEL m=4000, LOFAR m=6000, HHT/DEMON m=4000; MLP — `mlp`, `mlp_lofar`, `mlp_hht_h32-16_e30_4c`, `mlp_demon_h32-16_e30_4c`; RF — `rf_{{mel5s,lofar5s,hht,demon}}_n100_balanced_4c`; CNN — como acima. A lista completa está em `C.FAMILIES`.
+
+| Família | Melhor isolado (recall) | Oráculo obs. / esperado indep. | Unanimidade 4/4 | Erro comum 0/4 | "≥2/4" (empates = acerto) | Voto real (recall) | SP global: voto vs. melhor isolado (F-test) |
+| :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+{chr(10).join(fam_txt)}
+
+**Leitura:**
+- {vote_txt} Na CNN, o voto é {'**significativamente pior**' if cnnf['vote_vs_best_sp'][1] < 0.05 else 'pior, mas sem significância,'} ({nm(cnnf['vote_sp'][0])}% vs. {nm(cnnf['best_sp'][0])}%, p = {pv(cnnf['vote_vs_best_sp'][1])}), o que é coerente com 3 dos 4 votantes estarem colapsados.
+- A unanimidade da CNN ({pc(cnnf['consensus'][4] / cnnf['n'] * 100)}) é bem menor que a das outras famílias (até {pc(max_unan_other)}). Isso decorre do colapso das CNNs ad hoc, e não de uma "ortogonalidade" das representações.
+- Em todas as famílias o oráculo observado fica abaixo do esperado sob independência (erros correlacionados).
+"""))
+    cells.append(code(f'''
+# 8. Tabela comparativa recalculada (todas as famílias, classe {cls})
+fam_df, _ = C.family_table(CLASSE)
+display(fam_df)
+'''))
 
     nb_data = {
         "cells": cells,
         "metadata": {
-            "kernelspec": {
-                "display_name": "Python 3",
-                "language": "python",
-                "name": "python3"
-            },
-            "language_info": {
-                "codemirror_mode": {"name": "ipython", "version": 3},
-                "file_extension": ".py",
-                "mimetype": "text/x-python",
-                "name": "python",
-                "nbconvert_exporter": "python",
-                "pygments_lexer": "ipython3",
-                "version": "3.10.12"
-            }
+            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+            "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py",
+                              "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python",
+                              "pygments_lexer": "ipython3", "version": "3.10.12"},
         },
         "nbformat": 4,
-        "nbformat_minor": 4
+        "nbformat_minor": 4,
     }
-
     os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w", encoding="utf-8") as f:
         json.dump(nb_data, f, indent=2, ensure_ascii=False)
     print(f"Notebook gerado com sucesso em '{filename}'!")
+
+
+def create_notebook(filename="notebooks/20_analise_complementaridade_cnn_small.ipynb"):
+    build_cnn_notebook(0, filename)
+
 
 if __name__ == "__main__":
     create_notebook()

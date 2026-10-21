@@ -16,6 +16,8 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 
+from results_writer import ResultsWriter
+
 def mode(x):
     return Counter(x).most_common(1)[0][0]
 
@@ -45,7 +47,7 @@ def build_fold_matrices(feature_cache, file_dict):
         file_ids.extend([fid] * len(windows))
     return np.vstack(X_list), np.array(y_list, dtype=np.int64), np.array(file_ids, dtype=np.int64)
 
-def run_svm_predictions(feature_cache, folds, n_components=4000, C=2.0, l1_ratio=0.15):
+def run_svm_predictions(feature_cache, folds, n_components=4000, C=2.0, l1_ratio=0.15, writer=None):
     preds_by_fold = {}
     for fold in folds:
         fold_idx = fold["fold_idx"]
@@ -70,6 +72,9 @@ def run_svm_predictions(feature_cache, folds, n_components=4000, C=2.0, l1_ratio
         clf.fit(X_train_trans, y_train)
 
         win_preds = clf.predict(X_test_trans)
+        if writer is not None:
+            writer.save_fold(fold_idx, test_fids, y_test, win_preds, train_files=fold["train_files"],
+                             scores=clf.decision_function(X_test_trans))
         file_preds = defaultdict(list)
         for fid, pred in zip(test_fids, win_preds):
             file_preds[fid].append(pred)
@@ -97,11 +102,21 @@ def main():
 
     with open("data/iara_processed/cache_hht.pkl", "rb") as f:
         cache_hht = pickle.load(f)
-    hht_preds = run_svm_predictions(cache_hht, folds, n_components=4000, C=2.0)
+    hht_preds = run_svm_predictions(cache_hht, folds, n_components=4000, C=2.0, writer=ResultsWriter(
+        "svm_nystroem_4000_hht_C2.0_elasticnet_l1r0.15_4c", script=__file__,
+        params={"model": "Nystroem(rbf)+SGDClassifier(hinge)", "representation": "HHT", "dim": 256,
+                "n_components": 4000, "C": 2.0, "penalty": "elasticnet", "l1_ratio": 0.15, "max_iter": 200,
+                "early_stopping": True, "class_weight": "balanced", "gamma": "1/(n_features*var)",
+                "random_state": 42, "num_classes": 4}))
 
     with open("data/iara_processed/cache_fusion_mel_demon.pkl", "rb") as f:
         cache_fusion = pickle.load(f)
-    demon_preds = run_svm_predictions(cache_fusion["demon"], folds, n_components=4000, C=2.0)
+    demon_preds = run_svm_predictions(cache_fusion["demon"], folds, n_components=4000, C=2.0, writer=ResultsWriter(
+        "svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c", script=__file__,
+        params={"model": "Nystroem(rbf)+SGDClassifier(hinge)", "representation": "DEMON", "dim": 253,
+                "n_components": 4000, "C": 2.0, "penalty": "elasticnet", "l1_ratio": 0.15, "max_iter": 200,
+                "early_stopping": True, "class_weight": "balanced", "gamma": "1/(n_features*var)",
+                "random_state": 42, "num_classes": 4}))
 
     # Filtrar para LARGE (Target == 2)
     records = []

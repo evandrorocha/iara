@@ -19,6 +19,8 @@ from collections import defaultdict, Counter
 import numpy as np
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
+
+from results_writer import ResultsWriter
 import sklearn.metrics as sk_metrics
 import scipy.stats as scipy_stats
 
@@ -84,7 +86,7 @@ class PyTorchMLP(nn.Module):
     def forward(self, x):
         return self.net(x)
 
-def run_pytorch_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, lr=1e-3, seed=42):
+def run_pytorch_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, lr=1e-3, seed=42, writer=None):
     torch.manual_seed(seed)
     np.random.seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -124,7 +126,12 @@ def run_pytorch_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=6
         model.eval()
         with torch.no_grad():
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
-            win_preds = torch.argmax(model(tst_tensor), dim=1).cpu().numpy()
+            tst_logits = model(tst_tensor)
+            win_preds = torch.argmax(tst_logits, dim=1).cpu().numpy()
+            win_scores = torch.softmax(tst_logits, dim=1).cpu().numpy()
+        if writer is not None:
+            writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                             train_files=fold["train_files"], scores=win_scores)
 
         file_preds = defaultdict(list)
         for fid, pred in zip(test_fids, win_preds):
@@ -237,14 +244,22 @@ def main():
         print("Treinando e avaliando MLP HHT (PyTorch [32, 16])...")
         with open("data/iara_processed/cache_hht.pkl", "rb") as f:
             cache_hht = pickle.load(f)
-        hht_preds = run_pytorch_mlp(cache_hht, folds)
+        hht_preds = run_pytorch_mlp(cache_hht, folds, writer=ResultsWriter(
+            "mlp_hht_h32-16_e30_4c", script=__file__,
+            params={"model": "PyTorchMLP", "representation": "HHT", "dim": 256, "hidden": [32, 16],
+                    "dropout": 0.2, "epochs": 30, "batch_size": 64, "lr": 1e-3, "weight_decay": 1e-3,
+                    "seed": 42, "early_stopping": False, "scaler": "StandardScaler(treino)", "num_classes": 4}))
 
         # 4. Rodar MLP DEMON
         print("Treinando e avaliando MLP DEMON (PyTorch [32, 16])...")
         with open("data/iara_processed/cache_fusion_mel_demon.pkl", "rb") as f:
             cache_fusion = pickle.load(f)
         cache_demon = cache_fusion["demon"]
-        demon_preds = run_pytorch_mlp(cache_demon, folds)
+        demon_preds = run_pytorch_mlp(cache_demon, folds, writer=ResultsWriter(
+            "mlp_demon_h32-16_e30_4c", script=__file__,
+            params={"model": "PyTorchMLP", "representation": "DEMON", "dim": 253, "hidden": [32, 16],
+                    "dropout": 0.2, "epochs": 30, "batch_size": 64, "lr": 1e-3, "weight_decay": 1e-3,
+                    "seed": 42, "early_stopping": False, "scaler": "StandardScaler(treino)", "num_classes": 4}))
 
         # Salvar cache
         with open(cache_file, "wb") as f:

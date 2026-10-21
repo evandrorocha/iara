@@ -3,7 +3,7 @@ Evaluation of pure DEMON features with SVM Nystroem on the official 5x2cv protoc
 
 This script evaluates:
 1. Pure DEMON features (253 bins, 0.39 Hz - 25 Hz)
-2. Exact 10-fold cross-validation with ship ID isolation matching LOFAR and MEL
+2. Exact 10-fold cross-validation matching LOFAR and MEL (split by recording `ID`; the same ship may be in train and test)
 3. SVM Nystroem (m=1000 and m=4000 landmark points, RBF kernel, ElasticNet penalty)
 4. Both 4-Class (SMALL, MEDIUM, LARGE, AMBIENTAL) and 3-Class (SMALL, MEDIUM, LARGE)
 5. Comprehensive metrics: Audio Accuracy, SP Index, Per-Class Recall, Confusion Matrices
@@ -24,6 +24,8 @@ from sklearn.kernel_approximation import Nystroem
 from sklearn.linear_model import SGDClassifier
 import sklearn.metrics as sk_metrics
 import scipy.stats as scipy_stats
+
+from results_writer import ResultsWriter, load_file_predictions
 
 # Official IARA SP index calculation
 def compute_sp_index(targets, preds, num_classes=4):
@@ -131,6 +133,16 @@ def evaluate_svm_nystroem(
         else ["SMALL", "MEDIUM", "LARGE"]
     )
     exclude_target = 3 if num_classes == 3 else None
+    pca_tag = f"_pca{n_pca}" if use_pca else ""
+    norm_tag = "" if normalize else "_nonorm"
+    writer = ResultsWriter(
+        f"svm_nystroem_{n_components}_demon{pca_tag}{norm_tag}_C{C}_{penalty}_l1r{l1_ratio}_it1000_{num_classes}c",
+        script=__file__,
+        params={"model": "Nystroem(rbf)+SGDClassifier(hinge)", "representation": "DEMON", "dim": 253,
+                "n_components": n_components, "C": C, "penalty": penalty, "l1_ratio": l1_ratio,
+                "normalize": normalize, "pca": n_pca if use_pca else None, "max_iter": 1000, "early_stopping": False,
+                "class_weight": "balanced", "gamma": "1/(n_features*var)", "random_state": 42,
+                "num_classes": num_classes})
 
     fold_accuracies = []
     fold_sp_indices = []
@@ -188,6 +200,9 @@ def evaluate_svm_nystroem(
 
         # 4. Window-level prediction
         win_preds = clf.predict(X_test_trans)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=clf.decision_function(X_test_trans))
 
         # 5. Audio-level prediction (Majority voting)
         file_preds = defaultdict(list)
@@ -269,7 +284,7 @@ def main():
 
     # 2. Load official 10 folds
     folds = get_official_folds()
-    print(f"Carregados 10 folds oficiais com isolamento estrito de navios.")
+    print(f"Carregados 10 folds oficiais (particionamento por gravação `ID`).")
 
     # 3. Evaluate 4-Class Problem (SMALL, MEDIUM, LARGE, AMBIENTAL)
     res_4class = evaluate_svm_nystroem(
@@ -301,8 +316,22 @@ def main():
     print("=" * 80)
     print(f"{'Modelo':<25} | {'Acurácia':<18} | {'Índice SP':<18} | {'SMALL Rec':<12} | {'LARGE Rec':<12}")
     print("-" * 80)
-    print(f"{'LOFAR SVM (4000)':<25} | 63.32% ± 2.01%     | 63.09% ± 2.06%     | 47.81%       | 74.91%")
-    print(f"{'MEL SVM (4000)':<25} | 63.36% ± 1.00%     | 63.80% ± 1.12%     | 50.90%       | 69.16%")
+    # Referências recalculadas das predições salvas (antes eram valores digitados à mão e desatualizados)
+    for ref_name, ref_exp in [
+        ("LOFAR SVM (4000 PCA64)", "results/trainings/tests/svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0"),
+        ("LOFAR SVM (6000)", "results/trainings/tests/svm_nystroem_6000_lofar_elasticnet_l1r0.15"),
+        ("MEL SVM (4000)", "results/trainings/tests/svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0"),
+    ]:
+        ref_preds, ref_targets = load_file_predictions(ref_exp)
+        accs, sps, recs = [], [], []
+        for f_idx in ref_preds:
+            fids = sorted(ref_targets[f_idx])
+            t = np.array([ref_targets[f_idx][i] for i in fids])
+            p_ = np.array([ref_preds[f_idx][i] for i in fids])
+            sp_f, rec_f, _ = compute_sp_index(t, p_, num_classes=4)
+            accs.append((t == p_).mean() * 100); sps.append(sp_f); recs.append(rec_f * 100)
+        r = np.mean(recs, axis=0)
+        print(f"{ref_name:<25} | {np.mean(accs):.2f}% ± {np.std(accs):.2f}%     | {np.mean(sps):.2f}% ± {np.std(sps):.2f}%     | {r[0]:.2f}%       | {r[2]:.2f}%")
     print(f"{'DEMON SVM (Puro)':<25} | {res_4class['mean_acc']:.2f}% ± {res_4class['std_acc']:.2f}%     | {res_4class['mean_sp']:.2f}% ± {res_4class['std_sp']:.2f}%     | {res_4class['mean_recalls'][0]:.2f}%       | {res_4class['mean_recalls'][2]:.2f}%")
     print("=" * 80)
 

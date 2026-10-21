@@ -210,9 +210,8 @@
         \begin{block}{\small Protocolo $5\times2\text{cv}$ (10 Folds de Teste)}
             \scriptsize
             \begin{itemize}
-                \item \textbf{Exclusive Ships on Test}: Divis\~{a}o estratificada por navio f\'{i}sico (ID de arquivo). Nenhum navio de teste est\'{a} no treino (\textit{zero data leakage}).
-                \item \textbf{Volume de Teste}: $639\text{ \'{a}udios} \times 10\text{ folds} = \mathbf{6.390\text{ avalia\c{c}\~{o}es}}$.
-                \item Matrizes de confus\~{a}o e \'{I}ndice SP consolidados sobre essas 6.390 predi\c{c}\~{o}es de teste.
+                \item \textbf{Divis\~{a}o por grava\c{c}\~{a}o} (ID, como no artigo), \textbf{n\~{a}o} por navio: $63,5\%$ das grava\c{c}\~{o}es de navio no teste t\^{e}m o mesmo \textit{Ship ID} no treino.
+                \item \textbf{Volume de Teste}: $639 \times 10\text{ folds} = \mathbf{6.390\text{ avalia\c{c}\~{o}es}}$ de 1.706 \'{a}udios distintos (cada um em 1 a 5 folds; m\'{e}dia 3,75).
             \end{itemize}
         \end{block}
     \end{columns}
@@ -235,7 +234,7 @@
     \textbf{LARGE}      & $> 100\text{ m}$       & $214$ & $\mathbf{33,5\%}$ & $2.140$ & Petroleiros, cargueiros (raias puras, cavita\c{c}\~{a}o) \\
     \textbf{BACKGROUND} & Sem alvos              & $98$  & $\mathbf{15,3\%}$ & $980$   & Ru\'{i}do ambiente mar\'{i}timo natural \\
     \midrule
-    \textbf{Total}      & ---                    & $\mathbf{639}$ & $\mathbf{100,0\%}$ & $\mathbf{6.390}$ & $>64$ horas de grava\c{c}\~{o}es de teste \\
+    \textbf{Total}      & ---                    & $\mathbf{639}$ & $\mathbf{100,0\%}$ & $\mathbf{6.390}$ & $\approx 45,7$ h de grava\c{c}\~{a}o de teste por fold \\
     \bottomrule
     \end{tabular}%
     }
@@ -320,30 +319,33 @@
     \small
     Antes da proposi\c{c}\~{a}o de novas abordagens, foi replicado com rigor o pipeline do artigo nos 10 folds ($5\times2$cv):
     
-    \vspace{0.1cm}
     \begin{table}[h]
     \centering
-    \resizebox{0.92\textwidth}{!}{%
+    \resizebox{0.85\textwidth}{!}{%
     \begin{tabular}{llcc|c}
     \toprule
     \textbf{Classificador} & \textbf{Espectro} & \textbf{\'{I}ndice SP (\%) (Artigo)} & \textbf{\'{I}ndice SP (\%) (Local)} & \textbf{Diferen\c{c}a} \\
     \midrule
-    Random Forest (RF) & MEL   & $62,22 \pm 1,86$ & $62,10 \pm 1,92$ & $-0,12$ p.p. \\
-    Random Forest (RF) & LOFAR & $56,92 \pm 1,69$ & $56,85 \pm 1,75$ & $-0,07$ p.p. \\
+    Random Forest (RF) & MEL   & $62,22 \pm 1,86$ & n/d$^{*}$ & --- \\
+    Random Forest (RF) & LOFAR & $56,92 \pm 1,69$ & n/d$^{*}$ & --- \\
     \midrule
-    MLP [32, 16] & MEL   & $63,38 \pm 1,81$ & $64,66 \pm 2,11$ & $+1,28$ p.p. \\
-    \textbf{MLP [32, 16]} & \textbf{LOFAR} & $\mathbf{66,51 \pm 1,39}$ & $\mathbf{66,25 \pm 1,78}$ & $\mathbf{-0,26\text{ p.p.}}$ \\
+    MLP [32, 16] & MEL   & $63,38 \pm 1,81$ & $64,74 \pm 2,05$ & $+1,36$ p.p. \\
+    \textbf{MLP [32, 16]} & \textbf{LOFAR} & $\mathbf{66,51 \pm 1,39}$ & $\mathbf{66,24 \pm 1,78}$ & $\mathbf{-0,27\text{ p.p.}}$ \\
     \midrule
-    CNN Convolucional & MEL   & $63,52 \pm 2,26$ & $63,40 \pm 2,15$ & $-0,12$ p.p. \\
-    \textbf{CNN Convolucional} & \textbf{LOFAR} & $\mathbf{66,05 \pm 1,90}$ & $\mathbf{65,92 \pm 1,85}$ & $\mathbf{-0,13\text{ p.p.}}$ \\
+    CNN Convolucional & MEL   & $63,52 \pm 2,26$ & $63,80 \pm 2,23$ & $+0,28$ p.p. \\
+    CNN Convolucional & LOFAR & $66,05 \pm 1,90$ & n/d$^{*}$ & --- \\
     \bottomrule
     \end{tabular}%
     }
     \end{table}
-    
-    \vspace{0.1cm}
+    \vspace{-0.2cm}
+    {\tiny Coluna ``Artigo'' = Tabela 7 de Silva et al. (2025). Local = pipeline iara oficial (\texttt{mlp}, \texttt{mlp\_lofar}, \texttt{cnn}), mesmos 10 folds; m\'{e}dia $\pm$ desvio (ddof=0).\\
+    $^{*}$RF e CNN LOFAR n\~{a}o foram re-executados no pipeline oficial (janelas de 0,512 s). As vers\~{o}es ad hoc existentes usam cache de 5,12 s e n\~{a}o s\~{a}o compar\'{a}veis (RF MEL 61,50; RF LOFAR 63,07; CNN 2D LOFAR 35,40 $\pm$ 12,38, colapsada).\par}
+
+    \vspace{0.05cm}
     \begin{alertblock}{Conclus\~{a}o da Reprodu\c{c}\~{a}o}
-        Os resultados reproduzidos localmente confirmam com precis\~{a}o estat\'{i}stica os valores da literatura. O \textbf{MLP LOFAR ($66,51\%$ Artigo / $66,25\%$ Local)} consolidou-se como o benchmark principal a ser superado.
+        \footnotesize
+        MLP MEL, MLP LOFAR e CNN MEL reproduzidos com diferen\c{c}a $\le 1,36$ p.p. de SP ($\sim$1 desvio). O \textbf{MLP LOFAR ($66,51\%$ artigo / $66,24\%$ local)} \'{e} o benchmark; os F-tests $5\times2$cv a seguir usam a re-execu\c{c}\~{a}o local (o artigo n\~{a}o publica valores por fold).
     \end{alertblock}
 \end{frame}
 
@@ -355,7 +357,7 @@
 \begin{frame}{Motiva\c{c}\~{a}o: O SVM em Sonar Passivo}
     \small
     \begin{block}{M\'{e}todo Cl\'{a}ssico em UATR}
-        O SVM foi historicamente um dos primeiros m\'{e}todos aplicados em UATR e continua sendo empregado como baseline de refer\^{e}ncia em trabalhos recentes (e.g., Xu et al., reportando 69,24\% no \textbf{DeepShip}). Contudo, os datasets da literatura s\~{a}o de pequeno a m\'{e}dio porte (\textbf{ShipsEar}: 3h; \textbf{DeepShip}: 47h); a avalia\c{c}\~{a}o em bases de grande escala como o IARA ($>64$h) permanecia em aberto.
+        O SVM foi historicamente um dos primeiros m\'{e}todos aplicados em UATR e continua sendo empregado como baseline de refer\^{e}ncia em trabalhos recentes (e.g., Xu et al., reportando 69,24\% no \textbf{DeepShip}). Contudo, os datasets da literatura s\~{a}o de pequeno a m\'{e}dio porte (\textbf{ShipsEar}: 3h; \textbf{DeepShip}: 47h); a avalia\c{c}\~{a}o em bases de grande escala como o IARA ($\approx 130$h; $\approx 122$h no UO) permanecia em aberto.
     \end{block}
     
     \vspace{0.1cm}
@@ -384,8 +386,8 @@
         O SVM padr\~{a}o com kernel RBF exige calcular e armazenar a matriz de kernel $N \times N$, com complexidade espacial $O(N^2)$.
         \begin{itemize}
             \scriptsize
-            \item \textbf{Volume de Amostras ($N$ no IARA)}: $N$ \'{e} o n\'{u}mero de janelas espectrais de treinamento — MEL ($0,512\text{s}$) $\approx 500\text{k}$ janelas; LOFAR ($0,058\text{s}$) $\approx 800\text{k}$ janelas.
-            \item \textbf{Custo do RBF Cl\'{a}ssico}: A matriz Gram $N \times N$ exigiria $>1,0\text{ Terabyte}$ de RAM (invi\'{a}vel).
+            \item \textbf{Volume de Amostras ($N$ no IARA)}: $N$ \'{e} o n\'{u}mero de janelas espectrais de treinamento — MEL e LOFAR usam a mesma janela ($0,512\text{s}$): $\approx 200\text{k}$ janelas por fold (200.368 a 200.394 nos CSVs de treino).
+            \item \textbf{Custo do RBF Cl\'{a}ssico}: A matriz Gram $N \times N$ exigiria $\approx 160\text{ GB}$ (float32) ou $\approx 320\text{ GB}$ (float64) de RAM (invi\'{a}vel).
         \end{itemize}
     \end{block}
 
@@ -397,11 +399,11 @@
         \begin{itemize}
             \tiny
             \setlength{\itemsep}{1pt}
-            \item MEL ($m=4000$): $500\text{k} \times 4000 \times 4\text{B} \approx \mathbf{8\text{ GB}}$ de RAM (overhead total $\approx 10\text{ GB}$).
-            \item LOFAR ($m=4000$): $800\text{k} \times 4000 \times 4\text{B} \approx \mathbf{13\text{ GB}}$ de RAM (overhead total $\approx 15\text{ GB}$).
+            \item $m=4000$: $200\text{k} \times 4000 \times 4\text{B} \approx \mathbf{3,2\text{ GB}}$ de RAM (MEL ou LOFAR).
+            \item $m=6000$: $200\text{k} \times 6000 \times 4\text{B} \approx \mathbf{4,8\text{ GB}}$ de RAM.
         \end{itemize}
         \item \textbf{Complexidade Linear}: Reduz o treinamento para $O(N \cdot m^2)$, resolvido eficientemente via SGD.
-        \item \textbf{Tamanho do Modelo Final}: Armazena apenas o vetor de pesos linear ($4 \times m$ coeficientes $\approx \mathbf{<100\text{ KB}}$).
+        \item \textbf{Tamanho do Modelo Final}: pesos lineares ($4 \times m$ coeficientes) mais os $m$ \textit{landmarks} e o mapa de Nystr\"{o}m; o arquivo salvo por fold tem $\approx \mathbf{68\text{ MB}}$ (MEL, $m=4000$) e $\approx \mathbf{169\text{ MB}}$ (LOFAR, $m=6000$).
     \end{itemize}
 \end{frame}
 
@@ -422,21 +424,23 @@
     \toprule
     \textbf{Configura\c{c}\~{a}o SVM MEL} & \textbf{Componentes $m$} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur\'{a}cia Bal. (\%)} & \textbf{Observa\c{c}\~{a}o} \\
     \midrule
-    SVM MEL (m=300)   & 300  & $59,96 \pm 3,38$ & $62,34 \pm 1,98$ & Sub-amostragem severa \\
-    SVM MEL (m=1000)  & 1000 & $62,96 \pm 2,08$ & $64,11 \pm 1,98$ & Boa generaliza\c{c}\~{a}o \\
-    SVM MEL (m=2000)  & 2000 & $63,04 \pm 2,37$ & $64,45 \pm 1,93$ & Satura\c{c}\~{a}o linear \\
-    SVM MEL (m=3000)  & 3000 & $63,65 \pm 1,99$ & $64,77 \pm 1,87$ & Incremento consistente \\
+    SVM MEL (m=300, C=1, L2)   & 300  & $59,96 \pm 3,38$ & $62,34 \pm 1,98$ & Maior desvio entre folds \\
+    SVM MEL (m=1000, C=1, L2)  & 1000 & $62,96 \pm 2,08$ & $64,11 \pm 1,98$ & $p=0,34$ vs. $m=300$ \\
+    SVM MEL (m=2000, C=1, L2)  & 2000 & $63,04 \pm 2,37$ & $64,45 \pm 1,93$ & $p=0,81$ vs. $m=1000$ \\
+    SVM MEL (m=3000, C=1, L2)  & 3000 & $63,65 \pm 1,99$ & $64,77 \pm 1,87$ & $p=0,61$ vs. $m=2000$ \\
     \midrule
-    \textbf{Melhor SVM  MEL ($m=4000$)} & \textbf{4000} & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{Melhor MEL (ElasticNet, C=2.0)} \\
-    SVM MEL (m=4000, C=0.5)            & 4000 & $57,51 \pm 1,66$ & $58,14 \pm 1,16$ & Sub-ajuste por excesso de penalidade \\
+    \textbf{SVM MEL adotado ($m=4000$)} & \textbf{4000} & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{ElasticNet, C=2.0} ($p=0,70$ vs. $m=3000$) \\
+    SVM MEL (m=4000, C=0.5)            & 4000 & $63,48 \pm 1,50$ & $64,90 \pm 1,23$ & Equivalente ao C=2.0 ($p=0,66$) \\
     \bottomrule
     \end{tabular}%
     }
     \end{table}
-    
-    \vspace{0.1cm}
+    \vspace{-0.2cm}
+    {\tiny $p$ = F-test $5\times2$cv sobre o SP por fold (como no artigo). Acur\'{a}cia Bal. = m\'{e}dia dos recalls por classe.\par}
+
+    \vspace{0.05cm}
     \begin{block}{Destaque Experimental no MEL}
-        O **SVM Golden MEL ($m=4000$)** alcan\c{c}ou **$63,78\% \pm 1,14\%$ de SP**, superando a CNN MEL ($63,52\%$) e o RF MEL ($62,22\%$) com a **menor vari\^{a}ncia de todo o benchmark ($\pm 1,14\%$)**!
+        A m\'{e}dia do SP cresce de $m=300$ a $m=4000$, mas nenhum passo \'{e} estatisticamente significativo. O \textbf{SVM MEL ($m=4000$)} alcan\c{c}ou $\mathbf{63,78 \pm 1,14\%}$ de SP, \textbf{equivalente} \`{a} CNN MEL (local $63,80 \pm 2,23$, $p=0,27$; artigo $63,52$) e ao MLP MEL (local $64,74$, $p=0,64$), com o \textbf{menor desvio de SP entre folds} dos modelos comparados ($\pm 1,14$; artigo: $\ge 1,39$).
     \end{block}
 \end{frame}
 
@@ -448,7 +452,7 @@
 
 \begin{frame}{Explora\c{c}\~{a}o de Hiperpar\^{a}metros e Limite de Desempenho do SVM}
     \small
-    Foi realizada uma busca exaustiva de hiperpar\^{a}metros ($C$, penaliza\c{c}\~{a}o ElasticNet $\rho$ e componentes $m$), atingindo tetos bem definidos:
+    Foi realizada uma busca de hiperpar\^{a}metros ($C$, penaliza\c{c}\~{a}o ElasticNet $\rho$ e componentes $m$), avaliada nos mesmos folds de teste:
     
     \vspace{0.1cm}
     \begin{table}[h]
@@ -456,16 +460,16 @@
     \resizebox{0.96\textwidth}{!}{%
     \begin{tabular}{llcccc|l}
     \toprule
-    \textbf{Espectro} & \textbf{Configura\c{c}\~{a}o Avaliada} & \textbf{Comp. $m$} & \textbf{Reg. $C$} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur\'{a}cia (\%)} & \textbf{Diagn\'{o}stico Experimental} \\
+    \textbf{Espectro} & \textbf{Configura\c{c}\~{a}o Avaliada} & \textbf{Comp. $m$} & \textbf{Reg. $C$} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur. Bal. (\%)} & \textbf{Diagn\'{o}stico Experimental} \\
     \midrule
-    LOFAR & SVM LOFAR (m=1000) & 1000 & $1,0$ & $57,86 \pm 3,83$ & $60,95 \pm 2,89$ & Sub-amostragem severa do espa\c{c}o 1024-D \\
-    LOFAR & SVM LOFAR (m=2000, C=0.1) & 2000 & $0,1$ & $54,84 \pm 1,60$ & $59,67 \pm 1,28$ & Sub-ajuste r\'{i}gido por excesso de penalidade \\
-    LOFAR & SVM LOFAR (m=4000, C=0.5, E-Net) & 4000 & $0,5$ & $60,66 \pm 2,78$ & $63,23 \pm 2,05$ & Falta de flexibilidade no hiperplano \\
-    LOFAR & \textbf{SVM LOFAR (m=6000, C=1.0, E-Net)} & \textbf{6000} & $\mathbf{1,0}$ & $\mathbf{63,83 \pm 1,91}$ & $\mathbf{65,47 \pm 1,77}$ & \textbf{Teto M\'{a}ximo Absoluto LOFAR} \\
+    LOFAR & SVM LOFAR (m=1000) & 1000 & $1,0$ & $57,86 \pm 3,83$ & $60,95 \pm 2,89$ & Maior desvio; recall SMALL $27,4\%$ \\
+    LOFAR & SVM LOFAR (m=2000, C=0.1) & 2000 & $0,1$ & $54,84 \pm 1,60$ & $59,67 \pm 1,28$ & Menor SP; recall SMALL $18,0\%$ \\
+    LOFAR & SVM LOFAR (m=4000, C=0.5, E-Net) & 4000 & $0,5$ & $60,66 \pm 2,78$ & $63,23 \pm 2,05$ & Recall SMALL $31,2\%$; $p=0,17$ vs. $m=6000$ \\
+    LOFAR & \textbf{SVM LOFAR (m=6000, C=1.0, E-Net)} & \textbf{6000} & $\mathbf{1,0}$ & $\mathbf{63,83 \pm 1,91}$ & $\mathbf{65,47 \pm 1,77}$ & \textbf{Melhor SVM LOFAR testado} \\
     \midrule
-    MEL   & SVM MEL (m=4000, C=0.5, E-Net) & 4000 & $0,5$ & $57,51 \pm 1,66$ & $58,14 \pm 1,16$ & Sub-ajuste por regulariza\c{c}\~{a}o excessiva \\
-    MEL   & SVM MEL (m=2000, C=10.0, Puro) & 2000 & $10,0$ & $62,18 \pm 3,14$ & $63,53 \pm 2,50$ & Instabilidade e sobreajuste (alta vari\^{a}ncia) \\
-    MEL   & \textbf{Melhor SVM MEL (m=4000, C=2.0)} & \textbf{4000} & $\mathbf{2,0}$ & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{Teto M\'{a}ximo MEL (Menor Vari\^{a}ncia)} \\
+    MEL   & SVM MEL (m=4000, C=0.5, E-Net) & 4000 & $0,5$ & $63,48 \pm 1,50$ & $64,90 \pm 1,23$ & Equivalente ao C=2.0 ($p=0,66$); recall SMALL $38,5\%$ \\
+    MEL   & SVM MEL (m=2000, C=10.0, Puro) & 2000 & $10,0$ & $62,18 \pm 3,14$ & $63,53 \pm 2,50$ & Desvio alto entre folds ($\pm 3,14$) \\
+    MEL   & \textbf{Melhor SVM MEL (m=4000, C=2.0)} & \textbf{4000} & $\mathbf{2,0}$ & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{Melhor SP MEL (menor desvio)} \\
     \bottomrule
     \end{tabular}%
     }
@@ -474,15 +478,15 @@
     \vspace{0.1cm}
     \begin{columns}
         \column{0.52\textwidth}
-        \textbf{Compara\c{c}\~{a}o dos Tetos de Nystr\"{o}m:}
+        \textbf{Compara\c{c}\~{a}o dos Melhores SVM Nystr\"{o}m:}
         \begin{itemize}
-            \item \textbf{LOFAR $m=6000$ (Teto $\mathbf{63,83\%}$):} Exigiu $6000$ marcos para cobrir o espa\c{c}o esparso de 1024 dimens\~{o}es da FFT.
-            \item \textbf{MEL $m=4000$ (Teto $\mathbf{63,78\%}$):} Espa\c{c}o compacto (256 filtros) estabilizou em $m=4000$ com m\'{i}nima vari\^{a}ncia ($\pm 1,14\%$).
+            \item \textbf{LOFAR $m=6000$ ($\mathbf{63,83\%}$):} melhor m\'{e}dia no LOFAR (1024-D), mas equivalente a $m=4000$, C=0,5 ($p=0,17$).
+            \item \textbf{MEL $m=4000$ ($\mathbf{63,78\%}$):} 256 filtros; menor desvio entre folds ($\pm 1,14\%$). LOFAR 6000 e MEL 4000 s\~{a}o equivalentes ($p=0,10$).
         \end{itemize}
-        
+
         \column{0.48\textwidth}
-        \begin{alertblock}{Conclus\~{a}o: Gargalo Estrutural}
-            Mesmo com $m=6000$ e regulariza\c{c}\~{a}o \'{o}tima, o SVM estagnou em $\mathbf{63,83\%}$ de SP ($<66,25\%$ do MLP). A limita\c{c}\~{a}o provou ser a separa\c{c}\~{a}o plana simult\^{a}nea das 4 classes.
+        \begin{alertblock}{Conclus\~{a}o: Limite Observado}
+            Com $m=6000$, o SVM LOFAR ficou em $\mathbf{63,83\%}$ de SP, abaixo em m\'{e}dia do MLP LOFAR local ($66,24\%$), mas a diferen\c{c}a \textbf{n\~{a}o \'{e} significativa} ($p=0,15$). O gargalo vis\'{i}vel \'{e} o recall de SMALL ($38,2\%$); atribu\'{i}-lo \`{a} separa\c{c}\~{a}o linear no espa\c{c}o de Nystr\"{o}m \'{e} hip\'{o}tese, n\~{a}o testada.
         \end{alertblock}
     \end{columns}
 \end{frame}
@@ -503,29 +507,37 @@
     \begin{tabular}{l|cc|cc|cc}
     \toprule
     \multirow{2}{*}{\textbf{Modelo}} & \multicolumn{2}{c|}{\textbf{$t=0$ (100\% Cobertura)}} & \multicolumn{2}{c|}{\textbf{$t \ge 0,6$ (Maioria Absoluta)}} & \multicolumn{2}{c}{\textbf{$t \ge 0,9$ (Alto Consenso)}} \\
-    & \textbf{Cobertura} & \textbf{Acur\'{a}cia} & \textbf{Cobertura} & \textbf{Acur\'{a}cia} & \textbf{Cobertura} & \textbf{Acur\'{a}cia} \\
+    & \textbf{Cobertura} & \textbf{Acur. Bal.} & \textbf{Cobertura} & \textbf{Acur. Bal.} & \textbf{Cobertura} & \textbf{Acur. Bal.} \\
     \midrule
-    \textbf{SVM MEL (Best)}   & $100\%$ & $63,3\%$ & $\mathbf{76,1\%}$ & $\mathbf{69,6\%}$ & $37,5\%$ & $83,4\%$ \\
-    \textbf{SVM LOFAR (Best)} & $100\%$ & $63,8\%$ & $62,9\%$ & $75,9\%$ & $\mathbf{25,1\%}$ & $\mathbf{89,6\% - 90,4\%}$ [Melhor] \\
-    MLP MEL                   & $100\%$ & $63,5\%$ & $70,4\%$ & $72,0\%$ & $32,9\%$ & $85,9\%$ \\
-    MLP LOFAR                 & $100\%$ & $65,5\%$ & $61,0\%$ & $78,1\%$ & $24,8\%$ & $91,6\%$ \\
+    \textbf{SVM MEL ($m=4000$)}   & $100\%$ & $64,6\%$ & $76,1\%$ & $69,2\%$ & $37,5\%$ & $77,1\%$ \\
+    \textbf{SVM LOFAR ($m=6000$)} & $100\%$ & $65,5\%$ & $65,8\%$ & $72,6\%$ & $31,8\%$ & $80,6\%$ \\
+    MLP MEL (local)               & $100\%$ & $65,7\%$ & $70,4\%$ & $71,3\%$ & $32,9\%$ & $75,8\%$ \\
+    MLP LOFAR (local)             & $100\%$ & $\mathbf{67,2\%}$ & $61,0\%$ & $\mathbf{76,0\%}$ & $24,8\%$ & $\mathbf{81,2\%}$ \\
     \midrule
-    \textbf{CNN Convolucional}& $100\%$ & $64,9\%$ & $71,2\%$ & $68,4\%$ & $54,0\%$ & $\mathbf{74,4\%}$ [Alerta] \\
+    \textbf{CNN MEL (local)}      & $100\%$ & $65,0\%$ & $\mathbf{82,9\%}$ & $68,2\%$ & $\mathbf{54,0\%}$ & $72,0\%$ [Alerta] \\
     \bottomrule
     \end{tabular}%
     }
     \end{table}
-    
-    \vspace{0.1cm}
-    \begin{columns}
+    \vspace{-0.2cm}
+    {\tiny Concord\^{a}ncia = fra\c{c}\~{a}o das janelas do \'{a}udio que votaram na classe vencedora; acur\'{a}cia balanceada calculada s\'{o} nos \'{a}udios aceitos (m\'{e}dia dos 10 folds). Valores locais; a Tabela 9 do artigo usa outro ponto de opera\c{c}\~{a}o (raz\~{a}o \'{o}tima por modelo, MEL).\par}
+
+    \vspace{0.05cm}
+    \begin{columns}[T]
+        \footnotesize
         \column{0.5\textwidth}
         \textbf{Destaques do Comportamento Observado:}
         \begin{itemize}
-            \item \textbf{MEL:} Alta cobertura operacional ($76,1\%$).
-            \item \textbf{LOFAR:} Alta Precis\~{a}o  sob alto consenso ($>90\%$).
+            \item \textbf{MEL:} maior cobertura em $t \ge 0,6$ entre os modelos de janela (SVM MEL $76,1\%$).
+            \item \textbf{LOFAR:} maior acur\'{a}cia balanceada sob alto consenso ($80,6$--$81,2\%$), mas aceitando s\'{o} $25$--$32\%$ dos \'{a}udios.
         \end{itemize}
-        
+
         \column{0.5\textwidth}
+        \footnotesize
+        \begin{itemize}
+            \item \textbf{CNN [Alerta]:} com apenas 7 segmentos por \'{a}udio, a concord\^{a}ncia \'{e} discreta; mant\'{e}m $54\%$ de cobertura em $t \ge 0,9$ com a menor acur\'{a}cia ($72,0\%$).
+            \item Compara\c{c}\~{o}es entre modelos devem ser feitas a cobertura semelhante, n\~{a}o ao mesmo $t$.
+        \end{itemize}
     \end{columns}
 \end{frame}
 
@@ -544,26 +556,29 @@
         \begin{table}[h]
         \centering
         \resizebox{\columnwidth}{!}{%
-        \begin{tabular}{llcc}
+        \begin{tabular}{llcccc}
         \toprule
-        \textbf{Treinado em} & \textbf{Avaliado em} & \textbf{MLP LOFAR (SP \%)} & \textbf{SVM LOFAR (SP \%)} \\
+        \textbf{Treinado em} & \textbf{Avaliado em} & \textbf{MLP MEL (artigo)} & \textbf{MLP MEL (local)} & \textbf{SVM LOFAR (local)} & \textbf{$p$} \\
         \midrule
-        Near CPA (A) & Near CPA (A) & $63,64 \pm 2,86\%$ & $\mathbf{65,12 \pm 2,40\%}$ \\
-        Near CPA (A) & Far CPA (C)  & $42,50 \pm 3,10\%$ & $\mathbf{44,80 \pm 2,85\%}$ \\
+        Near CPA (A) & Near CPA (A) & $67,25 \pm 2,44$ & $67,33 \pm 2,67$ & $67,24 \pm 3,42$ & $0,63$ \\
+        Near CPA (A) & Far CPA (C)  & $59,08 \pm 6,51$ & $60,16 \pm 5,99$ & $55,35 \pm 4,45$ & $0,11$ \\
         \midrule
-        Far CPA (C)  & Far CPA (C)  & $55,20 \pm 2,50\%$ & $\mathbf{56,90 \pm 2,10\%}$ \\
-        Far CPA (C)  & Near CPA (A) & $48,10 \pm 3,40\%$ & $\mathbf{50,25 \pm 2,90\%}$ \\
+        Far CPA (C)  & Far CPA (C)  & $58,08 \pm 3,70$ & $59,46 \pm 4,45$ & $55,84 \pm 6,00$ & $0,36$ \\
+        Far CPA (C)  & Near CPA (A) & $59,59 \pm 5,22$ & $59,36 \pm 4,55$ & $58,52 \pm 4,95$ & $0,69$ \\
         \bottomrule
         \end{tabular}%
         }
         \end{table}
-        
+        \vspace{-0.2cm}
+        {\tiny \'{I}ndice SP (\%). ``Artigo'' = Tabela 10 de Silva et al. (2025). Local = re-execu\c{c}\~{a}o $5\times2$cv (\texttt{results/trainings/cpa\_exp}); SVM LOFAR $m=4000$, C=2, PCA64. $p$ = F-test $5\times2$cv, SVM LOFAR vs. MLP MEL local. N\~{a}o h\'{a} experimento CPA com MLP LOFAR.\par}
+
         \column{0.45\textwidth}
         \begin{block}{Conclus\~{o}es de Robustez ao CPA}
+            \scriptsize
             \begin{itemize}
-                \item \textbf{Near CPA (A):} Alta SNR, espectro limpo.
-                \item \textbf{Far CPA (C):} Baixa SNR, forte atenua\c{c}\~{a}o do meio.
-                \item O **SVM LOFAR** superou o MLP do artigo em todos os cen\'{a}rios de transfer\^{e}ncia inter-dist\^{a}ncia, comprovando a robustez da margem de separabilidade RBF.
+                \item \textbf{Near CPA (A):} Alta SNR. \textbf{Far CPA (C):} Baixa SNR, forte atenua\c{c}\~{a}o.
+                \item O \textbf{SVM LOFAR} \'{e} \textbf{equivalente} ao MLP MEL em todos os cen\'{a}rios ($p \ge 0,11$) e n\~{a}o o supera: em A$\to$A as m\'{e}dias empatam e, ao transferir A$\to$C, o SVM LOFAR tem a maior queda de SP ($-11,9$ p.p. vs. $-7,2$ p.p. do MLP).
+                \item A MLP local reproduz a Tabela 10 do artigo (diferen\c{c}as $\le 1,4$ p.p.).
             \end{itemize}
         \end{block}
     \end{columns}
@@ -581,16 +596,17 @@
     \resizebox{0.92\textwidth}{!}{%
     \begin{tabular}{llcc|l}
     \toprule
-    \textbf{Modelo} & \textbf{Representa\c{c}\~{a}o} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur\'{a}cia (\%)} & \textbf{Destaque T\'{e}cnico} \\
+    \textbf{Modelo} & \textbf{Representa\c{c}\~{a}o} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur. Bal. (\%)} & \textbf{Destaque T\'{e}cnico} \\
     \midrule
     \textbf{RF (Artigo)}       & MEL   & $62,22 \pm 1,86$ & $62,64 \pm 1,84$ & Baseline \'{A}rvores \\
     CNN (Artigo)      & MEL   & $63,52 \pm 2,26$ & $64,99 \pm 2,09$ & Convolucional Profundo \\
-    \textbf{Melhor SVM MEL} & \textbf{MEL (m=4000)} & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{Menor Vari\^{a}ncia ($\pm 1,14\%$)} \\
+    \textbf{SVM MEL (local)} & \textbf{MEL (m=4000)} & $\mathbf{63,78 \pm 1,14}$ & $\mathbf{64,56 \pm 1,18}$ & \textbf{Menor desvio ($\pm 1,14\%$)} \\
     \midrule
     RF (Artigo)       & LOFAR & $56,92 \pm 1,69$ & $58,87 \pm 1,68$ & Degrada\c{c}\~{a}o no LOFAR \\
     CNN (Artigo)      & LOFAR & $66,05 \pm 1,90$ & $67,02 \pm 1,78$ & Convolucional LOFAR \\
-    MLP Local         & LOFAR & $66,25 \pm 1,78$ & $67,21 \pm 1,65$ & Melhor Baseline Isolado \\
-    \textbf{SVM LOFAR}& \textbf{LOFAR (m=6000)} & $\mathbf{63,83 \pm 1,91}$ & $\mathbf{65,47 \pm 1,77}$ & \textbf{Melhor índice SP no SVM} \\
+    MLP (Artigo)      & LOFAR & $66,51 \pm 1,39$ & $67,48 \pm 1,24$ & Melhor Baseline do Artigo \\
+    MLP Local        & LOFAR & $66,24 \pm 1,78$ & $67,22 \pm 1,65$ & Re-execu\c{c}\~{a}o local (refer\^{e}ncia do F-test) \\
+    \textbf{SVM LOFAR (local)}& \textbf{LOFAR (m=6000)} & $\mathbf{63,83 \pm 1,91}$ & $\mathbf{65,47 \pm 1,77}$ & \textbf{Melhor \'{i}ndice SP no SVM} \\
     \bottomrule
     \end{tabular}%
     }
@@ -598,9 +614,10 @@
     
     \vspace{0.1cm}
     \begin{block}{Aspectos dos Resultados Apresentados:}
+        \footnotesize
         \begin{itemize}
-            \item \textbf{Consist\^{e}ncia do MEL:} O SVM em MEL superou os baselines RF e CNN em MEL, apresentando a menor vari\^{a}ncia entre folds de todo o benchmark ($\pm 1,14\%$).
-            \item \textbf{Teto do SVM no LOFAR:} O SVM atingiu $63,83\%$ de SP ($m=6000$), evidenciando o limite da separa\c{c}\~{a}o plana e a necessidade de estrat\'{e}gias h\'{i}bridas para superar o MLP ($66,25\%$).
+            \item \textbf{Consist\^{e}ncia do MEL:} O SVM em MEL \'{e} equivalente \`{a} CNN MEL (local $63,80\%$, $p=0,27$) e tem m\'{e}dia acima do RF MEL do artigo ($62,22\%$; sem teste pareado poss\'{i}vel), com o menor desvio entre folds da tabela ($\pm 1,14\%$).
+            \item \textbf{SVM no LOFAR:} O SVM atingiu $63,83\%$ de SP ($m=6000$), abaixo em m\'{e}dia do MLP LOFAR (local $66,24\%$; artigo $66,51\%$), sem diferen\c{c}a significativa frente ao MLP local ($p=0,15$). O recall de SMALL ($38,2\%$) motivou a estrat\'{e}gia em cascata.
         \end{itemize}
     \end{block}
 \end{frame}
@@ -608,7 +625,7 @@
 \begin{frame}{Matrizes de Confus\~{a}o: N\'{i}vel de \'{A}udio ($5\times2$cv)}
     \centering
     \scriptsize
-    \textit{Linhas = classe real \ | \ Colunas = predi\c{c}\~{a}o \ | \ Acumulado sobre 10 folds (\'{a}udios f\'{i}sicos \'{u}nicos)}\\
+    \textit{Linhas = classe real \ | \ Colunas = predi\c{c}\~{a}o (\%) \ | \ Acumulado sobre 10 folds (6.390 avalia\c{c}\~{o}es de 1.706 \'{a}udios distintos)}\\
 
     \vspace{0.1cm}
     \begin{columns}[T]
@@ -617,20 +634,20 @@
         \resizebox{0.90\columnwidth}{!}{%
         \begin{tabular}{r|cccc}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
-            \textbf{SMALL}  & \camd{44,8} & \calo{25,4} & 17,9 & 11,8 \\
-            \textbf{MEDIUM} & 20,4        & \cahi{64,0} & 13,1 &  2,5 \\
-            \textbf{LARGE}  & 12,9        & 15,0        & \cahi{68,6} & 3,6 \\
-            \textbf{BG}     &  6,1        &  3,8        &  5,0 & \cahi{85,1} \\
+            \textbf{SMALL}  & \camd{44,8} & \calo{25,5} & 17,9 & 11,8 \\
+            \textbf{MEDIUM} & 20,3        & \cahi{64,1} & 13,2 &  2,5 \\
+            \textbf{LARGE}  & 12,7        & 14,9        & \cahi{68,8} & 3,6 \\
+            \textbf{BG}     &  6,0        &  3,8        &  5,0 & \cahi{85,2} \\
         \end{tabular}}
 
         \vspace{0.15cm}
-        \centering \textbf{MLP LOFAR} (Melhor Baseline do Artigo) \\[0.05cm]
+        \centering \textbf{MLP LOFAR} (re-execu\c{c}\~{a}o local do melhor baseline do artigo) \\[0.05cm]
         \resizebox{0.90\columnwidth}{!}{%
         \begin{tabular}{r|cccc}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
-            \textbf{SMALL}  & \camd{46,6} & 21,2        & \calo{25,3} &  7,0 \\
-            \textbf{MEDIUM} & \calo{22,6} & \cahi{61,3} & 13,8 &  2,3 \\
-            \textbf{LARGE}  & 12,8        & 10,0        & \cahi{74,7} & 2,5 \\
+            \textbf{SMALL}  & \camd{46,3} & 21,2        & \calo{25,4} &  7,0 \\
+            \textbf{MEDIUM} & \calo{22,3} & \cahi{61,5} & 13,8 &  2,3 \\
+            \textbf{LARGE}  & 12,7        & 10,0        & \cahi{74,7} & 2,6 \\
             \textbf{BG}     &  7,3        &  3,8        &  2,6 & \cahi{86,3} \\
         \end{tabular}}
 
@@ -639,9 +656,9 @@
         \resizebox{0.90\columnwidth}{!}{%
         \begin{tabular}{r|cccc}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
-            \textbf{SMALL}  & \camd{50,9} & \calo{24,3} & 17,6 &  7,2 \\
+            \textbf{SMALL}  & \camd{50,7} & \calo{24,3} & 17,7 &  7,3 \\
             \textbf{MEDIUM} & \calo{26,0} & \cahi{60,4} & 12,5 &  1,1 \\
-            \textbf{LARGE}  & 14,9        & 13,6        & \cahi{69,2} & 2,3 \\
+            \textbf{LARGE}  & 14,8        & 13,6        & \cahi{69,3} & 2,4 \\
             \textbf{BG}     & 11,0        &  4,9        &  6,2 & \cahi{77,9} \\
         \end{tabular}}
 
@@ -650,18 +667,18 @@
         \resizebox{0.90\columnwidth}{!}{%
         \begin{tabular}{r|cccc}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} \\ \hline
-            \textbf{SMALL}  & \calo{38,2} & 22,9        & \calo{28,6} & 10,3 \\
-            \textbf{MEDIUM} & 17,6        & \cahi{60,5} & 17,2 &  4,8 \\
-            \textbf{LARGE}  &  9,3        & 10,8        & \cahi{76,3} & 3,6 \\
-            \textbf{BG}     &  6,1        &  2,8        &  4,2 & \cahi{86,9} \\
+            \textbf{SMALL}  & \calo{38,1} & 22,8        & \calo{28,7} & 10,4 \\
+            \textbf{MEDIUM} & 17,6        & \cahi{60,4} & 17,2 &  4,8 \\
+            \textbf{LARGE}  &  9,2        & 10,9        & \cahi{76,3} & 3,6 \\
+            \textbf{BG}     &  6,1        &  2,8        &  4,1 & \cahi{87,0} \\
         \end{tabular}}
     \end{columns}
 
     \vspace{0.1cm}
     \tiny
     \begin{itemize}
-        \item \textbf{Alvo Cr\'{i}tico (SMALL):} O \textbf{SVM MEL} obteve maior acerto na classe ($50,9\%$) vs. $46,6\%$ (MLP LOFAR) e $38,2\%$ (SVM LOFAR).
-        \item \textbf{Especializa\c{c}\~{a}o Espectral:} Modelos LOFAR maximizam acerto em LARGE ($74-76\%$), enquanto MEL mitiga confus\~{o}es com ru\'{i}do.
+        \item \textbf{Alvo Cr\'{i}tico (SMALL):} O \textbf{SVM MEL} obteve maior acerto na classe ($50,7\%$) vs. $46,3\%$ (MLP LOFAR) e $38,1\%$ (SVM LOFAR).
+        \item \textbf{Especializa\c{c}\~{a}o Espectral:} Modelos LOFAR maximizam acerto em LARGE ($74,7$--$76,3\%$) e BACKGROUND ($86,3$--$87,0\%$); o SVM MEL tem o menor acerto em BACKGROUND ($77,9\%$).
     \end{itemize}
 \end{frame}
 
@@ -670,9 +687,9 @@
 %===========================================
 \section{Estrat\'{e}gia de SVM em Cascata}
 
-\begin{frame}{Superando o Gargalo: Especialista em Cascata SMALL vs. LARGE (SL)}
+\begin{frame}{Atacando o Gargalo: Especialista em Cascata SMALL vs. LARGE (SL)}
     \footnotesize
-    \textbf{Diagn\'{o}stico:} No SVM LOFAR ($m=6000$), a classe \textbf{SMALL} obteve apenas $38,2\%$ de acerto, sendo que \textbf{$28,6\%$ das amostras de SMALL foram preditas erroneamente como LARGE}.
+    \textbf{Diagn\'{o}stico:} No SVM LOFAR ($m=6000$), a classe \textbf{SMALL} obteve apenas $38,1\%$ de acerto (acumulado nos 10 folds), sendo que \textbf{$28,7\%$ dos \'{a}udios SMALL foram preditos erroneamente como LARGE}.
     
     \vspace{0.15cm}
     \begin{columns}[t]
@@ -682,8 +699,7 @@
             Classificador bin\'{a}rio dedicado exclusivamente a distinguir \textbf{SMALL vs. LARGE}:
             \begin{itemize}
                 \setlength{\itemsep}{1pt}
-                \item Treinado para operar com rigor m\'{a}ximo ao confirmar \textbf{LARGE}.
-                \item Filtra o ru\'{i}do harm\^{o}nico de barcos r\'{a}pidos.
+                \item Treinado s\'{o} com SMALL e LARGE (MEL-256 + LOFAR-PCA8, $m=6000$), nas parti\c{c}\~{o}es do modelo de 4 classes.
             \end{itemize}
         \end{block}
         
@@ -703,42 +719,44 @@
     \vspace{0.15cm}
     \begin{alertblock}{\small Objetivo Operacional}
         \scriptsize
-        Resgatar dezenas de embarca\c{c}\~{o}es pequenas indevidamente absorvidas pela classe majorit\'{a}ria LARGE, elevando expressivamente o Recall de SMALL e destravando o \'{I}ndice SP global.
+        Resgatar embarca\c{c}\~{o}es pequenas absorvidas pela classe LARGE, elevando o Recall de SMALL e o SP.
+        \textbf{Nota:} o SL original (jun/2026) tinha no treino $49,1\%$ (1.925/3.920) dos \'{a}udios SMALL/LARGE de teste; foi retreinado em 20/10/2026 (0/3.920) e todas as cascatas foram re-executadas (o SP anterior de $69,48\%$ n\~{a}o \'{e} v\'{a}lido).
     \end{alertblock}
 \end{frame}
 
 \begin{frame}{Evolu\c{c}\~{a}o dos Classificadores Especialistas SL (SMALL vs. LARGE)}
     \small
-    Foram exploradas m\'{u}ltiplas variantes de representa\c{c}\~{a}o espectral e hiperpar\^{a}metros para o Especialista Bin\'{a}rio SL:
+    Variantes h\'{i}bridas do Especialista Bin\'{a}rio SL (m\'{e}tricas por \'{a}udio na tarefa SMALL vs. LARGE, m\'{e}dia $\pm$ desvio nos 10 folds):
     
     \vspace{0.1cm}
     \begin{table}[h]
     \centering
     \resizebox{0.95\textwidth}{!}{%
-    \begin{tabular}{llcc|l}
+    \begin{tabular}{llccc|l}
     \toprule
-    \textbf{Abordagem SL} & \textbf{Espa\c{c}o de Entrada} & \textbf{Marcos ($m$)} & \textbf{Precis\~{a}o LARGE (\%)} & \textbf{Diagn\'{o}stico Experimental} \\
+    \textbf{Abordagem SL} & \textbf{Espa\c{c}o de Entrada} & \textbf{Marcos ($m$)} & \textbf{Precis\~{a}o LARGE (\%)} & \textbf{Acur. Bal. (\%)} & \textbf{Observa\c{c}\~{a}o} \\
     \midrule
-    SVM MEL Puro & MEL (256-D) & 4000 & $74,2 \pm 2,5$ & Boa energia global, mas perde raias do motor \\
-    SVM LOFAR Puro & LOFAR (1024-D) & 4000 & $71,8 \pm 3,1$ & Alta esparsidade; ru\'{i}do em barcos pequenos \\
+    SVM H\'{i}brido (PCA-4) & MEL-256 + LOFAR-PCA4 (260-D) & 6000 & $77,6 \pm 4,2$ & $74,6 \pm 1,9$ & Parti\c{c}\~{a}o antiga (jun/2026) \\
+    SVM H\'{i}brido (PCA-16) & MEL-256 + LOFAR-PCA16 (272-D) & 6000 & $77,3 \pm 3,3$ & $75,0 \pm 1,8$ & Parti\c{c}\~{a}o antiga (jun/2026) \\
+    SVM H\'{i}brido (PCA-64) & MEL-256 + LOFAR-PCA64 (320-D) & 6000 & $77,0 \pm 3,9$ & $75,0 \pm 2,1$ & Parti\c{c}\~{a}o antiga (jun/2026) \\
     \midrule
-    SVM H\'{i}brido (PCA-4) & MEL-256 + LOFAR-PCA4 (260-D) & 6000 & $78,5 \pm 2,1$ & Poucas componentes para capturar o diesel \\
-    SVM H\'{i}brido (PCA-16) & MEL-256 + LOFAR-PCA16 (272-D) & 6000 & $80,4 \pm 1,9$ & Leve excesso de vari\^{a}ncia espectral \\
-    \midrule
-    \textbf{Melhor Especialista SL} & \textbf{MEL-256 + LOFAR-PCA8 (264-D)} & \textbf{6000} & $\mathbf{83,8 \pm 1,4}$ & \textbf{Equil\'{i}brio \'{O}timo: MEL + LOFAR Compacto} \\
+    \textbf{Especialista SL adotado} & \textbf{MEL-256 + LOFAR-PCA8 (264-D)} & \textbf{6000} & $\mathbf{78,4 \pm 4,1}$ & $\mathbf{75,8 \pm 2,2}$ & \textbf{Retreinado (20/10/2026)} \\
     \bottomrule
     \end{tabular}%
     }
     \end{table}
+    \vspace{-0.2cm}
+    {\tiny As variantes PCA-4/16/64 usam a parti\c{c}\~{a}o antiga do especialista (v\'{a}lida para a tarefa bin\'{a}ria, mas com vazamento em rela\c{c}\~{a}o ao teste do modelo de 4 classes) e n\~{a}o s\~{a}o pareadas com o PCA-8 retreinado. N\~{a}o foram encontrados em disco especialistas SL ``MEL puro'' ou ``LOFAR puro'' (removidos da tabela).\par}
     
     \vspace{0.1cm}
     \begin{columns}[t]
         \column{0.5\textwidth}
-        \begin{block}{\small Por que o H\'{i}brido com PCA-8 Venceu?}
+        \begin{block}{\small PCA-8: escolha, n\~{a}o vit\'{o}ria}
             \scriptsize
             \begin{itemize}
                 \setlength{\itemsep}{1pt}
-                \item \textbf{LOFAR-PCA8 (8-D):} Injeta apenas as 8 raias harm\^{o}nicas de cavita\c{c}\~{a}o/diesel mais energ\'{e}ticas.
+                \item As variantes diferem em $\le 1,4$ p.p. de precis\~{a}o LARGE, dentro do desvio entre folds ($3$--$4$ p.p.).
+                \item \textbf{LOFAR-PCA8 (8-D):} as 8 componentes principais do LOFAR (m\'{a}xima vari\^{a}ncia), n\~{a}o raias harm\^{o}nicas espec\'{i}ficas.
             \end{itemize}
         \end{block}
         
@@ -748,7 +766,7 @@
             \begin{itemize}
                 \setlength{\itemsep}{1pt}
                 \item Vetor compacto (264-D) permite proje\c{c}\~{a}o Nystr\"{o}m r\'{a}pida ($m=6000$).
-                \item Alta precis\~{a}o ($>83\%$) previne falsos alarmes ao confirmar se o navio \'{e} realmente LARGE.
+                \item Precis\~{a}o LARGE de $\approx 78\%$: cerca de 1 em cada 5 \'{a}udios confirmados como LARGE \'{e}, na verdade, SMALL.
             \end{itemize}
         \end{block}
     \end{columns}
@@ -766,7 +784,7 @@
             \begin{itemize}
                 \setlength{\itemsep}{2pt}
                 \item \textbf{Vetor Combinado:} Concatena\c{c}\~{a}o direta de \textbf{MEL (256-D)} com \textbf{LOFAR-PCA (8-D)}.
-                \item \textbf{Papel do PCA-8:} Comprime o LOFAR de 1.024 para as 8 componentes mais informativas, evitando sobreajuste e excesso de ru\'{i}do.
+                \item \textbf{Papel do PCA-8:} Comprime o LOFAR de 1.024 para as 8 componentes de maior vari\^{a}ncia (efeito sobre o sobreajuste n\~{a}o testado).
             \end{itemize}
         \end{block}
         
@@ -775,8 +793,8 @@
             \scriptsize
             \begin{itemize}
                 \setlength{\itemsep}{2pt}
-                \item \textbf{Acionamento:} Ativado \textbf{apenas} se o modelo base prediz a classe \textbf{LARGE}.
-                \item \textbf{Resgate para SMALL:} O especialista bin\'{a}rio reavalia o \'{a}udio; se n\~{a}o confirmar LARGE, reclassifica como \textbf{SMALL} (resgatando 31 \'{a}udios).
+                \item \textbf{Acionamento:} s\'{o} se o modelo base prediz \textbf{LARGE} (janela a janela).
+                \item \textbf{Resgate:} se n\~{a}o confirmar LARGE, vira \textbf{SMALL}: 293 SMALL resgatados de LARGE (10 folds), mas 146 MEDIUM corretos viraram SMALL.
             \end{itemize}
         \end{block}
     \end{columns}
@@ -786,7 +804,7 @@
 \begin{frame}{Impacto da Cascata: Matrizes de Confus\~{a}o (\%)}
     \centering
     \scriptsize
-    \textit{Linhas = classe real \ | \ Colunas = predi\c{c}\~{a}o \ | \ Avalia\c{c}\~{a}o por \'{a}udio ($5\times2$cv, 10 folds acumulados)}
+    \textit{Linhas = classe real \ | \ Colunas = predi\c{c}\~{a}o \ | \ Avalia\c{c}\~{a}o por \'{a}udio ($5\times2$cv, 10 folds acumulados; especialista SL retreinado)}
 
     \vspace{0.1cm}
     \begin{columns}[T]
@@ -795,32 +813,32 @@
         \resizebox{0.98\columnwidth}{!}{%
         \begin{tabular}{r|cccc|c}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} & \textbf{Rec.} \\ \hline
-            \textbf{SMALL}  & \calo{38,2} & 22,9        & \calo{28,6} & 10,3 & $38,2\%$ \\
-            \textbf{MEDIUM} & 17,6        & \cahi{60,5} & 17,2        &  4,8 & $60,5\%$ \\
-            \textbf{LARGE}  &  9,3        & 10,8        & \cahi{76,3} &  3,6 & $76,3\%$ \\
-            \textbf{BG}     &  6,1        &  2,8        &  4,2        & \cahi{86,9} & $86,9\%$ \\ \hline
-            \textbf{Prec.}  & 56,7\%      & 57,5\%      & 67,0\%      & 72,0\% &
+            \textbf{SMALL}  & \calo{38,1} & 22,8        & \calo{28,7} & 10,4 & $38,1\%$ \\
+            \textbf{MEDIUM} & 17,6        & \cahi{60,4} & 17,2        &  4,8 & $60,4\%$ \\
+            \textbf{LARGE}  &  9,2        & 10,9        & \cahi{76,3} &  3,6 & $76,3\%$ \\
+            \textbf{BG}     &  6,1        &  2,8        &  4,1        & \cahi{87,0} & $87,0\%$ \\ \hline
+            \textbf{Prec.}  & 56,7\%      & 57,5\%      & 66,9\%      & 71,9\% &
         \end{tabular}}
         \vspace{0.05cm}
 
         \scriptsize
-        \textbf{ACC Geral: $63,6\%$ | SP: $63,8\%$}
+        \textbf{ACC micro $63,6\%$ | bal. $65,5\%$ | SP $63,8\%$}
 
         \column{0.49\textwidth}
         \centering \textbf{Cascata LOFAR 6000 + SL (Proposta)} \\[0.05cm]
         \resizebox{0.98\columnwidth}{!}{%
         \begin{tabular}{r|cccc|c}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} & \textbf{Rec.} \\ \hline
-            \textbf{SMALL}  & \cahi{70,1} & 14,8        & \cahi{6,4}  &  8,7 & $\mathbf{70,1\%}$ \\
-            \textbf{MEDIUM} & 31,5        & \camd{57,0} &  7,6        &  4,0 & $57,0\%$ \\
-            \textbf{LARGE}  & 20,7        &  9,0        & \cahi{66,7} &  3,6 & $66,7\%$ \\
-            \textbf{BG}     & 10,0        &  2,0        &  2,0        & \cahi{85,9} & $85,9\%$ \\ \hline
-            \textbf{Prec.}  & 55,3\%      & 64,1\%      & \textbf{85,3\%} & 74,3\% &
+            \textbf{SMALL}  & \cahi{63,7} & 15,7        & \cahi{11,5} &  9,1 & $\mathbf{63,7\%}$ \\
+            \textbf{MEDIUM} & 30,3        & \camd{57,7} &  7,9        &  4,2 & $57,7\%$ \\
+            \textbf{LARGE}  & 23,5        &  9,4        & \camd{63,5} &  3,6 & $63,5\%$ \\
+            \textbf{BG}     &  9,9        &  2,0        &  2,3        & \cahi{85,7} & $85,7\%$ \\ \hline
+            \textbf{Prec.}  & 51,9\%      & 63,1\%      & \textbf{79,8\%} & 73,6\% &
         \end{tabular}}
         \vspace{0.05cm}
 
         \scriptsize
-        \textbf{ACC Geral: $\mathbf{68,3\%}$ | SP: $\mathbf{69,5\%}$}
+        \textbf{ACC micro $65,6\%$ | bal. $67,6\%$ | SP $67,2\%$}
     \end{columns}
 
     \vspace{0.15cm}
@@ -828,9 +846,9 @@
         \scriptsize
         \begin{itemize}
             \setlength{\itemsep}{1pt}
-            \item \textbf{Recall SMALL:} $38,2\% \to \mathbf{70,1\%}$ (\textbf{+31,9 p.p.}) | Confus\~{a}o S$\to$L: $28,6\% \to \mathbf{6,4\%}$
-            \item \textbf{Precis\~{a}o LARGE:} $67,0\% \to \mathbf{85,3\%}$ (\textbf{+18,3 p.p.})
-            \item \textbf{SP global:} $63,8\% \to \mathbf{69,5\%}$ (\textbf{+5,7 p.p.}) | \textbf{ACC geral:} $63,6\% \to \mathbf{68,3\%}$ (\textbf{+4,7 p.p.})
+            \item \textbf{Recall SMALL:} $38,1\% \to \mathbf{63,7\%}$ (\textbf{+25,5 p.p.}) | Confus\~{a}o S$\to$L: $28,7\% \to \mathbf{11,5\%}$ | \textbf{Recall LARGE:} $76,3\% \to 63,5\%$ ($-12,8$ p.p.)
+            \item \textbf{Precis\~{a}o LARGE:} $66,9\% \to \mathbf{79,8\%}$ (\textbf{+12,9 p.p.})
+            \item \textbf{SP global:} $63,8\% \to \mathbf{67,2\%}$ (\textbf{+3,3 p.p.}; F-test $5\times2$cv $p=0,007$ vs. base) | \textbf{ACC micro:} $63,6\% \to 65,6\%$ (+2,0 p.p.)
         \end{itemize}
     \end{block}
 \end{frame}
@@ -839,7 +857,7 @@
 \begin{frame}{Impacto da Cascata: Contagem Bruta de \'{A}udios}
     \centering
     \scriptsize
-    \textit{N\'{u}mero absoluto de \'{a}udios classificados (10 folds acumulados, 6.390 testes no total)}
+    \textit{N\'{u}mero absoluto de avalia\c{c}\~{o}es por \'{a}udio (10 folds acumulados, 6.390 testes no total)}
 
     \vspace{0.1cm}
     \begin{columns}[T]
@@ -848,49 +866,49 @@
         \resizebox{0.98\columnwidth}{!}{%
         \begin{tabular}{r|rrrr|r}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} & \textbf{Total} \\ \hline
-            \textbf{SMALL}  & \calo{680}  & 407  & \calo{509}  & 184 & 1.780 \\
-            \textbf{MEDIUM} & 262         & \cahi{901}  & 256         &  71 & 1.490 \\
-            \textbf{LARGE}  & 198         & 232         & \cahi{1.633} &  77 & 2.140 \\
-            \textbf{BG}     &  60         &  27         &  41         & \cahi{852} &   980 \\
+            \textbf{SMALL}  & \calo{679}  & 405  & \calo{511}  & 185 & 1.780 \\
+            \textbf{MEDIUM} & 262         & \cahi{900}  & 257         &  71 & 1.490 \\
+            \textbf{LARGE}  & 197         & 233         & \cahi{1.633} &  77 & 2.140 \\
+            \textbf{BG}     &  60         &  27         &  40         & \cahi{853} &   980 \\
         \end{tabular}}
         \vspace{0.05cm}
 
         \scriptsize
-        Corretos: 4.066/6.390 \\
-        \textbf{ACC Geral: $63,6\%$ | SP: $63,8\%$}
+        Corretos: 4.065/6.390 \\
+        \textbf{ACC micro: $63,6\%$ | SP: $63,8\%$}
 
         \column{0.49\textwidth}
         \centering \textbf{Cascata LOFAR 6000 + SL (Proposta)} \\[0.05cm]
         \resizebox{0.98\columnwidth}{!}{%
         \begin{tabular}{r|rrrr|r}
              & \textbf{S} & \textbf{M} & \textbf{L} & \textbf{BG} & \textbf{Total} \\ \hline
-            \textbf{SMALL}  & \cahi{1.248} & 263  & \cahi{114}  & 155 & 1.780 \\
-            \textbf{MEDIUM} & 469          & \camd{849}  & 113         &  59 & 1.490 \\
-            \textbf{LARGE}  & 442          & 193         & \cahi{1.428} &  77 & 2.140 \\
-            \textbf{BG}     &  98          &  20         &  20         & \cahi{842} &   980 \\
+            \textbf{SMALL}  & \cahi{1.133} & 280  & \cahi{205}  & 162 & 1.780 \\
+            \textbf{MEDIUM} & 452          & \camd{859}  & 117         &  62 & 1.490 \\
+            \textbf{LARGE}  & 502          & 202         & \camd{1.359} &  77 & 2.140 \\
+            \textbf{BG}     &  97          &  20         &  23         & \cahi{840} &   980 \\
         \end{tabular}}
         \vspace{0.05cm}
 
         \scriptsize
-        Corretos: \textbf{4.367}/6.390 (\textbf{+301 \'{a}udios}) \\
-        \textbf{ACC Geral: $\mathbf{68,3\%}$ | SP: $\mathbf{69,5\%}$}
+        Corretos: \textbf{4.191}/6.390 (\textbf{+126}) \\
+        \textbf{ACC micro: $65,6\%$ | SP: $67,2\%$}
     \end{columns}
 
     \vspace{0.15cm}
-    \begin{block}{\small Ganhos em N\'{u}meros Absolutos:}
+    \begin{block}{\small Ganhos e Perdas em N\'{u}meros Absolutos:}
         \scriptsize
         \begin{itemize}
             \setlength{\itemsep}{1pt}
-            \item \textbf{Resgate de SMALL:} De 680 para \textbf{1.248 \'{a}udios} corretos (\textbf{+568}), com confus\~{a}o S$\to$L caindo de 509 para \textbf{114 \'{a}udios}.
-            \item \textbf{MEDIUM:} De 901 para 849 corretos ($-52$ \'{a}udios) --- efeito colateral da reclassifica\c{c}\~{a}o janela a janela.
-            \item \textbf{Saldo total:} \textbf{+301 \'{a}udios} a mais corretamente classificados no conjunto completo.
+            \item \textbf{Resgate de SMALL:} De 679 para \textbf{1.133} corretos (\textbf{+454}), com confus\~{a}o S$\to$L caindo de 511 para \textbf{205}.
+            \item \textbf{LARGE:} De 1.633 para 1.359 corretos ($\mathbf{-274}$); L$\to$S sobe de 197 para 502. \textbf{MEDIUM:} De 900 para 859 ($-41$) --- efeito colateral da reclassifica\c{c}\~{a}o janela a janela. \textbf{BG:} $-13$.
+            \item \textbf{Saldo total:} \textbf{+126} avalia\c{c}\~{o}es corretas (de 6.390). Cada \'{a}udio aparece em m\'{e}dia em 3,75 folds de teste; as contagens n\~{a}o s\~{a}o \'{a}udios \'{u}nicos.
         \end{itemize}
     \end{block}
 \end{frame}
 
-\begin{frame}{Efeito Colateral: Impacto do Especialista SL sobre a Classe MEDIUM}
+\begin{frame}{Efeito Colateral: Impacto do Especialista SL sobre MEDIUM e LARGE}
     \footnotesize
-    Embora o Especialista SL atue \textbf{exclusivamente} na distin\c{c}\~{a}o SMALL vs. LARGE, ele gerou um efeito colateral na classe MEDIUM:
+    Embora o Especialista SL atue \textbf{exclusivamente} na distin\c{c}\~{a}o SMALL vs. LARGE, ele gerou efeitos colaterais em MEDIUM e, sobretudo, em LARGE:
 
     \vspace{0.15cm}
     \begin{table}[h]
@@ -898,12 +916,12 @@
     \resizebox{0.92\textwidth}{!}{%
     \begin{tabular}{l|cccc|c}
     \toprule
-    \textbf{Recall por Classe} & \textbf{SMALL} & \textbf{MEDIUM} & \textbf{LARGE} & \textbf{BG} & \textbf{\'{I}ndice SP} \\
+    \textbf{Recall por Classe (m\'{e}dia 10 folds)} & \textbf{SMALL} & \textbf{MEDIUM} & \textbf{LARGE} & \textbf{BG} & \textbf{\'{I}ndice SP} \\
     \midrule
-    SVM LOFAR 6000 (Base) & \calo{$38,2\%$} & \cahi{$60,5\%$} & \cahi{$76,3\%$} & \cahi{$86,9\%$} & $63,84\%$ \\
-    Cascata + SL (Proposta) & \cahi{$70,1\%$} & \camd{$57,0\%$} & \camd{$66,7\%$} & \cahi{$85,9\%$} & $\mathbf{69,48\%}$ \\
+    SVM LOFAR 6000 (Base) & \calo{$38,15\%$} & \cahi{$60,40\%$} & \cahi{$76,31\%$} & \cahi{$87,04\%$} & $63,83 \pm 1,91\%$ \\
+    Cascata + SL (Proposta) & \cahi{$63,65\%$} & \camd{$57,65\%$} & \camd{$63,50\%$} & \cahi{$85,71\%$} & $\mathbf{67,16 \pm 1,82\%}$ \\
     \midrule
-    \textbf{Varia\c{c}\~{a}o} & \textbf{+31,9 p.p.} & $-3,5$ p.p. & $-9,6$ p.p. & $-1,0$ p.p. & \textbf{+5,64 p.p.} \\
+    \textbf{Varia\c{c}\~{a}o} & \textbf{+25,51 p.p.} & $-2,75$ p.p. & $-12,80$ p.p. & $-1,33$ p.p. & \textbf{+3,33 p.p.} ($p=0,007$) \\
     \bottomrule
     \end{tabular}%
     }
@@ -914,74 +932,79 @@
         \column{0.55\textwidth}
         \begin{alertblock}{\small Por que MEDIUM caiu se o SL n\~{a}o toca nele?}
             \scriptsize
-            A cascata atua \textbf{janela a janela} ($0,512\text{ s}$). Em um navio MEDIUM, parte das janelas \'{e} classificada como LARGE pelo multiclasse. O Especialista SL converte essas janelas para SMALL, inflando os votos de SMALL na \textbf{vota\c{c}\~{a}o majorit\'{a}ria} do \'{a}udio e invertendo o resultado final de MEDIUM para SMALL.
+            A cascata atua \textbf{janela a janela} ($0,512\text{ s}$). Em um navio MEDIUM, parte das janelas \'{e} classificada como LARGE pelo multiclasse. O Especialista SL converte essas janelas para SMALL, inflando os votos de SMALL na \textbf{vota\c{c}\~{a}o majorit\'{a}ria} do \'{a}udio e invertendo o resultado final de MEDIUM para SMALL (146 avalia\c{c}\~{o}es MEDIUM corretas passaram a SMALL). Pelo mesmo mecanismo, 502 avalia\c{c}\~{o}es LARGE terminam como SMALL (eram 197).
         \end{alertblock}
 
         \column{0.44\textwidth}
         \begin{block}{\small Por que o SP subiu mesmo assim?}
             \scriptsize
-            O \'{I}ndice SP usa a \textbf{m\'{e}dia geom\'{e}trica} dos recalls. Nessa m\'{e}trica, o menor termo domina o resultado. Como SMALL era o gargalo ($38,2\%$), ao saltar para $70,1\%$, o ganho global compensou amplamente as perdas moderadas em MEDIUM e LARGE.
+            O \'{I}ndice SP combina m\'{e}dia aritm\'{e}tica e \textbf{m\'{e}dia geom\'{e}trica} dos recalls, que penaliza o menor termo. Como SMALL era o gargalo ($38,15\%$), o salto para $63,65\%$ compensou as perdas em MEDIUM ($-2,75$) e LARGE ($-12,80$ p.p.).
         \end{block}
     \end{columns}
 \end{frame}
 
 \begin{frame}{Robustez ao CPA: Desempenho da Cascata nos Regimes Ac\'{u}sticos}
     \footnotesize
-    Desempenho particionado por regimes de proximidade e passagem pelo CPA ($5\times2$cv por \'{a}udio):
+    Desempenho por cole\c{c}\~{a}o do \'{a}udio de teste (modelos de 4 classes; re-execu\c{c}\~{o}es locais, $5\times2$cv):
 
-    \vspace{0.15cm}
     \begin{table}[h]
     \centering
-    \resizebox{0.96\textwidth}{!}{%
+    \resizebox{0.88\textwidth}{!}{%
     \begin{tabular}{l|cc|cc|c}
     \toprule
     \textbf{Modelo} & \textbf{Near CPA (A)} & \textbf{Far CPA (C)} & \textbf{CPA IN (A+C)} & \textbf{CPA OUT (B+D)} & \textbf{Geral ($5\times2$cv)} \\
     \midrule
-    MLP LOFAR \textit{(Artigo)}       & $59,3\% \ (65,2\%)$ & $59,6\% \ (63,2\%)$ & $59,6\% \ (64,5\%)$ & $42,9\% \ (42,5\%)$ & $59,4\% \ (58,7\%)$ \\
-    CNN MEL \textit{(Artigo)}         & $66,8\% \ (70,1\%)$ & $63,7\% \ (66,7\%)$ & $65,6\% \ (68,8\%)$ & $49,0\% \ (48,8\%)$ & $65,1\% \ (63,8\%)$ \\
-    MLP H\'{i}brido \textit{(MEL+LOFAR)} & $63,1\% \ (68,2\%)$ & $63,0\% \ (67,6\%)$ & $63,5\% \ (68,0\%)$ & $52,3\% \ (52,6\%)$ & $66,2\% \ (64,9\%)$ \\
-    SVM LOFAR 6000 \textit{(Base)}   & $62,4\% \ (69,3\%)$ & $56,8\% \ (64,5\%)$ & $60,5\% \ (67,3\%)$ & $50,2\% \ (49,6\%)$ & $63,8\% \ (63,6\%)$ \\
+    MLP LOFAR \textit{(local)}        & \cahi{$67,0\% \ (68,1\%)$} & $59,7\% \ (61,2\%)$ & $64,2\% \ (65,3\%)$ & \cahi{$52,3\% \ (52,6\%)$} & $66,2\% \ (67,2\%)$ \\
+    MLP MEL \textit{(local)}          & $62,6\% \ (64,0\%)$ & $61,0\% \ (62,6\%)$ & $62,3\% \ (63,6\%)$ & $50,1\% \ (50,6\%)$ & $64,7\% \ (65,7\%)$ \\
+    CNN MEL \textit{(local)}          & $60,2\% \ (61,9\%)$ & $58,4\% \ (60,0\%)$ & $59,9\% \ (61,3\%)$ & $48,3\% \ (48,9\%)$ & $63,8\% \ (65,0\%)$ \\
+    MLP H\'{i}brido \textit{(MEL+LOFAR-PCA64)} & $63,1\% \ (64,6\%)$ & $63,0\% \ (64,0\%)$ & $63,6\% \ (64,6\%)$ & $52,2\% \ (52,5\%)$ & $66,1\% \ (66,9\%)$ \\
+    SVM LOFAR 6000 \textit{(Base)}    & $62,3\% \ (64,2\%)$ & $56,8\% \ (59,0\%)$ & $60,4\% \ (62,2\%)$ & $50,2\% \ (50,8\%)$ & $63,8\% \ (65,5\%)$ \\
     \midrule
-    \textbf{Cascata LOFAR + SL}       & \cahi{$\mathbf{68,9\% \ (70,7\%)}$} & \cahi{$\mathbf{67,9\% \ (72,6\%)}$} & \cahi{$\mathbf{69,2\% \ (71,6\%)}$} & \cahi{$\mathbf{54,5\% \ (57,1\%)}$} & \cahi{$\mathbf{69,5\% \ (68,3\%)}$} \\
+    \textbf{Cascata LOFAR + SL} (janela) & $65,3\% \ (65,8\%)$ & \cahi{$\mathbf{64,4\% \ (65,4\%)}$} & \cahi{$\mathbf{65,6\% \ (66,0\%)}$} & $51,7\% \ (52,6\%)$ & \cahi{$\mathbf{67,2\% \ (67,6\%)}$} \\
+    Cascata LOFAR + SL (arquivo)      & $64,6\% \ (65,3\%)$ & $61,9\% \ (63,2\%)$ & $64,0\% \ (64,6\%)$ & $51,0\% \ (51,4\%)$ & $66,0\% \ (66,8\%)$ \\
+    \midrule
+    \textit{$p$ cascata (janela) vs. MLP LOFAR} & $0,71$ & $0,056$ & $0,65$ & $0,40$ & $0,56$ \\
     \bottomrule
     \end{tabular}%
     }
     \end{table}
-    \centering \scriptsize \textit{Formato: \'{I}ndice SP \% (Acur\'{a}cia \%)}
+    \vspace{-0.25cm}
+    \centering \tiny \textit{Formato: SP \% (Acur\'{a}cia Balanceada \%). Cole\c{c}\~{o}es A--D t\^{e}m s\'{o} navios (SP sobre 3 classes); BACKGROUND (E) entra s\'{o} em ``Geral''.}
 
-    \vspace{0.1cm}
     \begin{block}{\small An\'{a}lise de Robustez Espectral:}
         \scriptsize
         \begin{itemize}
             \setlength{\itemsep}{1pt}
-            \item \textbf{Grande melhora no Far CPA (C):} No regime de sinal atenuado e baixa SNR, o SP subiu de $56,8\%$ (base) e $59,6\%$ (artigo) para $\mathbf{67,9\%}$ (\textbf{+11,1 p.p.}), com acur\'{a}cia de $\mathbf{72,6\%}$.
-            \item \textbf{Supera\c{c}\~{a}o no Near CPA (A):} Atingiu $\mathbf{68,9\%}$ de SP, superando inclusive a CNN profunda do artigo ($66,8\%$).
-            \item \textbf{Resili\^{e}ncia no CPA OUT (B+D):} Fora da passagem direta do CPA, alcan\c{c}ou $\mathbf{54,5\%}$ de SP vs. apenas $42,9\%$ do baseline do artigo (\textbf{+11,6 p.p.}).
+            \item \textbf{Melhora no Far CPA (C):} o SP subiu de $56,8\%$ (base) para $\mathbf{64,4\%}$ ($+7,6$ p.p., $p=0,003$). Frente ao MLP LOFAR ($59,7\%$) a diferen\c{c}a ($+4,7$ p.p.) n\~{a}o \'{e} significativa ($p=0,056$), e o MLP H\'{i}brido chega a $63,0\%$ ($p=0,39$).
+            \item \textbf{Near CPA (A):} a cascata ($65,3\%$) fica \textbf{abaixo} em m\'{e}dia do MLP LOFAR ($67,0\%$; $p=0,71$).
+            \item \textbf{CPA OUT (B+D):} todos os modelos caem para $48$--$52\%$; a cascata ($51,7\%$) \'{e} equivalente ao MLP LOFAR ($52,3\%$; $p=0,40$).
         \end{itemize}
     \end{block}
 \end{frame}
 
 \begin{frame}{Ranking Geral Consolidado de Todos os Modelos}
     \footnotesize
-    Ordena\c{c}\~{a}o decrescente pelo \textbf{\'{I}ndice SP} (avalia\c{c}\~{a}o $5\times2$cv em n\'{i}vel de \'{a}udio):
+    Ordem decrescente da m\'{e}dia do \textbf{\'{I}ndice SP} ($5\times2$cv por \'{a}udio); $p$ = F-test $5\times2$cv vs. MLP LOFAR local:
 
-    \vspace{0.1cm}
     \begin{table}[h]
     \centering
-    \resizebox{0.98\textwidth}{!}{%
-    \begin{tabular}{c|llcc|l}
+    \resizebox{0.90\textwidth}{!}{%
+    \begin{tabular}{c|llccc|l}
     \toprule
-    \textbf{Pos.} & \textbf{Modelo / Arquitetura} & \textbf{Espectro} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur\'{a}cia (\%)} & \textbf{Categoria / Destaque} \\
+    \textbf{Pos.} & \textbf{Modelo / Arquitetura} & \textbf{Espectro} & \textbf{\'{I}ndice SP (\%)} & \textbf{Acur. Bal. (\%)} & \textbf{$p$} & \textbf{Fonte / Destaque} \\
     \midrule
-    \textbf{1\textsuperscript{o}} & \textbf{SVM em Cascata (LOFAR 6000 + SL)} & \textbf{H\'{i}brido} & \cahi{$\mathbf{69,48 \pm 2,28}$} & \cahi{$\mathbf{69,93 \pm 2,23}$} & \textbf{Melhor modelo (proposta)} \\
-    \textbf{2\textsuperscript{o}} & \textbf{MLP [32, 16] LOFAR} & \textbf{LOFAR} & \cart{$\mathbf{66,25 \pm 1,78}$} & \cart{$\mathbf{67,21 \pm 1,65}$} & \textbf{Melhor Baseline do Artigo (Benchmark)} \\
-    3\textsuperscript{o} & CNN Convolucional LOFAR & LOFAR & $66,05 \pm 1,90$ & $67,02 \pm 1,78$ & Deep Learning LOFAR \\
-    4\textsuperscript{o} & MLP [32, 16] MEL & MEL-256 & $64,66 \pm 2,11$ & $64,80 \pm 2,00$ & Baseline Conectado MEL \\
-    5\textsuperscript{o} & SVM Nystr\"{o}m LOFAR ($m=6000$) & LOFAR & $63,83 \pm 1,91$ & $65,47 \pm 1,77$ & Melhor SVM Multiclasse Isolado \\
-    6\textsuperscript{o} & SVM Nystr\"{o}m MEL ($m=4000$) & MEL-256 & $63,78 \pm 1,14$ & $64,56 \pm 1,18$ & Menor Vari\^{a}ncia ($\pm 1,14\%$) \\
-    7\textsuperscript{o} & CNN Convolucional MEL & MEL-256 & $63,52 \pm 2,26$ & $64,99 \pm 2,09$ & Deep Learning MEL \\
-    8\textsuperscript{o} & Random Forest (RF) MEL & MEL-256 & $62,22 \pm 1,86$ & $62,64 \pm 1,84$ & Ensemble de \'{A}rvores MEL \\
-    9\textsuperscript{o} & Random Forest (RF) LOFAR & LOFAR & $56,92 \pm 1,69$ & $58,87 \pm 1,68$ & Ensemble de \'{A}rvores LOFAR \\
+    1\textsuperscript{o} & \textbf{SVM em Cascata por janela (LOFAR 6000 + SL)} & H\'{i}brido & \cahi{$\mathbf{67,16 \pm 1,82}$} & $67,63 \pm 1,87$ & $0,56$ & Local; $p=0,007$ vs. SVM base \\
+    2\textsuperscript{o} & \textbf{MLP [32, 16] LOFAR} & LOFAR & \cart{$\mathbf{66,51 \pm 1,39}$} & \cart{$\mathbf{67,48 \pm 1,24}$} & --- & Artigo (Tabela 7): benchmark \\
+    3\textsuperscript{o} & MLP [32, 16] LOFAR & LOFAR & $66,24 \pm 1,78$ & $67,22 \pm 1,65$ & ref. & Local (re-execu\c{c}\~{a}o) \\
+    4\textsuperscript{o} & MLP H\'{i}brido (MEL + LOFAR-PCA64) & H\'{i}brido & $66,13 \pm 1,09$ & $66,92 \pm 1,06$ & $0,67$ & Local \\
+    5\textsuperscript{o} & CNN Convolucional LOFAR & LOFAR & $66,05 \pm 1,90$ & $67,02 \pm 1,78$ & --- & Artigo (Tabela 7) \\
+    6\textsuperscript{o} & SVM em Cascata por arquivo (LOFAR 6000 + SL) & H\'{i}brido & $66,00 \pm 1,90$ & $66,77 \pm 1,92$ & $0,37$ & Local; $p=0,030$ vs. SVM base \\
+    7\textsuperscript{o} & MLP [32, 16] MEL & MEL-256 & $64,74 \pm 2,05$ & $65,73 \pm 1,90$ & $0,65$ & Local (artigo: $63,38$) \\
+    8\textsuperscript{o} & SVM Nystr\"{o}m LOFAR ($m=6000$) & LOFAR & $63,83 \pm 1,91$ & $65,47 \pm 1,77$ & $0,15$ & Local; melhor SVM isolado \\
+    9\textsuperscript{o} & CNN Convolucional MEL & MEL-256 & $63,80 \pm 2,23$ & $65,01 \pm 2,05$ & $0,22$ & Local (artigo: $63,52$) \\
+    10\textsuperscript{o} & SVM Nystr\"{o}m MEL ($m=4000$) & MEL-256 & $63,78 \pm 1,14$ & $64,56 \pm 1,18$ & $0,27$ & Local; menor desvio \\
+    11\textsuperscript{o} & Random Forest (RF) MEL & MEL-256 & $62,22 \pm 1,86$ & $62,64 \pm 1,84$ & --- & Artigo (Tabela 7) \\
+    12\textsuperscript{o} & Random Forest (RF) LOFAR & LOFAR & $56,92 \pm 1,69$ & $58,87 \pm 1,68$ & --- & Artigo (Tabela 7) \\
     \bottomrule
     \end{tabular}%
     }
@@ -992,8 +1015,8 @@
         \scriptsize
         \begin{itemize}
             \setlength{\itemsep}{1pt}
-            \item \textbf{Supera\c{c}\~{a}o do Benchmark:} O \textbf{SVM em Cascata ($\mathbf{69,48\%}$)} superou expressivamente o \textbf{Melhor Baseline do Artigo (MLP LOFAR: $66,25\%$)} em \textbf{+3,23 p.p.} de SP e \textbf{+2,72 p.p.} de acur\'{a}cia.
-            \item \textbf{Resgate Estrat\'{e}gico:} O ganho resultou do resgate de SMALL ($38,2\% \to 70,1\%$), mantendo a interpretabilidade e baixo custo computacional frente a redes profundas.
+            \item \textbf{Sem supera\c{c}\~{a}o estat\'{i}stica do benchmark:} a melhor cascata ($67,16 \pm 1,82\%$) \'{e} \textbf{equivalente} ao MLP LOFAR local ($66,24\%$; $p=0,56$) e fica $+0,65$ p.p. acima do MLP LOFAR do artigo ($66,51 \pm 1,39\%$), dentro do desvio. Nenhum modelo local difere significativamente do MLP LOFAR.
+            \item \textbf{Ganho real sobre o pr\'{o}prio SVM:} a cascata melhora o SVM LOFAR base ($63,83 \to 67,16\%$, $p=0,007$) ao resgatar SMALL ($38,15 \to 63,65\%$), \`{a} custa de LARGE ($76,31 \to 63,50\%$).
         \end{itemize}
     \end{block}
 \end{frame}
@@ -1015,8 +1038,8 @@
             \begin{itemize}
                 \setlength{\itemsep}{0pt}
                 \item Devemos tentar sempre melhorar o SP ou temos outros objetivos? 
-                \item Qual o patamar de SP almejado? ($\mathbf{69,5\%}$ vs. romper $\mathbf{70-75\%}$)
-                \item Resultados sustentam novo artigo? (supera\c{c}\~{a}o do artigo seminal, SVM em Cascata e robustez ao CPA).
+                \item Qual o patamar de SP almejado? (hoje $\mathbf{67,2\%}$, equivalente ao MLP LOFAR)
+                \item Resultados sustentam novo artigo? (sem supera\c{c}\~{a}o estat\'{i}stica do artigo; ganho significativo s\'{o} sobre o SVM base).
             \end{itemize}
         \end{block}
 

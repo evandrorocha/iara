@@ -3,7 +3,8 @@ Evaluation of Multimodal Fusion (MEL + DEMON) with:
 1. SVM Nyström (m=6000, RBF kernel, ElasticNet penalty)
 2. CNN 2D PyTorch (GPU RTX 5060 Ti, blocks 32 x D)
 
-Evaluated under the official 10-fold 5x2cv protocol with strict Ship ID isolation.
+Evaluated under the official 10-fold 5x2cv protocol (split by recording `ID`; the same ship may be in train and test).
+Window-level predictions are saved in results/trainings/multirep/<exp>/ (results_writer.py).
 Outputs metrics for both 4-Class and 3-Class tasks with Audio-Level Majority Voting.
 """
 
@@ -29,6 +30,9 @@ from torch.utils.data import TensorDataset, DataLoader
 
 
 # SP Index calculation
+from results_writer import ResultsWriter
+
+
 def compute_sp_index(targets, preds, num_classes=4):
     cm = sk_metrics.confusion_matrix(targets, preds, labels=list(range(num_classes)))
     with np.errstate(divide='ignore', invalid='ignore'):
@@ -97,6 +101,12 @@ def evaluate_svm_nystroem(feature_cache, folds, experiment_name="SVM (m=6000)", 
     print(f"AVALIAÇÃO: {experiment_name} [{problem_name}]", flush=True)
     print(f"Dimensão: {in_dim} | Landmarks: {n_components} | Kernel: RBF (gamma={1.0/in_dim:.6f}) | Penalidade: ElasticNet", flush=True)
     print("=" * 80, flush=True)
+    writer = ResultsWriter(
+        f"svm_nystroem_{n_components}_mel5s-demon_C2.0_elasticnet_l1r0.15_{num_classes}c", script=__file__,
+        params={"model": "Nystroem(rbf)+SGDClassifier(hinge)", "representation": "mel5s-demon", "dim": in_dim,
+                "window": "5.12 s (MEL alinhado ao DEMON)", "n_components": n_components, "gamma": "1/n_features",
+                "C": 2.0, "penalty": "elasticnet", "l1_ratio": 0.15, "max_iter": 1000,
+                "nystroem_random_state": "42 + fold_idx", "class_weight": "balanced", "num_classes": num_classes})
 
     fold_accs, fold_sps, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
@@ -129,6 +139,9 @@ def evaluate_svm_nystroem(feature_cache, folds, experiment_name="SVM (m=6000)", 
         )
         clf.fit(X_train_proj, y_train)
         win_preds = clf.predict(X_test_proj)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=clf.decision_function(X_test_proj))
 
         file_preds = defaultdict(list)
         file_targets = {}
@@ -248,6 +261,11 @@ def evaluate_cnn(feature_cache, folds, experiment_name="CNN 2D PyTorch", num_cla
     print("\n" + "=" * 80, flush=True)
     print(f"AVALIAÇÃO: {experiment_name} [{problem_name}]", flush=True)
     print(f"Dimensão de entrada: (1, 32, {in_dim}) | Dispositivo: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})", flush=True)
+    writer = ResultsWriter(
+        f"cnn2d_mel5s-demon_w32_b{batch_size}_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "PyTorch2DCNN", "representation": "mel5s-demon", "dim": in_dim,
+                "window": "5.12 s (MEL alinhado ao DEMON)", "image_windows": 32, "epochs": epochs,
+                "batch_size": batch_size, "lr": lr, "early_stopping": False, "num_classes": num_classes})
     print(f"Arquitetura: Conv2D [64, 32] + GAP + FC [64, {num_classes}] | Epochs: {epochs} | Batch: {batch_size}", flush=True)
     print("=" * 80, flush=True)
 
@@ -295,6 +313,9 @@ def evaluate_cnn(feature_cache, folds, experiment_name="CNN 2D PyTorch", num_cla
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             img_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, img_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}
@@ -367,6 +388,12 @@ def main():
 
     # Save results to pickle
     out_pkl = "data/iara_processed/results_fusion_svm_cnn.pkl"
+    # Preserva resultados de modelos não executados nesta chamada (ex.: --model svm não apaga CNN)
+    if os.path.exists(out_pkl):
+        with open(out_pkl, "rb") as f:
+            previous = pickle.load(f)
+        previous.update(results)
+        results = previous
     with open(out_pkl, "wb") as f:
         pickle.dump(results, f)
     print(f"\nResultados salvos com sucesso em {out_pkl}", flush=True)

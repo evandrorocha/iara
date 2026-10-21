@@ -1,455 +1,112 @@
 """
 Script de geração do notebook 19: notebooks/19_analise_complementaridade_rf_large.ipynb
 Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest para a Classe LARGE (Dataset IARA).
-"""
 
+Os números do markdown são calculados na geração (notebooks/rf_complementaridade_comum.py + iara_results.py)
+a partir das predições em results/trainings/multirep/rf_*_4c. Rodar na raiz do repositório:
+    python notebooks/generate_rf_large_notebook.py
+"""
 import os
-import json
+import sys
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import rf_complementaridade_comum as C  # noqa: E402
+from rf_complementaridade_comum import br, p_txt, md, code  # noqa: E402
+
+CLASSE = "LARGE"
+NB = 19
+FAMS = ("SVM", "MLP", "RF")
+
+HIPOTESES = """> **Hipóteses físicas (não testadas nesta análise).** Conjecturas para orientar trabalho futuro; nada nas predições as confirma:
+> - DEMON: a modulação pela rotação lenta de eixo de navios grandes (< 2 Hz) poderia separar parte dos `LARGE`; quando essa modulação não é captada, o envelope residual poderia se parecer com o de embarcações pequenas;
+> - LOFAR: raias tonais de maquinário poderiam explicar a vantagem do LOFAR nesta classe."""
+
+SINTESE_CODE = """# 9. Síntese: SVM vs MLP vs RF nas três classes de navio
+linhas = []
+for cl in ('SMALL', 'MEDIUM', 'LARGE'):
+    for f in ('SVM', 'MLP', 'RF'):
+        a = analise_classe(f, cl)
+        ex = a['exclusivos']
+        linhas.append({'Classe': cl, 'Família': f,
+                       'Melhor isolado': a['melhor'], 'Recall melhor isolado (%)': a['voto']['melhor'][0],
+                       'Unanimidade 4/4 (%)': a['consenso']['% da classe'].iloc[0],
+                       'Erro comum 0/4 (%)': a['consenso']['% da classe'].iloc[-1],
+                       'Oráculo obs. (%)': a['oraculo']['agregado'],
+                       'Oráculo esperado indep. (%)': a['oraculo']['esp_indep'],
+                       'Maior resgate exclusivo': ex['Instâncias'].idxmax(),
+                       'Voto real (%)': a['voto']['recall'][0], 'p voto vs melhor': a['voto']['p']})
+sintese = pd.DataFrame(linhas).set_index(['Classe', 'Família'])
+display(sintese)"""
+
 
 def create_notebook(filename="notebooks/19_analise_complementaridade_rf_large.ipynb"):
-    cells = [
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
-                "### Notebook 19: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest — Classe LARGE\n",
-                "\n",
-                "**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)\n",
-                "**Data:** Outubro de 2026\n",
-                "\n",
-                "---\n",
-                "\n",
-                "## Resumo Executivo da Investigação com Random Forest (RF)\n",
-                "\n",
-                "A classe **`LARGE`** (embarcações de grande porte: navios mercantes, graneleiros, petroleiros e porta-contêineres, $> 150\\\\text{ m}$ até mais de $300\\\\text{ m}$) foi avaliada em todas as **2.140 instâncias de teste** nos 10 folds oficiais do protocolo $5\\\\times2$cv com a arquitetura **Random Forest (100 árvores com balanceamento de classes)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).\n",
-                "\n",
-                "O objetivo é confrontar os resultados do SVM (Notebook 13) e do MLP (Notebook 16) com os do Random Forest para investigar os limites máximos de consenso acústico e de resgate exclusivo por modulação de envelope na maior fonte de ruído naval do oceano.\n",
-                "\n",
-                "### Principais Descobertas no Random Forest:\n",
-                "1. **O Maior Teto de Oráculo de Todo o Dataset IARA ($89{,}77\\\\%$ — 1.921 / 2.140 cargueiros):**\n",
-                "   - O Oráculo do Random Forest em `LARGE` quebra todos os recordes anteriores, atingindo quase **$90\\\\%$ de recall conjunto** (superando SVM com $88{,}18\\\\%$ e MLP com $88{,}83\\\\%$).\n",
-                "   - O erro comum irrecuperável cai para apenas **$10{,}23\\\\%$ (219 áudios)**, a menor perda intrínseca observada em todo o estudo.\n",
-                "2. **A Mais Alta Taxa de Unanimidade Acústica Jamais Registrada ($44{,}91\\\\%$ — 961 áudios):**\n",
-                "   - Quase metade de todos os cargueiros (**961 navios**) são classificados corretamente de forma simultânea e independente pelas 4 representações espectrais e temporais.\n",
-                "   - Somando com o alto consenso ($\\\\ge 3/4$), **$66{,}31\\\\%$ dos cargueiros (1.419 áudios)** são acertados por no mínimo 3 modelos.\n",
-                "3. **DEMON Quebra Recorde Absoluto de Resgates Exclusivos ($130$ navios — $6{,}07\\\\%$):**\n",
-                "   - O DEMON no Random Forest salvou sozinho **130 navios de grande porte** que LOFAR, MEL e HHT erraram simultaneamente. Em árvores de decisão, a assinatura subsônica de rotação de eixos ($< 2\\\\text{ Hz}$) de motores 2 tempos isola os cargueiros sem qualquer ambiguidade de energia contínua.\n",
-                "4. **A Votação por Maioria Simples ($\\\\ge 2/4$) Supera o LOFAR Isolado:**\n",
-                "   - Um ensemble cego por maioria atinge **$78{,}27\\\\%$ ($1.675$ navios)**, superando o LOFAR isolado ($75{,}65\\\\%$) em **$+2{,}62$ pontos percentuais**."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 1. Configuração do Ambiente e Imports\n",
-                "import os\n",
-                "import numpy as np\n",
-                "import pandas as pd\n",
-                "import matplotlib.pyplot as plt\n",
-                "try:\n",
-                "    from IPython.display import display\n",
-                "except ImportError:\n",
-                "    display = print\n",
-                "\n",
-                "# Estilização publication-ready (sem dependência externa)\n",
-                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
-                "plt.rcParams.update({\n",
-                "    'font.family': 'sans-serif',\n",
-                "    'font.size': 11,\n",
-                "    'axes.labelsize': 12,\n",
-                "    'axes.titlesize': 13,\n",
-                "    'xtick.labelsize': 10,\n",
-                "    'ytick.labelsize': 10,\n",
-                "    'figure.titlesize': 15,\n",
-                "    'figure.dpi': 150\n",
-                "})\n",
-                "\n",
-                "print(\"Ambiente configurado com sucesso! Bibliotecas prontas.\")"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 2. Metodologia Experimental e Base de Dados de Teste\n",
-                "\n",
-                "Avaliação exaustiva sobre todas as **2.140 instâncias de teste** onde a classe real comprovada era **`LARGE` (Classe 2)** nos 10 folds do protocolo oficial $5\\\\times2$cv com **Random Forest (100 árvores, balanced)** nas 4 representações:\n"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 2. Dados Consolidados das Predições do Random Forest na Classe LARGE\n",
-                "total_lrg = 2140\n",
-                "\n",
-                "# Desempenho individual no RF\n",
-                "hits_data = {\n",
-                "    'Representacao': ['MEL (256-D)', 'DEMON (253-D)', 'HHT Puro (256-D)', 'LOFAR (1024-D)', 'ORÁCULO RF (União 4 Modos)'],\n",
-                "    'Acertos': [1427, 1460, 1470, 1619, 1921],\n",
-                "    'Recall_Pct': [66.68, 68.22, 68.69, 75.65, 89.77]\n",
-                "}\n",
-                "df_hits = pd.DataFrame(hits_data)\n",
-                "\n",
-                "# Grau de consenso no RF\n",
-                "consensus_data = {\n",
-                "    'Nivel_Consenso': [\n",
-                "        '4 de 4 (Unanimidade / Independente)',\n",
-                "        '3 de 4 (Alto Consenso)',\n",
-                "        '2 de 4 (Consenso Parcial / Dividido)',\n",
-                "        '1 de 4 (Frágil / Resgate Exclusivo)',\n",
-                "        '0 de 4 (Erro Comum / Incorrigível)'\n",
-                "    ],\n",
-                "    'Audios': [961, 458, 256, 246, 219],\n",
-                "    'Pct_Total_Large': [44.91, 21.40, 11.96, 11.50, 10.23],\n",
-                "    'Pct_Dentro_Oraculo': [50.03, 23.84, 13.33, 12.81, np.nan]\n",
-                "}\n",
-                "df_consensus = pd.DataFrame(consensus_data)\n",
-                "\n",
-                "# Resgates exclusivos por representação no RF\n",
-                "exclusive_data = {\n",
-                "    'Representacao': ['HHT Exclusivo', 'MEL Exclusivo', 'LOFAR Exclusivo', 'DEMON Exclusivo'],\n",
-                "    'Audios_Salvos': [25, 26, 65, 130],\n",
-                "    'Percentual': [1.17, 1.21, 3.04, 6.07]\n",
-                "}\n",
-                "df_exclusive = pd.DataFrame(exclusive_data)\n",
-                "\n",
-                "# Efeito Reverso em Relação ao Baseline LOFAR (1.619 acertos, 521 erros)\n",
-                "reverse_data = {\n",
-                "    'Destino_Troca': ['Para MEL', 'Para HHT', 'Para DEMON'],\n",
-                "    'Mantem_do_LOFAR': [1309, 1382, 1223],\n",
-                "    'Perde_do_LOFAR (Efeito Reverso)': [310, 237, 396],\n",
-                "    'Pct_Perda_Acertos (%)': [19.15, 14.64, 24.46],\n",
-                "    'Resgata_Erros_LOFAR': [118, 88, 237],\n",
-                "    'Pct_Resgate_Erros (%)': [22.65, 16.89, 45.49],\n",
-                "    'Saldo_Liquido_Audios': [-192, -149, -159]\n",
-                "}\n",
-                "df_reverse = pd.DataFrame(reverse_data)\n",
-                "\n",
-                "# Padrão de confusão quando erra em LARGE no RF\n",
-                "confusion_pattern_data = {\n",
-                "    'Representacao': ['LOFAR (521 erros)', 'MEL (713 erros)', 'HHT (670 erros)', 'DEMON (680 erros)'],\n",
-                "    'Confundido_SMALL_Pct': [53.17, 56.24, 59.70, 81.76],\n",
-                "    'Confundido_MEDIUM_Pct': [42.80, 41.23, 35.07, 15.15],\n",
-                "    'Confundido_AMBIENTAL_Pct': [4.03, 2.52, 5.22, 3.09]\n",
-                "}\n",
-                "df_confusion_pattern = pd.DataFrame(confusion_pattern_data)\n",
-                "\n",
-                "display(df_hits)\n",
-                "display(df_consensus)\n",
-                "display(df_reverse)"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 3. O Efeito Oráculo no Random Forest: Desempenho Isolado vs. Teto Teórico\n",
-                "\n",
-                "O **LOFAR lidera o desempenho individual com $75{,}65\\\\%$ de recall (1.619 acertos)**.\n",
-                "\n",
-                "No entanto, o **Oráculo RF atinge o recorde de $89{,}77\\\\%$ de recall (1.921 acertos em 2.140 cargueiros)**:\n",
-                "- Um ganho de **$+14{,}1$ pontos percentuais** sobre o melhor modelo isolado;\n",
-                "- O erro comum (onde as 4 florestas erram simultaneamente) cai para apenas **$10{,}23\\\\%$ (219 áudios)**, o menor de todo o dataset."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 3. Gráfico: Desempenho Isolado vs Teto Teórico do Oráculo em LARGE (RF)\n",
-                "plt.figure(figsize=(10, 5.5))\n",
-                "colors = ['#2980b9', '#95a5a6', '#9b59b6', '#e67e22', '#27ae60']\n",
-                "bars = plt.bar(df_hits['Representacao'], df_hits['Recall_Pct'], color=colors, width=0.55, edgecolor='black', linewidth=0.8)\n",
-                "bars[-1].set_hatch('//')\n",
-                "\n",
-                "plt.axhline(89.77, color='#27ae60', linestyle='--', lw=1.5, alpha=0.7, label='Teto do Oráculo RF (89.77%)')\n",
-                "plt.axhline(75.65, color='#e67e22', linestyle=':', lw=1.5, alpha=0.7, label='Melhor Isolado LOFAR (75.65%)')\n",
-                "\n",
-                "plt.title('Recall Random Forest na Classe LARGE: Modelos Isolados vs. Teto Teórico do Oráculo', fontweight='bold', pad=12)\n",
-                "plt.ylabel('Recall em LARGE (%)')\n",
-                "plt.ylim(0, 105)\n",
-                "\n",
-                "for bar in bars:\n",
-                "    h = bar.get_height()\n",
-                "    plt.annotate(f'{h:.1f}%', xy=(bar.get_x() + bar.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
-                "                 fontsize=10.5, fontweight='bold', color='#111')\n",
-                "\n",
-                "plt.legend(loc='upper left', frameon=True)\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 4. Análise de Grau de Consenso e Risco do Efeito Reverso em LARGE (RF)\n",
-                "\n",
-                "### 4.1 A Pirâmide de Consenso no Random Forest\n",
-                "- **Unanimidade (4/4 certas): $961$ áudios ($44{,}91\\\\%$)** — a mais alta registrada no IARA;\n",
-                "- **Alto Consenso (3/4 certas): $458$ áudios ($21{,}40\\\\%$)**;\n",
-                "- **Consenso Dividido (2/4 certas): $256$ áudios ($11{,}96\\\\%$)**;\n",
-                "- **Resgate Exclusivo (1/4 certa): $246$ áudios ($11{,}50\\\\%$)**;\n",
-                "- **Erro Comum (0/4 certas): $219$ áudios ($10{,}23\\\\%$)**.\n",
-                "\n",
-                "### 4.2 O Efeito Reverso a partir do LOFAR (1.619 Acertos)\n",
-                "- **Chavear para MEL:** Perde $310$ e ganha $118$ (saldo líquido: $-192$ áudios);\n",
-                "- **Chavear para HHT:** Perde $237$ e ganha $88$ (saldo: $-149$ áudios);\n",
-                "- **Chavear para DEMON:** Perde $396$ e ganha $237$ (saldo: $-159$ áudios).\n",
-                "\n",
-                "Como o LOFAR acerta $75{,}65\\\\%$, chaveamento cego sem critério reduz acertos globais.\n",
-                "\n",
-                "### 4.3 O Sucesso da Votação por Maioria em LARGE (RF)\n",
-                "- **Unanimidade (4/4):** $44{,}91\\\\%$ ($961$ áudios);\n",
-                "- **Maioria Estrita ($\\\\ge 3/4$):** $66{,}31\\\\%$ ($1.419$ áudios);\n",
-                "- **Maioria Simples / Empate ($\\\\ge 2/4$):** **$78{,}27\\\\%$ ($1.675$ áudios)** $\\\\rightarrow$ **Supera o LOFAR isolado ($75{,}65\\\\%$) em $+2{,}62$ p.p.!**\n",
-                "- **Oráculo ($\\\\ge 1/4$):** **$89{,}77\\\\%$ ($1.921$ áudios)**."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 4. Visualização do Grau de Consenso e do Efeito Reverso em LARGE (RF)\n",
-                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))\n",
-                "\n",
-                "# Painel 1: Pirâmide de Consenso dos 2.140 Áudios\n",
-                "labels_cons = ['4 Entradas\\n(Unânime)', '3 Entradas\\n(Alto Consenso)', '2 Entradas\\n(Dividido)', '1 Entrada\\n(Exclusivo/Frágil)', '0 Entradas\\n(Erro Comum)']\n",
-                "counts_cons = [961, 458, 256, 246, 219]\n",
-                "pcts_cons = [44.91, 21.40, 11.96, 11.50, 10.23]\n",
-                "colors_cons = ['#27ae60', '#2980b9', '#f39c12', '#e74c3c', '#7f8c8d']\n",
-                "\n",
-                "bars1 = ax1.bar(labels_cons, counts_cons, color=colors_cons, edgecolor='black', linewidth=0.8, width=0.55)\n",
-                "ax1.set_title('Grau de Consenso RF em LARGE (Total: 2.140 Áudios no 5x2cv)', fontweight='bold', pad=12)\n",
-                "ax1.set_ylabel('Quantidade de Áudios de LARGE')\n",
-                "ax1.set_ylim(0, 1100)\n",
-                "\n",
-                "for bar, pct in zip(bars1, pcts_cons):\n",
-                "    h = bar.get_height()\n",
-                "    ax1.annotate(f'{h} ({pct:.1f}%)', xy=(bar.get_x() + bar.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom',\n",
-                "                 fontsize=9.5, fontweight='bold')\n",
-                "\n",
-                "# Painel 2: Simulação do Efeito Reverso a partir do LOFAR (1.619 Acertos no RF)\n",
-                "destinos = ['Para MEL', 'Para HHT', 'Para DEMON']\n",
-                "perdas = [310, 237, 396]\n",
-                "resgates = [118, 88, 237]\n",
-                "x = np.arange(len(destinos))\n",
-                "w = 0.35\n",
-                "\n",
-                "r1 = ax2.bar(x - w/2, perdas, w, label='Perde Acertos do LOFAR (Efeito Reverso)', color='#c0392b', alpha=0.9, edgecolor='black')\n",
-                "r2 = ax2.bar(x + w/2, resgates, w, label='Resgata dos Erros do LOFAR (Ganhos)', color='#27ae60', alpha=0.9, edgecolor='black')\n",
-                "\n",
-                "ax2.set_title('Balanço do Efeito Reverso no RF ao Trocar de Entrada a partir do LOFAR', fontweight='bold', pad=12)\n",
-                "ax2.set_ylabel('Quantidade de Áudios de LARGE')\n",
-                "ax2.set_xticks(x)\n",
-                "ax2.set_xticklabels(destinos, fontweight='bold', fontsize=11)\n",
-                "ax2.set_ylim(0, 480)\n",
-                "ax2.legend(loc='upper right', frameon=True)\n",
-                "\n",
-                "for rect in r1:\n",
-                "    h = rect.get_height()\n",
-                "    ax2.annotate(f'-{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#900')\n",
-                "\n",
-                "for rect in r2:\n",
-                "    h = rect.get_height()\n",
-                "    ax2.annotate(f'+{h}', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 3), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#006400')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 5. Resgates Exclusivos no Random Forest em LARGE: A Suprema Hegemonia do DEMON\n",
-                "\n",
-                "Em **$246$ áudios de `LARGE` ($11{,}50\\\\%$)**, três entradas falharam e apenas um modelo de floresta aleatória acertou o cargueiro:\n",
-                "\n",
-                "1. **DEMON Isolado (130 navios salvos exclusivamente — $6{,}07\\\\%$):**\n",
-                "   - É o **maior resgate exclusivo registrado em todo o estudo comparativo**!\n",
-                "   - O DEMON isola com total pureza as frequências de batimento de pás de hélices maciças acopladas a eixos ultralentos ($< 2\\\\text{ Hz}$).\n",
-                "2. **LOFAR Puro (65 navios salvos exclusivamente — $3{,}04\\\\%$):**\n",
-                "   - Raias tônicas discretas de maquinário de grande porte.\n",
-                "3. **MEL Isolado (26 navios salvos exclusivamente — $1{,}21\\\\%$):**\n",
-                "   - Potência espectral agregada de descarga.\n",
-                "4. **HHT Puro (25 navios salvos exclusivamente — $1{,}17\\\\%$):**\n",
-                "   - Instabilidades transitórias na cavitação de hélice."
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 5. Gráfico: Resgates Exclusivos na Classe LARGE (RF)\n",
-                "plt.figure(figsize=(9, 4.5))\n",
-                "colors_excl = ['#9b59b6', '#2980b9', '#e67e22', '#16a085']\n",
-                "bars_excl = plt.barh(df_exclusive['Representacao'], df_exclusive['Audios_Salvos'], color=colors_excl, height=0.5, edgecolor='black', linewidth=0.8)\n",
-                "\n",
-                "plt.title('Resgates Exclusivos RF na Classe LARGE (Total: 246 Áudios Únicos)', fontweight='bold', pad=12)\n",
-                "plt.xlabel('Número de Áudios Salvos Exclusivamente')\n",
-                "plt.xlim(0, 160)\n",
-                "\n",
-                "for idx, (bar, pct) in enumerate(zip(bars_excl, df_exclusive['Percentual'])):\n",
-                "    w = bar.get_width()\n",
-                "    tag = \"  <-- CAMPEÃO DE RESGATES EM LARGE\" if idx == 3 else \"\"\n",
-                "    plt.annotate(f'{w} áudios ({pct:.1f}%){tag}', xy=(w, bar.get_y() + bar.get_height()/2),\n",
-                "                 xytext=(5, 0), textcoords=\"offset points\", ha='left', va='center',\n",
-                "                 fontsize=9.5, fontweight='bold', color='#111' if idx != 3 else '#117864')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 6. Padrões de Erro em LARGE: Para Onde Cada Entrada Envia o Cargueiro no RF?\n",
-                "\n",
-                "| Entrada | Principal Erro | Porcentagem do Erro | Segundo Maior Erro | Diagnóstico Mecânico |\n",
-                "| :--- | :---: | :---: | :---: | :--- |\n",
-                "| **LOFAR** | **`SMALL`** | **$53{,}17\\\\%$** | `MEDIUM` ($42{,}80\\\\%$) | Na ausência de raias tônicas fortes, o particionamento de Fourier cai em espectro contínuo leve. |\n",
-                "| **MEL** | **`SMALL`** | **$56{,}24\\\\%$** | `MEDIUM` ($41{,}23\\\\%$) | Baixa relação sinal-ruído em áudios distantes assemelha-se a ruído de lanchas. |\n",
-                "| **HHT** | **`SMALL`** | **$59{,}70\\\\%$** | `MEDIUM` ($35{,}07\\\\%$) | Decomposição de IMFs de alta frequência espalha energia instantânea. |\n",
-                "| **DEMON** | **`SMALL`** | **$81{,}76\\\\%$** | `MEDIUM` ($15{,}15\\\\%$) | Quando a modulação perde o pico subsônico, o espectro residual demodulado assemelha-se a cavitação fraca de motores de popa. |"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 6. Gráfico: Destino do Erro em LARGE por Representação (RF)\n",
-                "plt.figure(figsize=(10, 5.5))\n",
-                "reps = df_confusion_pattern['Representacao']\n",
-                "sml_err = df_confusion_pattern['Confundido_SMALL_Pct']\n",
-                "med_err = df_confusion_pattern['Confundido_MEDIUM_Pct']\n",
-                "amb_err = df_confusion_pattern['Confundido_AMBIENTAL_Pct']\n",
-                "\n",
-                "w = 0.52\n",
-                "p1 = plt.bar(reps, sml_err, w, label='Confundido com SMALL (Lanchas)', color='#3498db', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "p2 = plt.bar(reps, med_err, w, bottom=sml_err, label='Confundido com MEDIUM (Rebocadores)', color='#f39c12', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "p3 = plt.bar(reps, amb_err, w, bottom=np.array(sml_err)+np.array(med_err), label='Confundido com AMBIENTAL (Ruído)', color='#95a5a6', alpha=0.9, edgecolor='black', linewidth=0.6)\n",
-                "\n",
-                "plt.title('Padrão de Erro RF na Classe LARGE: Para onde cada entrada envia o cargueiro? (%)', fontweight='bold', pad=12)\n",
-                "plt.ylabel('Distribuição Percentual dos Erros (%)')\n",
-                "plt.ylim(0, 118)\n",
-                "plt.legend(loc='upper right', frameon=True)\n",
-                "\n",
-                "for i in range(len(reps)):\n",
-                "    plt.text(i, sml_err[i]/2, f'{sml_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
-                "    plt.text(i, sml_err[i] + med_err[i]/2, f'{med_err[i]:.1f}%', ha='center', va='center', fontsize=9, fontweight='bold', color='white')\n",
-                "    if amb_err[i] > 3:\n",
-                "        plt.text(i, sml_err[i] + med_err[i] + amb_err[i]/2, f'{amb_err[i]:.1f}%', ha='center', va='center', fontsize=8.5, fontweight='bold', color='white')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 7. Painel Consolidado de Descoberta Científica (RF)\n",
-                "\n",
-                "Abaixo exibimos o painel visual oficial de 4 quadrantes para a classe `LARGE` com o modelo Random Forest:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "# 7. Exibição do Gráfico Oficial Consolidado salvo em disco\n",
-                "from IPython.display import Image, display\n",
-                "\n",
-                "img_path = 'reports/analise_complementaridade_rf_large_oraculo.png'\n",
-                "if os.path.exists(img_path):\n",
-                "    display(Image(filename=img_path))\n",
-                "else:\n",
-                "    print(f\"Imagem {img_path} não encontrada. Execute 'scratch/generate_rf_predictions_and_analysis.py' para gerá-la.\")"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 8. Comparativo Trilateral em LARGE: SVM Nyström vs. MLP PyTorch vs. Random Forest\n",
-                "\n",
-                "| Dimensão Analítica | SVM Nyström (Notebook 13) | MLP PyTorch (Notebook 16) | Random Forest (Notebook 19) | Conclusão Científica |\n",
-                "| :--- | :---: | :---: | :---: | :--- |\n",
-                "| **Melhor Modelo Isolado** | **$76{,}31\\\\%$** (LOFAR) | $74{,}72\\\\%$ (LOFAR) | $75{,}65\\\\%$ (LOFAR) | LOFAR é a âncora soberana de cargueiros em todas as 3 famílias. |\n",
-                "| **Teto do Oráculo** | $88{,}18\\\\%$ ($1.887$) | $88{,}83\\\\%$ ($1.901$) | **$89{,}77\\\\%$ ($1.921$)** | **O Random Forest atinge o maior teto de LARGE da pesquisa (quase $90\\\\%$)!** |\n",
-                "| **Taxa de Unanimidade (4/4)** | $36{,}92\\\\%$ ($790$) | $42{,}99\\\\%$ ($920$) | **$44{,}91\\\\%$ ($961$)** | Quase metade de todos os cargueiros é imune à escolha da transformada no RF. |\n",
-                "| **Erro Comum Incorrigível** | $11{,}82\\\\%$ ($253$) | $11{,}17\\\\%$ ($239$) | **$10{,}23\\\\%$ ($219$)** | Menor erro irrecuperável de todo o dataset IARA. |\n",
-                "| **Campeão de Resgates Exclusivos** | DEMON ($83$ navios) | DEMON ($117$ navios) | **DEMON ($130$ navios!)** | **Consagração absoluta:** DEMON é indispensável para navios pesados nas 3 famílias. |\n",
-                "| **Votação Simples ($\\\\ge 2/4$)** | $77{,}34\\\\%$ ($+1{,}0$ p.p.) | $78{,}08\\\\%$ ($+3{,}36$ p.p.) | **$78{,}27\\\\%$ ($+2{,}62$ p.p.)** | A votação majoritária supera o LOFAR isolado nas 3 arquiteturas! |\n",
-                "\n",
-                "---\n",
-                "\n",
-                "## 9. A Grande Síntese Tridimensional: SVM vs. MLP vs. Random Forest\n",
-                "\n",
-                "Com a conclusão dos 9 notebooks de análise de complementaridade (Notebooks 10 a 19), consolida-se um quadro teórico completo da classificação acústica submarina:\n",
-                "\n",
-                "1. **Random Forest se consagra como o campeão dos Tetos de Oráculo:**\n",
-                "   - Atinge o maior oráculo em `SMALL` (**$86{,}52\\\\%$**) e em `LARGE` (**$89{,}77\\\\%$**);\n",
-                "   - Possui a mais alta taxa de unanimidade em `LARGE` ($44{,}91\\\\%$);\n",
-                "2. **O DEMON é a maior descoberta de complementaridade transversal do projeto:**\n",
-                "   - Em todas as 3 famílias (SVM, MLP, RF), o DEMON lidera os resgates exclusivos em cargueiros de grande porte ($83$ no SVM, $117$ no MLP, $130$ no RF);\n",
-                "   - No Random Forest, o DEMON também lidera os resgates em lanchas rápidas ($178$ lanchas salvas);\n",
-                "3. **A Hierarquia de Robustez Acústica:**\n",
-                "   - `SMALL` ($\\\\approx 5\text{--}17\\\\%$ unanimidade) $\\\\ll$ `MEDIUM` ($\\\\approx 27\text{--}30\\\\%$ unanimidade) $\\\\ll$ `LARGE` ($\\\\approx 37\text{--}45\\\\%$ unanimidade);\n",
-                "   - Prova definitiva de que o ruído hidrodinâmico de marulho penaliza assimetricamente embarcações leves, exigindo fusão multimodal adaptativa."
-            ]
-        }
-    ]
+    ns = C.run_helper()
+    tri_cells, A_fam = C.secao_trilateral(ns, CLASSE, NB, 8)
+    a = A_fam["RF"]
+    orc, cons, ex, v = a["oraculo"], a["consenso"], a["exclusivos"], a["voto"]
+    b = a["melhor"]
+    champ = ex["Instâncias"].idxmax()
+    unan = {f: A_fam[f]["consenso"]["% da classe"].iloc[0] for f in A_fam}
+    orc_f = {f: A_fam[f]["oraculo"]["agregado"] for f in A_fam}
+    voto_rel = ("não difere significativamente do" if v["p"] >= 0.05 else
+                ("é significativamente maior que o" if v["recall"][0] > v["melhor"][0] else "é significativamente menor que o"))
 
-    nb_data = {
-        "cells": cells,
-        "metadata": {
-            "kernelspec": {
-                "display_name": "Python 3",
-                "language": "python",
-                "name": "python3"
-            },
-            "language_info": {
-                "codemirror_mode": {"name": "ipython", "version": 3},
-                "file_extension": ".py",
-                "mimetype": "text/x-python",
-                "name": "python",
-                "nbconvert_exporter": "python",
-                "pygments_lexer": "ipython3",
-                "version": "3.10.12"
-            }
-        },
-        "nbformat": 4,
-        "nbformat_minor": 4
-    }
+    header = f"""# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
+### Notebook {NB}: Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest — Classe LARGE
 
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
-    with open(filename, "w", encoding="utf-8") as f:
-        json.dump(nb_data, f, indent=2, ensure_ascii=False)
-    print(f"Notebook gerado com sucesso em '{filename}'!")
+**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)
+**Data:** Outubro de 2026
+
+---
+
+## Resumo Executivo da Investigação com Random Forest (RF)
+
+A classe **`LARGE`** (embarcações com comprimento ≥ 100 m, conforme `src/iara/default.py`) foi avaliada em **{br(a['n_inst'])} instâncias de teste** (arquivo × fold; **{br(a['n_grav'])} gravações distintas** de **{br(a['n_navios'])} navios**) nos 10 folds do protocolo 5×2cv, com **Random Forest (100 árvores, `class_weight='balanced'`)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).
+
+O objetivo é confrontar os resultados do SVM (Notebook 13) e do MLP (Notebook 16) com os do Random Forest na classe `LARGE`.
+
+{C.aviso_modelos(ns)}
+
+### Principais Descobertas no Random Forest:
+1. **Oráculo RF de {br(orc['agregado'])}% ({br(orc['acertos'])} / {br(a['n_inst'])} instâncias), não realizável; sob erros independentes o esperado seria {br(orc['esp_indep'])}%:**
+   - Oráculos das três famílias: SVM {br(orc_f['SVM'])}%, MLP {br(orc_f['MLP'])}%, RF {br(orc_f['RF'])}%.
+   - Erro comum (as 4 erram): **{br(int(cons['Instâncias'].iloc[-1]))} instâncias ({br(cons['% da classe'].iloc[-1])}%)**.
+2. **Unanimidade 4/4 de {br(unan['RF'])}%:** {br(int(cons['Instâncias'].iloc[0]))} instâncias arquivo × fold, que correspondem a **{br(int(cons['Gravações distintas'].iloc[0]))} gravações distintas** (não "navios"). SVM: {br(unan['SVM'])}%; MLP: {br(unan['MLP'])}%. Com o alto consenso, **{br(v['ge3'])}% ({br(v['ge3_n'])} instâncias)** são acertadas por pelo menos 3 entradas.
+3. **Maior número de resgates exclusivos: {champ}** ({br(int(ex.loc[champ, 'Instâncias']))} instâncias = {br(int(ex.loc[champ, 'Gravações distintas']))} gravações de {br(int(ex.loc[champ, 'Navios distintos']))} navios; {br(int(ex.loc[champ, 'Gravações exclusivas em todas as aparições']))} dessas gravações são exclusivas do {champ} em todas as aparições).
+4. **Votação:** "≥2/4" dá {br(v['ge2'])}%, mas conta {br(v['empates_2x2'])} empates 2×2 como acerto e não é realizável. O **voto real** tem recall em `LARGE` de **{br(v['recall'][0])}% ± {br(v['recall'][1])}** e {voto_rel} melhor isolado ({b}, {br(v['melhor'][0])}% ± {br(v['melhor'][1])}; F-test 5×2cv, {p_txt(v['p'])})."""
+
+    # ---- Síntese (Seção 9): calculada aqui com o mesmo código da célula ----
+    S = {cl: (A_fam if cl == CLASSE else {f: ns["analise_classe"](f, cl) for f in FAMS}) for cl in ("SMALL", "MEDIUM", "LARGE")}
+    un = {cl: [S[cl][f]["consenso"]["% da classe"].iloc[0] for f in FAMS] for cl in S}
+    faixa = "; ".join(f"`{cl}` {br(min(x))}–{br(max(x))}%" for cl, x in un.items())
+    ordem_ok = max(un["SMALL"]) < min(un["MEDIUM"]) and max(un["MEDIUM"]) < min(un["LARGE"])
+    ordem_txt = ("Em todas as famílias, a unanimidade cresce de `SMALL` para `MEDIUM` e para `LARGE`, sem sobreposição das faixas."
+                 if ordem_ok else "As faixas de unanimidade das classes se sobrepõem entre famílias.")
+    top_orc = {cl: max(FAMS, key=lambda f: S[cl][f]["oraculo"]["agregado"]) for cl in S}
+    champs = {cl: {f: S[cl][f]["exclusivos"]["Instâncias"].idxmax() for f in FAMS} for cl in S}
+    champ_txt = "; ".join(f"`{cl}`: " + ", ".join(f"{f} → {champs[cl][f]}" for f in FAMS) for cl in S)
+    sig = [(cl, f) for cl in S for f in FAMS if S[cl][f]["voto"]["p"] < 0.05]
+    sig_txt = ("Em nenhuma combinação classe × família o voto real difere significativamente do melhor isolado (F-test 5×2cv, p ≥ 0,05)."
+               if not sig else "O voto real difere significativamente do melhor isolado (p < 0,05) em: " +
+               ", ".join(f"{f}/{cl} ({br(S[cl][f]['voto']['recall'][0])}% vs {br(S[cl][f]['voto']['melhor'][0])}%, {p_txt(S[cl][f]['voto']['p'])})" for cl, f in sig) +
+               "; nas demais combinações, não.")
+    abaixo = all(S[cl][f]["oraculo"]["agregado"] < S[cl][f]["oraculo"]["esp_indep"] for cl in S for f in FAMS)
+
+    sintese_md = f"""## 9. Síntese: SVM vs. MLP vs. Random Forest nas Três Classes de Navio
+
+Consolidação dos Notebooks 10 a 19, calculada na célula abaixo com o mesmo código (instâncias arquivo × fold; as famílias não são homogêneas — ver Seção 8):
+
+1. **Oráculos (não realizáveis):** o maior oráculo é do {top_orc['SMALL']} em `SMALL`, do {top_orc['MEDIUM']} em `MEDIUM` e do {top_orc['LARGE']} em `LARGE`. {"Em todos os 9 casos o oráculo observado fica abaixo do esperado sob erros independentes: as entradas erram de forma correlacionada." if abaixo else "Nem sempre o oráculo observado fica abaixo do esperado sob erros independentes."}
+2. **Maior número de resgates exclusivos por família:** {champ_txt}. Esses resgates são contados em instâncias e são, em grande parte, instáveis entre folds.
+3. **Unanimidade 4/4 por classe (faixa entre famílias):** {faixa}. {ordem_txt} Isso descreve o consenso dos modelos; não identifica a causa física (marulho, distância, etc.).
+4. **Votação real:** {sig_txt} Um oráculo alto não se converte em ganho com voto simples."""
+
+    cells = [C.md(header), C.code(C.SETUP_SRC), C.code(C.HELPER_SRC)]
+    cells += C.cells_comuns(ns, a, NB, "o Navio Grande", HIPOTESES)
+    cells += tri_cells
+    cells += [md(sintese_md), code(SINTESE_CODE)]
+    C.write_notebook(cells, filename)
+
 
 if __name__ == "__main__":
     create_notebook()

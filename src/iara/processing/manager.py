@@ -18,7 +18,10 @@ import numpy as np
 import scipy.io.wavfile as scipy_wav
 import matplotlib.pyplot as plt
 import matplotlib.colors as color
-import tikzplotlib as tikz
+try:
+    import tikzplotlib as tikz
+except ImportError:
+    tikz = None
 
 import iara.utils as iara_utils
 import iara.processing.analysis as iara_proc

@@ -1,331 +1,381 @@
 """
-Script to generate notebooks/8_comparacao_multimodal_mel_demon_lofar.ipynb.
-Comprehensive comparison of MEL, DEMON, LOFAR and FUSION (MEL+DEMON)
-across CNN 2D, SVM Nystroem (m=6000), MLP and Random Forest under the 5x2cv protocol.
+Gera notebooks/8_comparacao_multimodal_mel_demon_lofar.ipynb: comparação de MEL, DEMON, LOFAR e FUSÃO (MEL+DEMON)
+em MLP, SVM Nyström, Random Forest e CNN 2D sob o protocolo 5x2cv.
+
+Todos os números (tabelas, matrizes de confusão, testes e valores citados no markdown) são recalculados a partir
+das predições por janela em results/trainings/{multirep,tests} por notebooks/iara_results.py. O MESMO código que vai
+para as células é executado aqui para gerar os números do markdown.
 """
 
 import os
+import sys
 import json
 
-def build_notebook(filename="notebooks/8_comparacao_multimodal_mel_demon_lofar.ipynb"):
-    cells = [
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
-                "### Notebook 8: Comparativo Multimodal Global — MEL, DEMON, LOFAR e FUSÃO (MEL + DEMON)\n",
-                "#### Modelos Avaliados: Multi-Layer Perceptron (MLP), SVM Nyström ($m=6000$), Random Forest e CNN 2D PyTorch\n",
-                "\n",
-                "Este notebook consolida a investigação experimental mais abrangente do projeto IARA, avaliando sistematicamente a interação entre **quatro representações acústicas** e **quatro grandes famílias de aprendizado de máquina** sob o protocolo oficial de **$5\\times2$ validação cruzada (10 folds)** com isolamento estrito de `Ship ID` sobre todos os **1.706 áudios de UO** (*Silva et al.*, IEEE Access 2025).\n",
-                "\n",
-                "--- \n",
-                "\n",
-                "### Representações Espectrais Avaliadas:\n",
-                "1. **MEL (256 filtros log-triangulares):** Integração de energia contínua de banda larga ($0\\text{ a }11\\text{ kHz}$), capturando ruído de cavitação e combustão.\n",
-                "2. **DEMON (253 bins de modulação):** Demodulação de envoltória em baixa frequência ($0\\text{ a }50\\text{ Hz}$), capturando taxa de giro do eixo ($\text{RPM}$) e frequência de passagem de pás da hélice.\n",
-                "3. **LOFAR (1024 bins de banda estreita linear):** Espectrograma clássico de alta resolução de raias harmônicas de maquinário.\n",
-                "4. **FUSÃO MULTIMODAL (509 atributos):** Concatenação direta $\\text{MEL} (256) + \\text{DEMON} (253)$ na mesma grade temporal (janelas de 5,12s sincronizadas).\n",
-                "\n",
-                "--- \n",
-                "\n",
-                "### Famílias de Aprendizado de Máquina:\n",
-                "1. **Multi-Layer Perceptron (MLP PyTorch):** Camadas densas com `BatchNorm1d` e `Dropout`.\n",
-                "2. **SVM Nyström ($m=6000$):** Mapeamento em espaço de Hilbert de alta dimensão via kernel RBF Gaussiano com penalização ElasticNet.\n",
-                "3. **Random Forest (100 árvores):** Ensembles baseados em árvores de decisão ortogonais com balanceamento de pesos.\n",
-                "4. **CNN 2D PyTorch (GPU RTX 5060 Ti):** Blocos sequenciais de tensores temporais ($32 \\times D$) com convoluções bidimensionais.\n"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "import os\n",
-                "import sys\n",
-                "import numpy as np\n",
-                "import pandas as pd\n",
-                "import matplotlib.pyplot as plt\n",
-                "from IPython.display import display, HTML\n",
-                "\n",
-                "# Configuração visual acadêmica\n",
-                "plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')\n",
-                "plt.rcParams.update({\n",
-                "    'font.family': 'sans-serif',\n",
-                "    'font.size': 11,\n",
-                "    'axes.labelsize': 12,\n",
-                "    'axes.titlesize': 13,\n",
-                "    'xtick.labelsize': 10,\n",
-                "    'ytick.labelsize': 10,\n",
-                "    'figure.titlesize': 15,\n",
-                "    'figure.dpi': 130\n",
-                "})\n",
-                "\n",
-                "print('Ambiente carregado com sucesso!')\n"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 1. Tabela Mestra Comparativa Global ($4 \\times 4$)\n",
-                "\n",
-                "Abaixo apresentamos a matriz completa de resultados dos 16 pares (Modelo $\\times$ Representação) para **4 Classes** e **3 Classes**:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "dados_completos = [\n",
-                "    # MLP\n",
-                "    {'Modelo': 'MLP (PyTorch)', 'Representacao': 'DEMON', 'Dim': '253-D', 'Acc 4C (%)': 53.10, 'SP 4C (%)': 53.51, 'Rec SMALL 4C (%)': 34.78, 'Acc 3C (%)': 57.25, 'SP 3C (%)': 55.62, 'Rec SMALL 3C (%)': 46.10, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'MLP (PyTorch)', 'Representacao': 'MEL', 'Dim': '256-D', 'Acc 4C (%)': 64.26, 'SP 4C (%)': 64.93, 'Rec SMALL 4C (%)': 45.62, 'Acc 3C (%)': 64.53, 'SP 3C (%)': 63.98, 'Rec SMALL 3C (%)': 55.11, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'MLP (PyTorch)', 'Representacao': 'LOFAR', 'Dim': '1024-D', 'Acc 4C (%)': 67.48, 'SP 4C (%)': 66.51, 'Rec SMALL 4C (%)': 47.80, 'Acc 3C (%)': 65.50, 'SP 3C (%)': 64.20, 'Rec SMALL 3C (%)': 52.30, 'Tipo': 'Baseline Artigo'},\n",
-                "    {'Modelo': 'MLP (PyTorch)', 'Representacao': 'FUSÃO (MEL+DEMON)', 'Dim': '509-D', 'Acc 4C (%)': 66.18, 'SP 4C (%)': 66.99, 'Rec SMALL 4C (%)': 53.93, 'Acc 3C (%)': 66.93, 'SP 3C (%)': 66.18, 'Rec SMALL 3C (%)': 60.90, 'Tipo': 'Proposto (Fusão)'},\n",
-                "    \n",
-                "    # SVM m=6000\n",
-                "    {'Modelo': 'SVM Nyström (m=6000)', 'Representacao': 'DEMON', 'Dim': '253-D', 'Acc 4C (%)': 51.72, 'SP 4C (%)': 46.57, 'Rec SMALL 4C (%)': 15.51, 'Acc 3C (%)': 57.80, 'SP 3C (%)': 53.25, 'Rec SMALL 3C (%)': 57.92, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'SVM Nyström (m=6000)', 'Representacao': 'MEL', 'Dim': '256-D', 'Acc 4C (%)': 64.56, 'SP 4C (%)': 63.78, 'Rec SMALL 4C (%)': 45.60, 'Acc 3C (%)': 64.02, 'SP 3C (%)': 63.50, 'Rec SMALL 3C (%)': 55.00, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'SVM Nyström (m=6000)', 'Representacao': 'LOFAR', 'Dim': '1024-D', 'Acc 4C (%)': 65.47, 'SP 4C (%)': 63.83, 'Rec SMALL 4C (%)': 42.58, 'Acc 3C (%)': 59.41, 'SP 3C (%)': 60.59, 'Rec SMALL 3C (%)': 47.81, 'Tipo': 'Proposto (SVM LOFAR)'},\n",
-                "    {'Modelo': 'SVM Nyström (m=6000)', 'Representacao': 'FUSÃO (MEL+DEMON)', 'Dim': '509-D', 'Acc 4C (%)': 64.55, 'SP 4C (%)': 64.85, 'Rec SMALL 4C (%)': 47.08, 'Acc 3C (%)': 64.58, 'SP 3C (%)': 63.33, 'Rec SMALL 3C (%)': 60.90, 'Tipo': 'Proposto (Fusão)'},\n",
-                "    \n",
-                "    # Random Forest\n",
-                "    {'Modelo': 'Random Forest (100 arv.)', 'Representacao': 'DEMON', 'Dim': '253-D', 'Acc 4C (%)': 50.06, 'SP 4C (%)': 44.30, 'Rec SMALL 4C (%)': 53.40, 'Acc 3C (%)': 56.40, 'SP 3C (%)': 52.10, 'Rec SMALL 3C (%)': 60.51, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'Random Forest (100 arv.)', 'Representacao': 'MEL', 'Dim': '256-D', 'Acc 4C (%)': 62.64, 'SP 4C (%)': 62.22, 'Rec SMALL 4C (%)': 44.20, 'Acc 3C (%)': 62.10, 'SP 3C (%)': 61.50, 'Rec SMALL 3C (%)': 52.40, 'Tipo': 'Baseline Artigo'},\n",
-                "    {'Modelo': 'Random Forest (100 arv.)', 'Representacao': 'LOFAR', 'Dim': '1024-D', 'Acc 4C (%)': 58.87, 'SP 4C (%)': 56.92, 'Rec SMALL 4C (%)': 39.10, 'Acc 3C (%)': 57.50, 'SP 3C (%)': 55.20, 'Rec SMALL 3C (%)': 45.60, 'Tipo': 'Baseline Artigo'},\n",
-                "    {'Modelo': 'Random Forest (100 arv.)', 'Representacao': 'FUSÃO (MEL+DEMON)', 'Dim': '509-D', 'Acc 4C (%)': 61.99, 'SP 4C (%)': 62.05, 'Rec SMALL 4C (%)': 59.44, 'Acc 3C (%)': 61.77, 'SP 3C (%)': 61.16, 'Rec SMALL 3C (%)': 59.83, 'Tipo': 'Proposto (Fusão)'},\n",
-                "    \n",
-                "    # CNN 2D\n",
-                "    {'Modelo': 'CNN 2D PyTorch', 'Representacao': 'DEMON', 'Dim': '32x253', 'Acc 4C (%)': 42.47, 'SP 4C (%)': 35.72, 'Rec SMALL 4C (%)': 19.33, 'Acc 3C (%)': 47.10, 'SP 3C (%)': 32.15, 'Rec SMALL 3C (%)': 22.40, 'Tipo': 'Isolado'},\n",
-                "    {'Modelo': 'CNN 2D PyTorch', 'Representacao': 'MEL', 'Dim': '32x256', 'Acc 4C (%)': 64.99, 'SP 4C (%)': 63.52, 'Rec SMALL 4C (%)': 46.20, 'Acc 3C (%)': 65.10, 'SP 3C (%)': 63.80, 'Rec SMALL 3C (%)': 54.80, 'Tipo': 'Baseline Artigo'},\n",
-                "    {'Modelo': 'CNN 2D PyTorch', 'Representacao': 'LOFAR', 'Dim': '32x1024', 'Acc 4C (%)': 67.02, 'SP 4C (%)': 66.05, 'Rec SMALL 4C (%)': 47.10, 'Acc 3C (%)': 65.80, 'SP 3C (%)': 64.50, 'Rec SMALL 3C (%)': 53.10, 'Tipo': 'Baseline Artigo'},\n",
-                "    {'Modelo': 'CNN 2D PyTorch', 'Representacao': 'FUSÃO (MEL+DEMON)', 'Dim': '32x509', 'Acc 4C (%)': 38.22, 'SP 4C (%)': 23.96, 'Rec SMALL 4C (%)': 28.09, 'Acc 3C (%)': 43.92, 'SP 3C (%)': 22.03, 'Rec SMALL 3C (%)': 33.15, 'Tipo': 'Proposto (Fusão)'}\n",
-                "]\n",
-                "\n",
-                "df_master = pd.DataFrame(dados_completos)\n",
-                "display(df_master)\n"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 2. Gráfico 1: O Impacto da Fusão MEL + DEMON vs. LOFAR (Índice SP Oficial)\n",
-                "\n",
-                "Abaixo plotamos a comparação de todas as representações para os 4 modelos:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "fig, ax = plt.subplots(figsize=(15, 7))\n",
-                "\n",
-                "models = ['MLP (PyTorch)', 'SVM Nyström (m=6000)', 'Random Forest (100 arv.)', 'CNN 2D PyTorch']\n",
-                "x = np.arange(len(models))\n",
-                "width = 0.20\n",
-                "\n",
-                "# Coletar SP por representação\n",
-                "sp_demon = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'DEMON')]['SP 4C (%)'].values[0] for m in models]\n",
-                "sp_mel   = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'MEL')]['SP 4C (%)'].values[0] for m in models]\n",
-                "sp_lofar = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'LOFAR')]['SP 4C (%)'].values[0] for m in models]\n",
-                "sp_fused = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'FUSÃO (MEL+DEMON)')]['SP 4C (%)'].values[0] for m in models]\n",
-                "\n",
-                "r1 = ax.bar(x - 1.5*width, sp_demon, width, label='DEMON Puro (253-D)', color='#95a5a6', alpha=0.9)\n",
-                "r2 = ax.bar(x - 0.5*width, sp_mel,   width, label='MEL Puro (256-D)',   color='#3498db', alpha=0.9)\n",
-                "r3 = ax.bar(x + 0.5*width, sp_lofar, width, label='LOFAR Puro (1024-D)', color='#e67e22', alpha=0.9)\n",
-                "r4 = ax.bar(x + 1.5*width, sp_fused, width, label='FUSÃO MEL+DEMON (509-D)', color='#27ae60', alpha=0.95)\n",
-                "\n",
-                "ax.set_title('Comparativo Global do Índice SP Oficial (%): 4 Modelos × 4 Representações (5x2cv)', fontweight='bold', fontsize=14, pad=15)\n",
-                "ax.set_ylabel('Índice SP Oficial (%)', fontweight='bold', fontsize=12)\n",
-                "ax.set_xticks(x)\n",
-                "ax.set_xticklabels(models, fontweight='bold', fontsize=11)\n",
-                "ax.set_ylim(0, 78)\n",
-                "ax.legend(loc='lower left', frameon=True, fontsize=10.5)\n",
-                "\n",
-                "for rects in [r1, r2, r3, r4]:\n",
-                "    for rect in rects:\n",
-                "        h = rect.get_height()\n",
-                "        c = '#c0392b' if h < 30 else 'black'\n",
-                "        weight = 'bold' if rects == r4 else 'normal'\n",
-                "        ax.annotate(f'{h:.1f}%', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                    xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9, fontweight=weight, color=c)\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()\n"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 3. Gráfico 2: Desbloqueio da Classe Crítica `SMALL` (Lanchas Rápidas)\n",
-                "\n",
-                "O grande desafio histórico do dataset IARA sempre foi identificar embarcações pequenas (`SMALL`), cuja sensibilidade no LOFAR e no MEL nunca passava de $45\\%\\text{--}47\\%$. Veja abaixo o impacto do DEMON na sensibilidade de `SMALL`:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))\n",
-                "\n",
-                "# 4 Classes\n",
-                "sm_4c_mel   = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'MEL')]['Rec SMALL 4C (%)'].values[0] for m in models[:3]]\n",
-                "sm_4c_lofar = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'LOFAR')]['Rec SMALL 4C (%)'].values[0] for m in models[:3]]\n",
-                "sm_4c_fused = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'FUSÃO (MEL+DEMON)')]['Rec SMALL 4C (%)'].values[0] for m in models[:3]]\n",
-                "\n",
-                "x_vec = np.arange(len(models[:3]))\n",
-                "w = 0.25\n",
-                "\n",
-                "ax1.bar(x_vec - w, sm_4c_mel, w, label='MEL Puro', color='#3498db')\n",
-                "ax1.bar(x_vec, sm_4c_lofar, w, label='LOFAR Puro', color='#e67e22')\n",
-                "r_f = ax1.bar(x_vec + w, sm_4c_fused, w, label='FUSÃO MEL+DEMON', color='#27ae60')\n",
-                "ax1.set_title('Sensibilidade em SMALL — 4 Classes (%)', fontweight='bold')\n",
-                "ax1.set_xticks(x_vec)\n",
-                "ax1.set_xticklabels(models[:3], fontweight='bold')\n",
-                "ax1.set_ylim(0, 75)\n",
-                "ax1.legend()\n",
-                "\n",
-                "for rect in r_f:\n",
-                "    h = rect.get_height()\n",
-                "    ax1.annotate(f'{h:.1f}%', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#27ae60')\n",
-                "\n",
-                "# 3 Classes (Apenas Embarcações)\n",
-                "sm_3c_mel   = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'MEL')]['Rec SMALL 3C (%)'].values[0] for m in models[:3]]\n",
-                "sm_3c_lofar = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'LOFAR')]['Rec SMALL 3C (%)'].values[0] for m in models[:3]]\n",
-                "sm_3c_fused = [df_master[(df_master['Modelo'] == m) & (df_master['Representacao'] == 'FUSÃO (MEL+DEMON)')]['Rec SMALL 3C (%)'].values[0] for m in models[:3]]\n",
-                "\n",
-                "ax2.bar(x_vec - w, sm_3c_mel, w, label='MEL Puro', color='#3498db')\n",
-                "ax2.bar(x_vec, sm_3c_lofar, w, label='LOFAR Puro', color='#e67e22')\n",
-                "r_f3 = ax2.bar(x_vec + w, sm_3c_fused, w, label='FUSÃO MEL+DEMON', color='#27ae60')\n",
-                "ax2.set_title('Sensibilidade em SMALL — 3 Classes (Embarcações) (%)', fontweight='bold')\n",
-                "ax2.set_xticks(x_vec)\n",
-                "ax2.set_xticklabels(models[:3], fontweight='bold')\n",
-                "ax2.set_ylim(0, 75)\n",
-                "ax2.legend()\n",
-                "\n",
-                "for rect in r_f3:\n",
-                "    h = rect.get_height()\n",
-                "    ax2.annotate(f'{h:.1f}%', xy=(rect.get_x() + rect.get_width()/2, h),\n",
-                "                 xytext=(0, 4), textcoords=\"offset points\", ha='center', va='bottom', fontsize=9.5, fontweight='bold', color='#27ae60')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()\n"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 4. Matrizes de Confusão Normalizadas da Fusão (MLP e SVM)\n",
-                "\n",
-                "Abaixo comparamos as matrizes de confusão do campeão geral (**MLP na Fusão**) e do **SVM ($m=6000$)**:"
-            ]
-        },
-        {
-            "cell_type": "code",
-            "execution_count": None,
-            "metadata": {},
-            "outputs": [],
-            "source": [
-                "cm_mlp_4c = np.array([\n",
-                "    [53.9, 23.0, 17.4,  5.7],\n",
-                "    [23.8, 63.6, 10.3,  2.3],\n",
-                "    [14.9, 11.0, 71.5,  2.7],\n",
-                "    [11.2,  4.9,  3.1, 80.8]\n",
-                "])\n",
-                "\n",
-                "cm_svm_4c = np.array([\n",
-                "    [47.1, 25.3, 20.5,  7.1],\n",
-                "    [21.7, 65.1, 10.7,  2.6],\n",
-                "    [13.6, 11.3, 72.1,  3.0],\n",
-                "    [ 9.7,  5.6,  5.7, 79.0]\n",
-                "])\n",
-                "\n",
-                "classes = ['SMALL', 'MEDIUM', 'LARGE', 'AMBIENTAL']\n",
-                "\n",
-                "fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(15, 6))\n",
-                "\n",
-                "im1 = ax1.imshow(cm_mlp_4c, cmap='Blues', vmin=0, vmax=100)\n",
-                "ax1.set_title('Matriz de Confusão: MLP na FUSÃO MEL+DEMON (SP = 66.99%)', fontweight='bold')\n",
-                "ax1.set_xticks(range(4)); ax1.set_yticks(range(4))\n",
-                "ax1.set_xticklabels(classes, fontweight='bold'); ax1.set_yticklabels(classes, fontweight='bold')\n",
-                "for i in range(4):\n",
-                "    for j in range(4):\n",
-                "        val = cm_mlp_4c[i, j]\n",
-                "        ax1.text(j, i, f'{val:.1f}%', ha='center', va='center', color='white' if val > 45 else 'black', fontweight='bold' if i == j else 'normal')\n",
-                "\n",
-                "im2 = ax2.imshow(cm_svm_4c, cmap='Greens', vmin=0, vmax=100)\n",
-                "ax2.set_title('Matriz de Confusão: SVM (m=6000) na FUSÃO MEL+DEMON (SP = 64.85%)', fontweight='bold')\n",
-                "ax2.set_xticks(range(4)); ax2.set_yticks(range(4))\n",
-                "ax2.set_xticklabels(classes, fontweight='bold'); ax2.set_yticklabels(classes, fontweight='bold')\n",
-                "for i in range(4):\n",
-                "    for j in range(4):\n",
-                "        val = cm_svm_4c[i, j]\n",
-                "        ax2.text(j, i, f'{val:.1f}%', ha='center', va='center', color='white' if val > 45 else 'black', fontweight='bold' if i == j else 'normal')\n",
-                "\n",
-                "plt.tight_layout()\n",
-                "plt.show()\n"
-            ]
-        },
-        {
-            "cell_type": "markdown",
-            "metadata": {},
-            "source": [
-                "## 5. Conclusões Físicas e Arquiteturais Fundamentais\n",
-                "\n",
-                "1. **Por que a Fusão MEL + DEMON equivale ou supera o LOFAR?**\n",
-                "   * O **LOFAR (1024-D)** analisa a banda audível estreita. Ele retém tanto ruído contínuo quanto linhas discretas de maquinário.\n",
-                "   * A **Fusão MEL + DEMON (509-D)** decompõe o problema acusticamente: o **MEL** fornece a energia contínua de cavitação/combustão e o **DEMON** fornece a frequência de giro do eixo e número de pás.\n",
-                "   * O resultado é a mesma capacidade discriminativa do LOFAR, mas com **metade da dimensão** ($509$ vs. $1024$) e muito maior equilíbrio para alvos rápidos (`SMALL`).\n",
-                "\n",
-                "2. **Por que a CNN 2D colapsa na Fusão direta?**\n",
-                "   * Redes convolucionais assumem **correlação local contínua** (pixels vizinhos têm continuidade semântica).\n",
-                "   * Ao concatenar os 256 canais de Mel com os 253 canais de DEMON, a fronteira artificial entre eles não tem coerência física. Convoluções 2D agem como filtros passa-baixas que borram os harmônicos finos do DEMON e poluem o Mel, provocando colapso de gradiente em vários folds ($SP = 23{,}96\\%$).\n",
-                "\n",
-                "3. **Modelos Vetoriais (MLP e SVM) são os Vencedores Naturais da Fusão Multimodal:**\n",
-                "   * Tratando os dados como vetores em $\\mathbb{R}^{509}$, o **MLP PyTorch** estabelece o recorde absoluto de **$66{,}99\\% \\pm 1{,}67\\%$ de Índice SP**, superando a MLP LOFAR ($66{,}51\\%$) e a CNN LOFAR ($66{,}05\\%$) do artigo original.\n",
-                "   * O **SVM Nyström ($m=6000$)** sobe para **$64{,}85\\%$ de SP**, superando seu benchmark com LOFAR ($63{,}83\\%$) e atingindo **$60{,}90\\%$ de recall em SMALL** no problema de embarcações."
-            ]
-        }
-    ]
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+os.environ.setdefault("MPLBACKEND", "Agg")
 
-    notebook_json = {
+
+def br(x, nd=2):
+    return f"{x:,.{nd}f}".replace(",", "X").replace(".", ",").replace("X", ".")
+
+
+def pm(ms, nd=2):
+    return f"{br(ms[0], nd)} ± {br(ms[1], nd)}"
+
+
+def pv(p):
+    return "p < 0,001" if p < 0.001 else f"p = {br(p, 3)}"
+
+
+def md(text):
+    return {"cell_type": "markdown", "metadata": {}, "source": text.strip("\n").splitlines(keepends=True)}
+
+
+def code(text):
+    return {"cell_type": "code", "execution_count": None, "metadata": {}, "outputs": [],
+            "source": text.strip("\n").splitlines(keepends=True)}
+
+
+SETUP_CODE = r'''
+import os, sys
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+try:
+    from IPython.display import display
+except ImportError:
+    display = print
+
+sys.path.insert(0, os.path.abspath('.') if os.path.exists('iara_results.py') else os.path.abspath('notebooks'))
+import iara_results as R
+
+plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
+plt.rcParams.update({'font.family': 'sans-serif', 'font.size': 11, 'axes.labelsize': 12, 'axes.titlesize': 13,
+                     'xtick.labelsize': 10, 'ytick.labelsize': 10, 'figure.titlesize': 15, 'figure.dpi': 130})
+'''
+
+TABLES_CODE = r'''
+MODELS = ['MLP', 'SVM Nyström', 'Random Forest', 'CNN 2D']
+REPS = ['DEMON', 'MEL', 'LOFAR', 'FUSÃO (MEL+DEMON)']
+# (modelo, representação) -> (rótulo, experimento 4c, experimento 3c retreinado ou None, grade temporal, observação)
+GRID = {
+    ('MLP', 'DEMON'): ('MLP [32,16] 35 ép. | DEMON', 'mlp_demon_h32-16_e35_4c', 'mlp_demon_h32-16_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py'),
+    ('MLP', 'MEL'): ('MLP [32,16] 35 ép. | MEL 5,12 s', 'mlp_mel5s_h32-16_e35_4c', 'mlp_mel5s_h32-16_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py'),
+    ('MLP', 'LOFAR'): ('MLP oficial | LOFAR', 'mlp_lofar', None, '0,512 s', 'pipeline iara (early stopping)'),
+    ('MLP', 'FUSÃO (MEL+DEMON)'): ('MLP [64,32] 35 ép. | FUSÃO', 'mlp_mel5s-demon_h64-32_e35_4c', 'mlp_mel5s-demon_h64-32_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py (rede MAIOR)'),
+    ('SVM Nyström', 'DEMON'): ('SVM m=6000 | DEMON', 'svm_nystroem_6000_demon_C2.0_elasticnet_l1r0.15_it1000_4c', 'svm_nystroem_6000_demon_C2.0_elasticnet_l1r0.15_it1000_3c', '5,12 s', 'eval_demon_svm_5x2cv.py'),
+    ('SVM Nyström', 'MEL'): ('SVM m=4000 | MEL', 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0', None, '0,512 s', 'pipeline iara (m=4000, não 6000)'),
+    ('SVM Nyström', 'LOFAR'): ('SVM m=6000 | LOFAR', 'svm_nystroem_6000_lofar_elasticnet_l1r0.15', None, '0,512 s', 'pipeline iara'),
+    ('SVM Nyström', 'FUSÃO (MEL+DEMON)'): ('SVM m=6000 | FUSÃO', 'svm_nystroem_6000_mel5s-demon_C2.0_elasticnet_l1r0.15_4c', 'svm_nystroem_6000_mel5s-demon_C2.0_elasticnet_l1r0.15_3c', '5,12 s', 'eval_fusion_svm_cnn_5x2cv.py'),
+    ('Random Forest', 'DEMON'): ('RF 100 árv. | DEMON', 'rf_demon_n100_balanced_4c', 'rf_demon_n100_balanced_3c', '5,12 s', 'eval_demon_baselines_5x2cv.py'),
+    ('Random Forest', 'MEL'): ('RF 100 árv. | MEL 5,12 s', 'rf_mel5s_n100_balanced_4c', None, '5,12 s', 'generate_rf_predictions_and_analysis.py'),
+    ('Random Forest', 'LOFAR'): ('RF 100 árv. | LOFAR 5,12 s', 'rf_lofar5s_n100_balanced_4c', None, '5,12 s', 'generate_rf_predictions_and_analysis.py'),
+    ('Random Forest', 'FUSÃO (MEL+DEMON)'): ('RF 100 árv. | FUSÃO', 'rf_mel5s-demon_n100_balanced_4c', 'rf_mel5s-demon_n100_balanced_3c', '5,12 s', 'eval_rf_fusion_5x2cv.py'),
+    ('CNN 2D', 'DEMON'): ('CNN 2D ad hoc | DEMON', 'cnn2d_demon_w32_b32_e20_4c', 'cnn2d_demon_w32_b32_e20_3c', '5,12 s', 'eval_demon_baselines_5x2cv.py [COLAPSADA]'),
+    ('CNN 2D', 'MEL'): ('CNN oficial | MEL', 'cnn', None, '0,512 s', 'pipeline iara'),
+    ('CNN 2D', 'LOFAR'): ('CNN 2D ad hoc | LOFAR 5,12 s', 'cnn2d_lofar5s_w32_b64_e15_4c', None, '5,12 s', 'generate_cnn_predictions_and_analysis.py [COLAPSADA]'),
+    ('CNN 2D', 'FUSÃO (MEL+DEMON)'): ('CNN 2D ad hoc | FUSÃO', 'cnn2d_mel5s-demon_w32_b32_e25_4c', 'cnn2d_mel5s-demon_w32_b32_e25_3c', '5,12 s', 'eval_fusion_svm_cnn_5x2cv.py [COLAPSADA]'),
+}
+S4 = {k: R.summary(v[1], '4c') for k, v in GRID.items()}
+SB = {k: R.summary(v[1], '4c_sem_bg') for k, v in GRID.items()}
+S3 = {k: R.summary(v[2], '3c') for k, v in GRID.items() if v[2]}
+
+
+def row(k, S, extra=None):
+    lbl, e4, e3, grade, obs = GRID[k]
+    s = S[k]
+    d = {'Modelo': k[0], 'Representação': k[1], 'Configuração': lbl, 'Grade': grade,
+         'SP': R.fmt(s['SP']), 'ACC (bal.)': R.fmt(s['ACC']), 'F1': R.fmt(s['F1']),
+         'Rec SMALL': round(s['R_SMALL'][0], 2), 'Rec MEDIUM': round(s['R_MEDIUM'][0], 2), 'Rec LARGE': round(s['R_LARGE'][0], 2)}
+    if 'R_BACKGROUND' in s:
+        d['Rec BG'] = round(s['R_BACKGROUND'][0], 2)
+    d['Origem'] = obs
+    d['Experimento'] = e3 if S is S3 else e4
+    return d
+
+
+KEYS = [(m, r) for m in MODELS for r in REPS]
+df_master = pd.DataFrame([row(k, S4) for k in KEYS])
+df_sem_bg = pd.DataFrame([row(k, SB) for k in KEYS])
+df_3c = pd.DataFrame([row(k, S3) for k in KEYS if k in S3])
+
+tab_artigo = pd.DataFrame([{'Par': f'{m} | {r}', **{k: R.fmt(v) for k, v in R.ARTICLE_TABLE7[(m, r)].items()}}
+                           for (m, r) in R.ARTICLE_TABLE7]).set_index('Par')
+LOCAL_OF_ARTICLE = {('RF', 'MEL'): ('Random Forest', 'MEL'), ('RF', 'LOFAR'): ('Random Forest', 'LOFAR'),
+                    ('MLP', 'MEL'): None, ('MLP', 'LOFAR'): ('MLP', 'LOFAR'),
+                    ('CNN', 'MEL'): ('CNN 2D', 'MEL'), ('CNN', 'LOFAR'): ('CNN 2D', 'LOFAR')}
+rast = []
+for (m, r), v in R.ARTICLE_TABLE7.items():
+    if LOCAL_OF_ARTICLE[(m, r)] is None:
+        lbl, exp, grade = 'MLP oficial | MEL', 'mlp', '0,512 s'
+    else:
+        lbl, exp, _, grade, _ = GRID[LOCAL_OF_ARTICLE[(m, r)]]
+    s = R.summary(exp)
+    rast.append({'Par': f'{m} | {r}', 'Artigo SP': R.fmt(v['SP']), 'Artigo ACC': R.fmt(v['ACC']),
+                 'Local': lbl, 'Grade local': grade, 'Local SP': R.fmt(s['SP']), 'Local ACC': R.fmt(s['ACC']),
+                 'Local Rec SMALL': round(s['R_SMALL'][0], 2), 'Experimento': exp})
+df_rast = pd.DataFrame(rast).set_index('Par')
+
+MLP_DEMON = [('25 ép. (NB7)', 'mlp_demon_h32-16_e25_4c'), ('30 ép., seed 42 (NBs 14–16, gate)', 'mlp_demon_h32-16_e30_4c'),
+             ('35 ép. (grade da fusão, este NB)', 'mlp_demon_h32-16_e35_4c')]
+tab_mlp_demon = R.table([(f'MLP [32,16] DEMON {l}', e) for l, e in MLP_DEMON], metrics=('SP', 'ACC', 'F1'))
+SP_FOLDS = {k: R.fold_metrics(GRID[k][1])['SP'].round(1).tolist() for k in KEYS}
+'''
+
+PLOT_SP_CODE = r'''
+fig, ax = plt.subplots(figsize=(15, 7))
+x = np.arange(len(MODELS)); width = 0.20
+colors = {'DEMON': '#95a5a6', 'MEL': '#3498db', 'LOFAR': '#e67e22', 'FUSÃO (MEL+DEMON)': '#27ae60'}
+for i, r in enumerate(REPS):
+    vals = [S4[(m, r)]['SP'][0] for m in MODELS]
+    errs = [S4[(m, r)]['SP'][1] for m in MODELS]
+    rects = ax.bar(x + (i - 1.5) * width, vals, width, yerr=errs, capsize=3, label=r, color=colors[r], alpha=0.9)
+    for m, rect in zip(MODELS, rects):
+        h = rect.get_height()
+        coll = 'COLAPSADA' in GRID[(m, r)][4]
+        ax.annotate(f'{h:.1f}' + ('*' if coll else ''), xy=(rect.get_x() + rect.get_width() / 2, h), xytext=(0, 4),
+                    textcoords='offset points', ha='center', va='bottom', fontsize=9, color='#c0392b' if coll else 'black')
+ax.set_title('SP (média ± desvio, 10 folds) — 4 modelos × 4 representações, 4 classes\n* = modelo ad hoc colapsado (não usar como baseline)',
+             fontweight='bold', fontsize=13, pad=15)
+ax.set_ylabel('SP (%)', fontweight='bold'); ax.set_xticks(x); ax.set_xticklabels(MODELS, fontweight='bold')
+ax.set_ylim(0, 78); ax.legend(loc='lower left', frameon=True, fontsize=10.5)
+plt.tight_layout()
+plt.show()
+'''
+
+PLOT_SMALL_CODE = r'''
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(16, 6))
+m3 = MODELS[:3]
+x = np.arange(len(m3)); w = 0.2
+for ax, S, title in [(ax1, S4, 'Recall SMALL — modelos 4c (%)'), (ax2, S3, 'Recall SMALL — modelos RETREINADOS sem BG (3c) (%)')]:
+    for i, (r, c) in enumerate([('DEMON', '#95a5a6'), ('MEL', '#3498db'), ('LOFAR', '#e67e22'), ('FUSÃO (MEL+DEMON)', '#27ae60')]):
+        vals = [S[(m, r)]['R_SMALL'][0] if (m, r) in S else np.nan for m in m3]
+        rects = ax.bar(x + (i - 1.5) * w, vals, w, label=r, color=c)
+        for rect, v in zip(rects, vals):
+            ax.annotate('n/d' if np.isnan(v) else f'{v:.1f}', xy=(rect.get_x() + rect.get_width() / 2, 0 if np.isnan(v) else v),
+                        xytext=(0, 4), textcoords='offset points', ha='center', va='bottom', fontsize=9)
+    ax.set_title(title, fontweight='bold'); ax.set_xticks(x); ax.set_xticklabels(m3, fontweight='bold')
+    ax.set_ylim(0, 75); ax.legend(fontsize=9)
+ax2.text(0.5, 0.97, 'n/d = não há modelo retreinado sem BG para esse par', transform=ax2.transAxes, ha='center', va='top', fontsize=9, style='italic')
+plt.tight_layout()
+plt.show()
+'''
+
+CONF_CODE = r'''
+CLS = ['SMALL', 'MEDIUM', 'LARGE', 'BACKGROUND']
+
+
+def confusion(exp):
+    """Matriz por arquivo, ACUMULADA nas 10 dobras (instâncias arquivo x fold), normalizada por linha (%)."""
+    df = pd.concat(R.file_predictions(exp).values(), ignore_index=True)
+    rows = sorted(df.Target.unique()); cols = sorted(set(rows) | set(df.Prediction.unique()))
+    cm = pd.crosstab(df.Target, df.Prediction).reindex(index=rows, columns=cols, fill_value=0)
+    cmn = 100 * cm.div(cm.sum(axis=1), axis=0)
+    cmn.index = [CLS[i] for i in rows]; cmn.columns = [CLS[i] for i in cols]
+    return cmn
+
+
+CM_KEYS = [('MLP', 'FUSÃO (MEL+DEMON)'), ('SVM Nyström', 'FUSÃO (MEL+DEMON)')]
+CMS = {k: confusion(GRID[k][1]) for k in CM_KEYS}
+'''
+
+PLOT_CONF_CODE = r'''
+fig, axes = plt.subplots(1, 2, figsize=(15, 6))
+for ax, k, cmap in zip(axes, CM_KEYS, ['Blues', 'Greens']):
+    cm = CMS[k]
+    ax.imshow(cm.values, cmap=cmap, vmin=0, vmax=100)
+    sp = S4[k]['SP']
+    ax.set_title(f'{GRID[k][0]} (SP = {sp[0]:.2f} ± {sp[1]:.2f} %)', fontweight='bold')
+    ax.set_xticks(range(4)); ax.set_yticks(range(4))
+    ax.set_xticklabels(cm.columns, fontweight='bold'); ax.set_yticklabels(cm.index, fontweight='bold')
+    ax.set_xlabel('Classe predita'); ax.set_ylabel('Classe real')
+    for i in range(4):
+        for j in range(4):
+            v = cm.values[i, j]
+            ax.text(j, i, f'{v:.1f}%', ha='center', va='center', color='white' if v > 45 else 'black',
+                    fontweight='bold' if i == j else 'normal')
+plt.tight_layout()
+plt.show()
+'''
+
+TESTS_CODE = r'''
+# F-test 5x2cv (Alpaydin), como no artigo: FUSÃO contra as entradas isoladas, por família (modelos 4c)
+F = 'FUSÃO (MEL+DEMON)'
+PAIRS = [(('MLP', F), ('MLP', 'LOFAR')), (('MLP', F), ('MLP', 'MEL')), (('MLP', F), ('MLP', 'DEMON')),
+         (('SVM Nyström', F), ('SVM Nyström', 'LOFAR')), (('SVM Nyström', F), ('SVM Nyström', 'MEL')),
+         (('Random Forest', F), ('Random Forest', 'LOFAR')), (('Random Forest', F), ('Random Forest', 'MEL'))]
+rows = []
+for a, b in PAIRS:
+    for met in ('SP', 'R_SMALL'):
+        f, p = R.f_test_5x2(GRID[a][1], GRID[b][1], metric=met)
+        rows.append({'A': GRID[a][0], 'B': GRID[b][0], 'métrica': met, 'média A': round(S4[a][met][0], 2),
+                     'média B': round(S4[b][met][0], 2), 'F': round(f, 2), 'p': round(p, 4), 'p < 0,05': p < 0.05,
+                     '_a': a, '_b': b})
+df_tests = pd.DataFrame(rows)
+# Extra: MLP oficial MEL (0,512 s) contra MLP MEL 5,12 s, para medir o efeito da grade temporal
+f, p = R.f_test_5x2('mlp', 'mlp_mel5s_h32-16_e35_4c')
+grid_effect = {'F': f, 'p': p, 'oficial': R.summary('mlp')['SP'], 'mel5s': S4[('MLP', 'MEL')]['SP']}
+display(df_tests.drop(columns=['_a', '_b']))
+print(f"MLP MEL oficial (0,512 s) vs MLP MEL 5,12 s: F = {f:.2f}, p = {p:.4f}")
+'''
+
+
+def build(filename=os.path.join(HERE, "8_comparacao_multimodal_mel_demon_lofar.ipynb")):
+    ns = {}
+    exec(SETUP_CODE, ns)
+    exec(TABLES_CODE, ns)
+    exec(CONF_CODE, ns)
+    ns["display"] = lambda *a, **k: None
+    ns["print"] = lambda *a, **k: None
+    exec(TESTS_CODE, ns)
+    R = ns["R"]
+    S4, S3, GRID, T = ns["S4"], ns["S3"], ns["GRID"], ns["df_tests"]
+    CMS = ns["CMS"]
+    FU = "FUSÃO (MEL+DEMON)"
+
+    def t(a, b, met):
+        r = T[(T._a == a) & (T._b == b) & (T["métrica"] == met)].iloc[0]
+        return f"F = {br(r.F)}, {pv(r.p)}", r.p
+
+    def eq(p):
+        return "diferença **significativa**" if p < 0.05 else "**equivalentes**"
+
+    k_mf, k_ml, k_mm, k_md = ("MLP", FU), ("MLP", "LOFAR"), ("MLP", "MEL"), ("MLP", "DEMON")
+    k_sf, k_sl, k_sm = ("SVM Nyström", FU), ("SVM Nyström", "LOFAR"), ("SVM Nyström", "MEL")
+    k_rf, k_rl, k_rm = ("Random Forest", FU), ("Random Forest", "LOFAR"), ("Random Forest", "MEL")
+    k_cf = ("CNN 2D", FU)
+    art_mlpl = R.ARTICLE_TABLE7[("MLP", "LOFAR")]["SP"]
+    art_cnnl = R.ARTICLE_TABLE7[("CNN", "LOFAR")]["SP"]
+    art_rfl = R.ARTICLE_TABLE7[("RF", "LOFAR")]["SP"]
+    ge = ns["grid_effect"]
+    sm_lofar = [S4[(m, "LOFAR")]["R_SMALL"][0] for m in ("MLP", "SVM Nyström", "Random Forest")]
+    sm_mel = [S4[(m, "MEL")]["R_SMALL"][0] for m in ("MLP", "SVM Nyström", "Random Forest")]
+    tab_md = ns["tab_mlp_demon"]
+    md_sp = {l: R.summary(e)["SP"] for l, e in ns["MLP_DEMON"]}
+    cnn_f_folds = ns["SP_FOLDS"][k_cf]
+
+    _fp = R.file_predictions('mlp_lofar')
+    n_files = len(set().union(*[set(d.File) for d in _fp.values()]))
+    cells = []
+    cells.append(md(r"""
+# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
+### Notebook 8: Comparativo Multimodal Global — MEL, DEMON, LOFAR e FUSÃO (MEL + DEMON)
+#### Modelos Avaliados: Multi-Layer Perceptron (MLP), SVM Nyström, Random Forest e CNN 2D
+
+Este notebook avalia a interação entre **quatro representações acústicas** e **quatro famílias de aprendizado de máquina** sob o protocolo oficial de **$5\times2$ validação cruzada (10 folds)** com **particionamento por gravação de áudio (`ID`, `exclusive_header='ID'` em `src/iara/ml/experiment.py`)** sobre os **__NFILES__ áudios de UO** (*Silva et al.*, IEEE Access 2025, Seção V-D: *"samples from the same audio recording were not placed in different sets"*). O particionamento não isola navios: gravações diferentes do mesmo navio podem cair em treino e teste.
+
+> **Nota metodológica:**
+> * **ACC = acurácia balanceada** (média dos recalls; a coluna `ACC` da Tabela 7 do artigo) em todas as tabelas. Acurácia micro não é usada.
+> * Todos os números locais são recalculados das predições por janela em `results/trainings/` por `notebooks/iara_results.py`. Os valores do artigo vêm de `R.ARTICLE_TABLE7` (Tabela 7, só 4 classes) e aparecem em tabela **separada**.
+> * **Duas grades temporais:** os experimentos do pipeline iara oficial (`results/trainings/tests`: MLP/CNN/SVM com MEL ou LOFAR) usam janelas de **0,512 s**; o DEMON, a FUSÃO e os caches `mel5s`/`lofar5s` usam **um vetor a cada 5,12 s** (MEL/LOFAR com média de 10 frames, resolução temporal 10× menor). A coluna `Grade` indica qual é qual.
+> * **"3 classes"** aparece em dois modos, sempre rotulados: `4c_sem_bg` (modelo 4c avaliado só em navios; prever BG = erro) e `3c` (modelo **retreinado** sem BG, só onde existe).
+
+---
+
+### Representações Espectrais Avaliadas:
+1. **MEL (256 filtros log-triangulares):** energia de banda larga de **$0\text{ a }8\text{ kHz}$** (Nyquist do sinal decimado a $16\text{ kHz}$).
+2. **DEMON (253 bins de modulação):** envoltória da banda de 1–2 kHz demodulada em **$0{,}39\text{ a }25\text{ Hz}$** (Nyquist da envoltória decimada a $50\text{ Hz}$). A FFT de $N_{\text{FFT}}=512$ tem 257 bins; os **4** primeiros ($0$; $0{,}098$; $0{,}195$; $0{,}293\text{ Hz}$) são descartados (`discard_dc_bins = 4` em `scratch/extract_all_demon.py`).
+3. **LOFAR (1024 bins de banda estreita linear):** espectrograma de **$0\text{ a }8\text{ kHz}$** ($N_{\text{FFT}}=2048$ sobre o sinal a $16\text{ kHz}$).
+4. **FUSÃO MULTIMODAL (509 atributos):** concatenação $\text{MEL}_{5{,}12\text{ s}} (256) + \text{DEMON} (253)$ na grade de $5{,}12\text{ s}$.
+
+---
+
+### Famílias de Aprendizado de Máquina:
+1. **MLP (PyTorch):** camadas densas com `BatchNorm1d` e `Dropout`. **Atenção:** a MLP da FUSÃO usa `[64, 32]`; as MLP de MEL 5,12 s e DEMON usam `[32, 16]`.
+2. **SVM Nyström:** kernel RBF aproximado com penalização ElasticNet; $m=6000$ para DEMON, LOFAR e FUSÃO e **$m=4000$ para MEL** (o único SVM MEL oficial em disco).
+3. **Random Forest (100 árvores):** `class_weight='balanced'`.
+4. **CNN 2D:** CNN oficial do artigo para MEL; CNNs **ad hoc** (PyTorch) para DEMON, LOFAR 5,12 s e FUSÃO — estas três colapsaram e não devem ser usadas como baseline.
+"""))
+    cells[0]["source"] = [x.replace("__NFILES__", br(n_files, 0)) for x in cells[0]["source"]]
+    cells.append(code(SETUP_CODE))
+    cells.append(md(f"""
+## 1. Tabela Mestra Comparativa Global ($4 \\times 4$)
+
+Os 16 pares (Modelo × Representação), com o experimento em disco, a grade temporal e a origem de cada linha. Abaixo dela: a mesma matriz em `4c_sem_bg`, os modelos retreinados sem BG (`3c`), a Tabela 7 do artigo e a rastreabilidade artigo × avaliação local.
+
+* O recall SMALL do `SVM m=6000 | LOFAR` é **{br(S4[k_sl]['R_SMALL'][0])}%** (uma versão anterior trazia 42,58%, provavelmente um valor 3C).
+* A linha SVM | MEL é o modelo **m=4000** (uma versão anterior a rotulava como m=6000).
+* **Três MLP DEMON [32,16]** distintos existem no projeto (tabela abaixo): 25 épocas ({pm(md_sp['25 ép. (NB7)'])}%, NB7), 30 épocas com seed 42 ({pm(md_sp['30 ép., seed 42 (NBs 14–16, gate)'])}%, NBs 14–16 e gate) e 35 épocas ({pm(md_sp['35 ép. (grade da fusão, este NB)'])}%, usada aqui por estar na mesma grade e no mesmo script da FUSÃO).
+"""))
+    cells.append(code(TABLES_CODE + r'''
+print('4 classes (modelos 4c):'); display(df_master)
+print('Só navios, modelos 4c (prever BACKGROUND = erro):'); display(df_sem_bg)
+print('Só navios, modelos RETREINADOS sem BACKGROUND (3c):'); display(df_3c)
+print('Tabela 7 do artigo (Silva et al., 2025; 4 classes):'); display(tab_artigo)
+print('Rastreabilidade: Tabela 7 do artigo vs. avaliação local:'); display(df_rast)
+print('Os três MLP DEMON [32,16] do projeto (4c):'); display(tab_mlp_demon)
+'''))
+    cells.append(md(r"""
+## 2. Gráfico 1: Índice SP por Modelo e Representação
+
+Os modelos marcados com `*` são as CNNs ad hoc colapsadas (SP baixo e desvio alto entre folds):
+"""))
+    cells.append(code(PLOT_SP_CODE))
+    cells.append(md(f"""
+## 3. Gráfico 2: Recall da Classe Crítica `SMALL`
+
+Nos modelos 4c (MLP, SVM, RF), o recall de SMALL vai de {br(min(sm_lofar))}% a {br(max(sm_lofar))}% com LOFAR e de {br(min(sm_mel))}% a {br(max(sm_mel))}% com MEL. Abaixo, o efeito da fusão com DEMON (à esquerda, modelos 4c; à direita, modelos retreinados sem BG, só onde existem):
+"""))
+    cells.append(code(PLOT_SMALL_CODE))
+    cells.append(md(r"""
+## 4. Matrizes de Confusão da Fusão (MLP e SVM)
+
+Matrizes por arquivo, acumuladas nas 10 dobras e normalizadas por linha:
+"""))
+    cells.append(code(CONF_CODE))
+    cells.append(code(PLOT_CONF_CODE))
+    cells.append(md(r"""
+## 5. Testes Estatísticos (F-test 5x2cv)
+
+FUSÃO contra cada entrada isolada da mesma família (SP e recall SMALL por fold). "Supera" só quando p < 0,05:
+"""))
+    cells.append(code(TESTS_CODE))
+
+    tm_l, pm_l = t(k_mf, k_ml, "SP")
+    tm_m, pm_m = t(k_mf, k_mm, "SP")
+    tm_d, pm_d = t(k_mf, k_md, "SP")
+    ts_l, ps_l = t(k_sf, k_sl, "SP")
+    ts_m, ps_m = t(k_sf, k_sm, "SP")
+    tr_l, pr_l = t(k_rf, k_rl, "SP")
+    tr_m, pr_m = t(k_rf, k_rm, "SP")
+    trs_l, prs_l = t(k_rf, k_rl, "R_SMALL")
+    tms_l, pms_l = t(k_mf, k_ml, "R_SMALL")
+    tss_l, pss_l = t(k_sf, k_sl, "R_SMALL")
+    cm_m = CMS[k_mf]
+    headline = ('A fusão MEL + DEMON é estatisticamente equivalente ao LOFAR em SP nas três famílias vetoriais — não o supera.'
+                if max(pm_l, ps_l, pr_l) >= 0.05 and min(pm_l, ps_l, pr_l) >= 0.05 else
+                'Fusão MEL + DEMON × LOFAR: resultado misto (ver p de cada família).')
+    cells.append(md(f"""
+## 6. Conclusões
+
+1. **{headline}**
+   * **MLP:** FUSÃO {pm(S4[k_mf]['SP'])}% × MLP LOFAR oficial {pm(S4[k_ml]['SP'])}% ({tm_l}: {eq(pm_l)}); a MLP LOFAR da Tabela 7 do artigo tem {pm(art_mlpl)}%. A comparação **favorece a FUSÃO**: a MLP da FUSÃO tem rede maior (`[64, 32]` contra `[32, 16]`) e outra grade temporal (5,12 s contra 0,512 s). Contra a MLP MEL 5,12 s `[32,16]` (mesma grade e script), {tm_m}: {eq(pm_m)}; contra a MLP DEMON, {tm_d}: {eq(pm_d)}.
+   * **SVM:** FUSÃO (m=6000) {pm(S4[k_sf]['SP'])}% × SVM LOFAR m=6000 {pm(S4[k_sl]['SP'])}% ({ts_l}: {eq(ps_l)}) e × SVM MEL m=4000 {pm(S4[k_sm]['SP'])}% ({ts_m}: {eq(ps_m)}).
+   * **Random Forest:** FUSÃO {pm(S4[k_rf]['SP'])}% × RF LOFAR 5,12 s local {pm(S4[k_rl]['SP'])}% ({tr_l}: {eq(pr_l)}) e × RF MEL 5,12 s {pm(S4[k_rm]['SP'])}% ({tr_m}: {eq(pr_m)}). O RF LOFAR local tem SP média **{'maior' if S4[k_rl]['SP'][0] > S4[k_rf]['SP'][0] else 'menor'}** que a RF FUSÃO. (O RF LOFAR da Tabela 7 do artigo, {pm(art_rfl)}%, não é comparável: grade e hiperparâmetros diferentes.)
+   * **Recall SMALL:** a FUSÃO eleva o recall de SMALL em relação ao LOFAR na RF ({br(S4[k_rf]['R_SMALL'][0])}% × {br(S4[k_rl]['R_SMALL'][0])}%; {trs_l}: {eq(prs_l)}); na MLP ({br(S4[k_mf]['R_SMALL'][0])}% × {br(S4[k_ml]['R_SMALL'][0])}%; {tms_l}: {eq(pms_l)}) e no SVM ({br(S4[k_sf]['R_SMALL'][0])}% × {br(S4[k_sl]['R_SMALL'][0])}%; {tss_l}: {eq(pss_l)}).
+   * A FUSÃO tem metade da dimensão do LOFAR (509 × 1024) com SP estatisticamente equivalente; isto é o que os dados sustentam.
+
+2. **A CNN 2D ad hoc colapsa na fusão:** SP {pm(S4[k_cf]['SP'])}% (folds: {', '.join(br(x, 1) for x in cnn_f_folds)}). A CNN ad hoc também colapsa em DEMON ({pm(S4[('CNN 2D', 'DEMON')]['SP'])}%) e em LOFAR 5,12 s ({pm(S4[('CNN 2D', 'LOFAR')]['SP'])}%, contra {pm(art_cnnl)}% da CNN LOFAR da Tabela 7 do artigo), então o colapso não pode ser atribuído à fusão. *Hipótese (não testada):* a fronteira artificial entre os 256 canais MEL e os 253 canais DEMON não tem continuidade física para convoluções 2D.
+
+3. **MLP FUSÃO:** tem a maior SP média local ({pm(S4[k_mf]['SP'])}%, recall SMALL {br(S4[k_mf]['R_SMALL'][0])}%, {br(cm_m.loc['SMALL', 'MEDIUM'], 1)}% dos SMALL indo para MEDIUM na matriz acumulada), mas **sem diferença estatística** para a MLP LOFAR oficial. O efeito da grade temporal também precisa ser considerado: MLP MEL oficial (0,512 s) {pm(ge['oficial'])}% × MLP MEL 5,12 s {pm(ge['mel5s'])}% (F = {br(ge['F'])}, {pv(ge['p'])}).
+"""))
+
+    notebook = {
         "cells": cells,
         "metadata": {
-            "kernelspec": {
-                "display_name": "Python 3",
-                "language": "python",
-                "name": "python3"
-            },
-            "language_info": {
-                "codemirror_mode": {"name": "ipython", "version": 3},
-                "file_extension": ".py",
-                "mimetype": "text/x-python",
-                "name": "python",
-                "nbconvert_exporter": "python",
-                "pygments_lexer": "ipython3",
-                "version": "3.10.0"
-            }
+            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+            "language_info": {"codemirror_mode": {"name": "ipython", "version": 3}, "file_extension": ".py",
+                              "mimetype": "text/x-python", "name": "python", "nbconvert_exporter": "python",
+                              "pygments_lexer": "ipython3", "version": "3.10.0"},
         },
         "nbformat": 4,
-        "nbformat_minor": 4
+        "nbformat_minor": 4,
     }
-
-    os.makedirs(os.path.dirname(filename), exist_ok=True)
     with open(filename, "w", encoding="utf-8") as f:
-        json.dump(notebook_json, f, indent=2, ensure_ascii=False)
+        json.dump(notebook, f, indent=1, ensure_ascii=False)
     print(f"Notebook gerado com sucesso em: {filename}")
 
+
 if __name__ == "__main__":
-    build_notebook()
+    build()

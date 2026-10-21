@@ -4,7 +4,8 @@ Evaluation of DEMON features with Baseline Models:
 - Multi-Layer Perceptron (MLP)
 - Convolutional Neural Network (CNN)
 
-Evaluated on the official 10-fold 5x2cv protocol with Ship ID isolation.
+Evaluated on the official 10-fold 5x2cv protocol (split by recording `ID`; the same ship may be in train and test).
+Window-level predictions are saved in results/trainings/multirep/<exp>/ (results_writer.py).
 Outputs metrics for both 4-Class and 3-Class tasks with Audio-Level Majority Voting.
 """
 
@@ -27,6 +28,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
+
+from results_writer import ResultsWriter
 
 # SP Index calculation
 def compute_sp_index(targets, preds, num_classes=4):
@@ -104,6 +107,11 @@ def evaluate_random_forest(feature_cache, folds, num_classes=4, n_estimators=100
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO DEMON: Random Forest (n_estimators={n_estimators}, balanced) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"rf_demon_n{n_estimators}_balanced_{num_classes}c", script=__file__,
+        params={"model": "RandomForestClassifier", "representation": "DEMON", "dim": 253,
+                "n_estimators": n_estimators, "max_depth": None, "class_weight": "balanced",
+                "random_state": 42, "num_classes": num_classes})
 
     fold_accs, fold_sps, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
@@ -125,6 +133,9 @@ def evaluate_random_forest(feature_cache, folds, num_classes=4, n_estimators=100
         rf.fit(X_train, y_train)
 
         win_preds = rf.predict(X_test)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=rf.predict_proba(X_test))
 
         # Majority voting per audio
         file_preds = defaultdict(list)
@@ -193,6 +204,11 @@ def evaluate_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, 
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO DEMON: MLP PyTorch [32, 16] (Batch={batch_size}, lr={lr}) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"mlp_demon_h32-16_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "PyTorchMLP", "representation": "DEMON", "dim": 253, "hidden": [32, 16],
+                "epochs": epochs, "batch_size": batch_size, "lr": lr, "weight_decay": 1e-3,
+                "early_stopping": False, "scaler": "StandardScaler(treino)", "num_classes": num_classes})
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Utilizando dispositivo: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})", flush=True)
@@ -238,6 +254,9 @@ def evaluate_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, 
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             win_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}
@@ -358,6 +377,12 @@ def evaluate_cnn(feature_cache, folds, num_classes=4, epochs=25, batch_size=32, 
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO DEMON: CNN 2D PyTorch [64, 32] (Images 32x253) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"cnn2d_demon_w32_b{batch_size}_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "PyTorchDEMONCNN [64, 32]", "representation": "DEMON", "dim": 253, "image_windows": 32,
+                "epochs": epochs, "batch_size": batch_size, "lr": lr, "weight_decay": 1e-3,
+                "early_stopping": False, "normalization": "z-score escalar global (treino)",
+                "num_classes": num_classes})
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Utilizando dispositivo: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})", flush=True)
@@ -403,6 +428,9 @@ def evaluate_cnn(feature_cache, folds, num_classes=4, epochs=25, batch_size=32, 
             tst_tensor = torch.tensor(X_test, device=device)
             logits = model(tst_tensor)
             img_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, img_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}

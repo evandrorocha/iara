@@ -5,7 +5,8 @@ Avaliação Completa dos 4 Modelos no Dataset HHT (256 Bins):
 3. MLP PyTorch (256 -> 32 -> 16 -> C, BatchNorm, Dropout)
 4. CNN 2D PyTorch (Imagens 32x256 de Hilbert-Huang Spectrogram)
 
-Protocolo Oficial 5x2cv (10 Folds com isolamento estrito por Ship ID).
+Protocolo Oficial 5x2cv (10 Folds, particionamento por gravação `ID`; o mesmo navio pode estar em treino e teste).
+As predições por janela de cada modelo são gravadas em results/trainings/multirep/<exp>/ (results_writer.py).
 Avaliação tanto para 4 Classes quanto para 3 Classes (sem ambiental).
 Votação majoritária por áudio (Majority Voting).
 """
@@ -30,6 +31,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
+
+from results_writer import ResultsWriter
 
 
 # Cálculo oficial do Índice SP (Standardized Performance)
@@ -153,6 +156,12 @@ def evaluate_svm_nystroem(
     print(f"AVALIAÇÃO HHT: SVM Nyström (m={n_components}, C={C}, penalty={penalty}) [{problem_name}]")
     print("=" * 80)
 
+    writer = ResultsWriter(
+        f"svm_nystroem_{n_components}_hht_C{C}_{penalty}_l1r{l1_ratio}_{num_classes}c", script=__file__,
+        params={"model": "Nystroem(rbf)+SGDClassifier(hinge)", "representation": "HHT", "dim": 256,
+                "n_components": n_components, "C": C, "penalty": penalty, "l1_ratio": l1_ratio, "max_iter": 200, "early_stopping": True,
+                "class_weight": "balanced", "gamma": "1/(n_features*var)", "random_state": 42,
+                "num_classes": num_classes})
     fold_accuracies, fold_sp_indices, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
 
@@ -199,6 +208,8 @@ def evaluate_svm_nystroem(
 
         # Window predictions
         win_preds = clf.predict(X_test_trans)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target}, scores=clf.decision_function(X_test_trans))
 
         # Majority voting per audio
         file_preds = defaultdict(list)
@@ -248,6 +259,11 @@ def evaluate_random_forest(feature_cache, folds, num_classes=4, n_estimators=100
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO HHT: Random Forest (n_estimators={n_estimators}, balanced) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"rf_hht_n{n_estimators}_balanced_{num_classes}c", script=__file__,
+        params={"model": "RandomForestClassifier", "representation": "HHT", "dim": 256,
+                "n_estimators": n_estimators, "max_depth": None, "class_weight": "balanced",
+                "random_state": 42, "num_classes": num_classes})
 
     fold_accs, fold_sps, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
@@ -269,6 +285,8 @@ def evaluate_random_forest(feature_cache, folds, num_classes=4, n_estimators=100
         rf.fit(X_train, y_train)
 
         win_preds = rf.predict(X_test)
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target}, scores=rf.predict_proba(X_test))
 
         # Majority voting per audio
         file_preds = defaultdict(list)
@@ -337,6 +355,11 @@ def evaluate_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, 
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO HHT: MLP PyTorch [32, 16] (Batch={batch_size}, lr={lr}, epochs={epochs}) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"mlp_hht_h32-16_e{epochs}_noseed_{num_classes}c", script=__file__,
+        params={"model": "PyTorchMLP", "representation": "HHT", "dim": 256, "hidden": [32, 16],
+                "dropout": 0.2, "epochs": epochs, "batch_size": batch_size, "lr": lr, "weight_decay": 1e-3,
+                "seed": None, "early_stopping": False, "scaler": "StandardScaler(treino)", "num_classes": num_classes})
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Dispositivo PyTorch: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
@@ -382,6 +405,8 @@ def evaluate_mlp(feature_cache, folds, num_classes=4, epochs=30, batch_size=64, 
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             win_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target}, scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}
@@ -494,6 +519,12 @@ def evaluate_cnn(feature_cache, folds, num_classes=4, epochs=25, batch_size=32, 
     print("\n" + "=" * 80)
     print(f"AVALIAÇÃO HHT: CNN 2D PyTorch [64, 32] (Imagens 32x256) [{problem_name}]")
     print("=" * 80)
+    writer = ResultsWriter(
+        f"cnn2d_hht_w32_b{batch_size}_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "PyTorchHHTCNN [64, 32]", "representation": "HHT", "dim": 256, "image_windows": 32,
+                "epochs": epochs, "batch_size": batch_size, "lr": lr, "weight_decay": 1e-3,
+                "early_stopping": False, "normalization": "z-score escalar global (treino)",
+                "num_classes": num_classes})
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     print(f"Dispositivo PyTorch: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})")
@@ -540,6 +571,8 @@ def evaluate_cnn(feature_cache, folds, num_classes=4, epochs=25, batch_size=32, 
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             slice_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, slice_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target}, scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}

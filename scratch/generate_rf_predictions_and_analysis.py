@@ -29,6 +29,8 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
+from results_writer import ResultsWriter
+
 def mode(x):
     return Counter(x).most_common(1)[0][0]
 
@@ -68,7 +70,7 @@ def build_fold_matrices(feature_cache, file_dict):
         file_ids.extend([fid] * len(windows))
     return np.vstack(X_list), np.array(y_list, dtype=np.int64), np.array(file_ids, dtype=np.int64)
 
-def run_random_forest(feature_cache, folds, num_classes=4, n_estimators=100, random_state=42):
+def run_random_forest(feature_cache, folds, num_classes=4, n_estimators=100, random_state=42, writer=None):
     preds_by_fold = {}
     for fold in folds:
         fold_idx = fold["fold_idx"]
@@ -84,6 +86,9 @@ def run_random_forest(feature_cache, folds, num_classes=4, n_estimators=100, ran
         )
         rf.fit(X_train, y_train)
         win_preds = rf.predict(X_test)
+        if writer is not None:
+            writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                             train_files=fold["train_files"], scores=rf.predict_proba(X_test))
 
         file_preds = defaultdict(list)
         for fid, pred in zip(test_fids, win_preds):
@@ -326,19 +331,31 @@ def main():
 
         # 1. Random Forest no MEL
         print("\n--- Treinando Random Forest no MEL (256-D, 10 Folds 5x2cv) ---")
-        mel_preds = run_random_forest(cache_mel, folds)
+        mel_preds = run_random_forest(cache_mel, folds, writer=ResultsWriter(
+            "rf_mel5s_n100_balanced_4c", script=__file__,
+            params={"model": "RandomForestClassifier", "representation": "MEL", "window": "5.12 s (média de 10 frames de 0.512 s)", "dim": 256,
+                    "n_estimators": 100, "class_weight": "balanced", "random_state": 42, "num_classes": 4}))
 
         # 2. Random Forest no LOFAR
         print("\n--- Treinando Random Forest no LOFAR (1024-D, 10 Folds 5x2cv) ---")
-        lofar_preds = run_random_forest(cache_lofar, folds)
+        lofar_preds = run_random_forest(cache_lofar, folds, writer=ResultsWriter(
+            "rf_lofar5s_n100_balanced_4c", script=__file__,
+            params={"model": "RandomForestClassifier", "representation": "LOFAR", "window": "5.12 s (média de 10 frames de 0.512 s)", "dim": 1024,
+                    "n_estimators": 100, "class_weight": "balanced", "random_state": 42, "num_classes": 4}))
 
         # 3. Random Forest no HHT
         print("\n--- Treinando Random Forest no HHT (256-D, 10 Folds 5x2cv) ---")
-        hht_preds = run_random_forest(cache_hht, folds)
+        hht_preds = run_random_forest(cache_hht, folds, writer=ResultsWriter(
+            "rf_hht_n100_balanced_4c", script=__file__,
+            params={"model": "RandomForestClassifier", "representation": "HHT", "dim": 256,
+                    "n_estimators": 100, "class_weight": "balanced", "random_state": 42, "num_classes": 4}))
 
         # 4. Random Forest no DEMON
         print("\n--- Treinando Random Forest no DEMON (253-D, 10 Folds 5x2cv) ---")
-        demon_preds = run_random_forest(cache_demon, folds)
+        demon_preds = run_random_forest(cache_demon, folds, writer=ResultsWriter(
+            "rf_demon_n100_balanced_4c", script=__file__,
+            params={"model": "RandomForestClassifier", "representation": "DEMON", "dim": 253,
+                    "n_estimators": 100, "class_weight": "balanced", "random_state": 42, "num_classes": 4}))
 
         # Salvar predições
         with open(cache_pred_file, "wb") as f:

@@ -7,7 +7,8 @@ This script evaluates:
 3. Fused MEL + DEMON (509 features: 256 Mel + 253 DEMON)
 
 All evaluated with PyTorch MLP on the NVIDIA RTX 5060 Ti GPU inside the Docker container,
-using the exact 10 folds of 5x2cv with Ship ID isolation on both 4-Class and 3-Class tasks.
+using the exact 10 folds of 5x2cv (split by recording `ID`; the same ship may be in train and test)
+on both 4-Class and 3-Class tasks. Window-level predictions are saved in results/trainings/multirep/<exp>/.
 """
 
 import os
@@ -27,6 +28,8 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import TensorDataset, DataLoader
+
+from results_writer import ResultsWriter
 
 
 def compute_sp_index(targets, preds, num_classes=4):
@@ -170,7 +173,8 @@ def evaluate_mlp_experiment(
     epochs=35,
     batch_size=64,
     lr=1e-3,
-    dropout=0.2
+    dropout=0.2,
+    rep_tag="mel-demon",
 ):
     class_names = ["SMALL", "MEDIUM", "LARGE", "AMBIENTAL"] if num_classes == 4 else ["SMALL", "MEDIUM", "LARGE"]
     exclude_target = 3 if num_classes == 3 else None
@@ -184,6 +188,13 @@ def evaluate_mlp_experiment(
     print(f"Dimensão: {in_dim} | Dispositivo: {device} ({torch.cuda.get_device_name(0) if torch.cuda.is_available() else 'CPU'})", flush=True)
     print(f"Arquitetura: MLP {hidden} | Epochs: {epochs} | Batch: {batch_size} | lr: {lr} | Dropout: {dropout}", flush=True)
     print("=" * 80, flush=True)
+
+    writer = ResultsWriter(
+        f"mlp_{rep_tag}_h{'-'.join(map(str, hidden))}_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "PyTorchFusionMLP", "representation": rep_tag, "dim": in_dim,
+                "window": "5.12 s (MEL alinhado ao DEMON)", "hidden": hidden, "dropout": dropout,
+                "epochs": epochs, "batch_size": batch_size, "lr": lr, "weight_decay": 1e-3,
+                "early_stopping": False, "scaler": "StandardScaler(treino)", "num_classes": num_classes})
 
     fold_accs, fold_sps, fold_recalls = [], [], []
     total_cm = np.zeros((num_classes, num_classes), dtype=np.int64)
@@ -229,6 +240,9 @@ def evaluate_mlp_experiment(
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             win_preds = torch.argmax(logits, dim=1).cpu().numpy()
+        writer.save_fold(fold_idx, test_fids, y_test, win_preds,
+                         train_files={k: v for k, v in fold["train_files"].items() if v != exclude_target},
+                         scores=torch.softmax(logits, dim=1).cpu().numpy())
 
         file_preds = defaultdict(list)
         file_targets = {}
@@ -294,26 +308,26 @@ def main():
 
     # 1. MEL Isolado (256-D, 5.12s)
     results["MEL_4C"] = evaluate_mlp_experiment(
-        cache_mel, folds, experiment_name="MEL Isolado (256-D)", num_classes=4, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_mel, folds, experiment_name="MEL Isolado (256-D)", rep_tag="mel5s", num_classes=4, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
     results["MEL_3C"] = evaluate_mlp_experiment(
-        cache_mel, folds, experiment_name="MEL Isolado (256-D)", num_classes=3, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_mel, folds, experiment_name="MEL Isolado (256-D)", rep_tag="mel5s", num_classes=3, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
 
     # 2. DEMON Isolado (253-D, 5.12s)
     results["DEMON_4C"] = evaluate_mlp_experiment(
-        cache_demon, folds, experiment_name="DEMON Isolado (253-D)", num_classes=4, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_demon, folds, experiment_name="DEMON Isolado (253-D)", rep_tag="demon", num_classes=4, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
     results["DEMON_3C"] = evaluate_mlp_experiment(
-        cache_demon, folds, experiment_name="DEMON Isolado (253-D)", num_classes=3, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_demon, folds, experiment_name="DEMON Isolado (253-D)", rep_tag="demon", num_classes=3, hidden=[32, 16], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
 
     # 3. FUSÃO MULTIMODAL: MEL + DEMON (509-D)
     results["FUSED_4C"] = evaluate_mlp_experiment(
-        cache_fused, folds, experiment_name="FUSÃO MULTIMODAL MEL + DEMON (509-D)", num_classes=4, hidden=[64, 32], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_fused, folds, experiment_name="FUSÃO MULTIMODAL MEL + DEMON (509-D)", rep_tag="mel5s-demon", num_classes=4, hidden=[64, 32], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
     results["FUSED_3C"] = evaluate_mlp_experiment(
-        cache_fused, folds, experiment_name="FUSÃO MULTIMODAL MEL + DEMON (509-D)", num_classes=3, hidden=[64, 32], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
+        cache_fused, folds, experiment_name="FUSÃO MULTIMODAL MEL + DEMON (509-D)", rep_tag="mel5s-demon", num_classes=3, hidden=[64, 32], epochs=args.epochs, batch_size=args.batch_size, lr=args.lr
     )
 
     # Quadro Resumo Final

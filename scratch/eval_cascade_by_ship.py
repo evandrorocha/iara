@@ -22,6 +22,8 @@ import torch
 from collections import defaultdict
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 import iara.ml.experiment as iara_exp
 import iara.ml.dataset as iara_dataset
@@ -188,22 +190,26 @@ def evaluate_fold_fast(fold_idx, ships, data_loader, input_type):
 
     ship_preds   = {}
     ship_targets = {}
+    window_rows  = []   # (File, Target, Prediction) por janela, para results/trainings/multirep
 
     for fid, info in ships.items():
         tgt = info["target"]
+        win = info["preds"]
         if fid in large_ids:
             mask = (large_file_ids == fid)
             if mask.any():
                 sl_out = run_sl_specialist(sl_model, large_samples[mask], bias=CASCADE_BIAS)
                 final  = majority_vote(sl_out)
+                win    = sl_out.tolist()
             else:
                 final = ship_stage1[fid]
         else:
             final = ship_stage1[fid]
         ship_preds[fid]   = final
         ship_targets[fid] = tgt
+        window_rows.extend((fid, tgt, int(w)) for w in win)
 
-    return ship_preds, ship_targets
+    return ship_preds, ship_targets, window_rows
 
 
 def evaluate_fold_full(fold_idx, dataset):
@@ -277,6 +283,20 @@ def main():
     id_list = config.split_datasets()
     data_loader = config.get_data_loader()
 
+    import pandas as pd
+    from results_writer import ResultsWriter
+    sl_trn = {}
+    for k in range(N_FOLDS):
+        trn_csv = os.path.join(SL_DIR, "eval", f"fold_{k}",
+                               f"{os.path.basename(SL_DIR)}_multiclass_trn.csv")
+        sl_trn[k] = set(pd.read_csv(trn_csv, usecols=["File"])["File"].astype(int))
+    writer = ResultsWriter(
+        "cascade_file_lofarmc6000_sl6000pca8_4c", script=__file__,
+        params={"stage1": LOFAR_MC_DIR, "sl_specialist": SL_DIR, "cascade_bias": CASCADE_BIAS,
+                "routing": "arquivo votado LARGE pelo estágio 1 -> todas as janelas passam pelo SL; "
+                           "demais arquivos mantêm as janelas do estágio 1",
+                "sl_specialist_retrained": "2026-10-20 (split alinhado ao 4 classes, sem vazamento)"})
+
     all_rec = {c: [] for c in range(4)}
     all_acc, all_sp = [], []
 
@@ -288,14 +308,22 @@ def main():
         ships = read_lofar_mc_csv(fold_idx)
         if ships is not None:
             # Fast path: CSV exists → load only LARGE ships' features
-            ship_preds, ship_targets = evaluate_fold_fast(
+            ship_preds, ship_targets, window_rows = evaluate_fold_fast(
                 fold_idx, ships, data_loader, config.input_type)
+            routed = {fid for fid, (_, p) in
+                      ((f, (i["target"], majority_vote(i["preds"]))) for f, i in ships.items()) if p == 2}
+            leak = routed & sl_trn[fold_idx]
+            print(f"  Arquivos roteados ao SL que estavam no TREINO do SL: {len(leak)}/{len(routed)}")
+            assert not leak, f"fold {fold_idx}: vazamento do especialista SL ({len(leak)} arquivos)"
+            writer.save_fold(fold_idx, [r[0] for r in window_rows], [r[1] for r in window_rows],
+                             [r[2] for r in window_rows],
+                             train_files=dict(zip(id_list[fold_idx][0]['ID'], id_list[fold_idx][0]['Target'])))
         else:
             # Full path: load all test features, run multiclass from scratch
             print(f"  [full run] No LOFAR-MC CSV found, running multiclass...")
             dataset = iara_dataset.AudioDataset(
                 data_loader, config.input_type, test_ids)
-            ship_preds, ship_targets = evaluate_fold_full(fold_idx, dataset)
+            raise RuntimeError("caminho completo sem CSV do LOFAR-MC não grava resultados; gere o CSV antes")
 
         if 'total_cm' not in locals():
             total_cm = np.zeros((4, 4), dtype=int)

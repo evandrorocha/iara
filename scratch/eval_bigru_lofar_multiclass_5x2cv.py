@@ -1,7 +1,8 @@
 """
 Treinamento e Avaliação do BiGRU com Mecanismo de Atenção Temporal (Temporal Attention)
 com LOFAR (1024-D), FUSÃO LOFAR + DEMON (1277-D) e FUSÃO LOFAR + HHT (1280-D)
-sob o protocolo oficial 5x2cv (10 Folds com isolamento de navios)
+sob o protocolo oficial 5x2cv (10 Folds, particionamento por gravação `ID`; o mesmo navio pode estar em treino e teste)
+Predições por sequência salvas em results/trainings/multirep/<exp>/ (results_writer.py)
 para 4 Classes e 3 Classes.
 """
 import os
@@ -161,10 +162,20 @@ def get_official_folds(eval_base_dir="results/trainings/tests/svm_nystroem_4000_
     return folds
 
 
-def train_and_eval_bigru(cache, num_classes=4, epochs=15, batch_size=128, lr=3e-4, device='cuda', seq_len=15, stride=5):
+def train_and_eval_bigru(cache, num_classes=4, epochs=15, batch_size=128, lr=3e-4, device='cuda', seq_len=15, stride=5,
+                         rep_tag="rep"):
+    from results_writer import ResultsWriter
     folds = get_official_folds(num_classes=num_classes)
     first_fid = list(cache.keys())[0]
     input_dim = cache[first_fid].shape[1]
+
+    writer = ResultsWriter(
+        f"bigru_att_{rep_tag}_h128_s{seq_len}-{stride}_e{epochs}_{num_classes}c", script=__file__,
+        params={"model": "BiGRUAttention (sem BatchNorm)", "representation": rep_tag, "dim": input_dim,
+                "hidden_size": 128, "num_layers": 2, "dropout": 0.3, "seq_len_frames": seq_len,
+                "seq_stride_frames": stride, "frame_step_s": 5.12, "epochs": epochs, "batch_size": batch_size,
+                "drop_last": True, "lr": lr, "optimizer": "AdamW(wd=1e-3)", "scheduler": "CosineAnnealingLR",
+                "class_weight": "1/count normalizado", "early_stopping": False, "num_classes": num_classes})
 
     fold_metrics = []
 
@@ -220,6 +231,7 @@ def train_and_eval_bigru(cache, num_classes=4, epochs=15, batch_size=128, lr=3e-
         model.eval()
         file_preds = defaultdict(list)
         file_targets = {}
+        seq_fids, seq_targets, seq_preds, seq_scores = [], [], [], []
 
         with torch.no_grad():
             for batch_X, batch_y, batch_fids in tst_loader:
@@ -227,10 +239,17 @@ def train_and_eval_bigru(cache, num_classes=4, epochs=15, batch_size=128, lr=3e-
                 logits = model(batch_X)
                 preds = torch.argmax(logits, dim=1).cpu().numpy()
                 targets = batch_y.numpy()
+                seq_fids.extend(np.asarray(batch_fids).tolist())
+                seq_targets.extend(targets.tolist())
+                seq_preds.extend(preds.tolist())
+                seq_scores.append(torch.softmax(logits, dim=1).cpu().numpy())
 
                 for fid, pred, tgt in zip(batch_fids, preds, targets):
                     file_preds[fid].append(pred)
                     file_targets[fid] = tgt
+
+        writer.save_fold(fold_idx, seq_fids, seq_targets, seq_preds, train_files=train_files,
+                         scores=np.concatenate(seq_scores))
 
         audio_preds = []
         audio_targets = []
@@ -331,7 +350,10 @@ def main():
         for rep_name, cache_dict in representations.items():
             print(f"\n>>> Avaliando {rep_name} ({n_cls} Classes)...")
             t0 = time.time()
-            summary, df_m = train_and_eval_bigru(cache_dict, num_classes=n_cls, epochs=args.epochs, device=device)
+            rep_tag = {'LOFAR (1024-D)': 'lofar5s', 'FUSÃO LOFAR + DEMON (1277-D)': 'lofar5s-demon',
+                       'FUSÃO LOFAR + HHT (1280-D)': 'lofar5s-hht'}[rep_name]
+            summary, df_m = train_and_eval_bigru(cache_dict, num_classes=n_cls, epochs=args.epochs, device=device,
+                                                 rep_tag=rep_tag)
             elapsed = time.time() - t0
 
             print(f"Concluído em {elapsed:.1f}s.")

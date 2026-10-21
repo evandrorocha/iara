@@ -5,7 +5,7 @@ Gera e analisa as predições do modelo CNN 2D (PyTorch 2D-CNN, GPU RTX 5060 Ti)
 - HHT (PyTorch 2D-CNN, 256-D)
 - DEMON (PyTorch 2D-CNN, 253-D)
 
-Sob o protocolo oficial 5x2cv (10 folds com isolamento rígido por Ship ID).
+Sob o protocolo oficial 5x2cv (10 folds, particionamento por gravação `ID`; o mesmo navio pode estar em treino e teste).
 Calcula a análise de consenso, teto do oráculo, resgates exclusivos e padrões de erro
 para as 3 classes de embarcações:
 - SMALL (Classe 0)
@@ -27,6 +27,8 @@ import scipy.stats as scipy_stats
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
+
+from results_writer import ResultsWriter
 
 import torch
 import torch.nn as nn
@@ -108,7 +110,7 @@ class PyTorch2DCNN(nn.Module):
         x = torch.flatten(x, 1)
         return self.fc(x)
 
-def run_pytorch_cnn(feature_cache, folds, num_classes=4, epochs=20, batch_size=64, lr=1e-3, seed=42):
+def run_pytorch_cnn(feature_cache, folds, num_classes=4, epochs=20, batch_size=64, lr=1e-3, seed=42, writer=None):
     torch.manual_seed(seed)
     np.random.seed(seed)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -155,6 +157,10 @@ def run_pytorch_cnn(feature_cache, folds, num_classes=4, epochs=20, batch_size=6
             tst_tensor = torch.tensor(X_test, dtype=torch.float32, device=device)
             logits = model(tst_tensor)
             img_preds = torch.argmax(logits, dim=1).cpu().numpy()
+            img_scores = torch.softmax(logits, dim=1).cpu().numpy()
+        if writer is not None:
+            writer.save_fold(fold_idx, test_fids, y_test, img_preds,
+                             train_files=fold["train_files"], scores=img_scores)
 
         file_preds = defaultdict(list)
         for fid, pred in zip(test_fids, img_preds):
@@ -359,9 +365,10 @@ def plot_4panel_figure(res, class_name, out_filename, artifact_dir):
     plt.close()
     print(f"Gráfico salvo com sucesso em '{out_filename}'.", flush=True)
 
-    artifact_copy = os.path.join(artifact_dir, os.path.basename(out_filename))
-    shutil.copy2(out_filename, artifact_copy)
-    print(f"Copiado para os artefatos: '{artifact_copy}'.", flush=True)
+    if os.path.isdir(artifact_dir):  # diretório local do Windows; não existe dentro do container
+        artifact_copy = os.path.join(artifact_dir, os.path.basename(out_filename))
+        shutil.copy2(out_filename, artifact_copy)
+        print(f"Copiado para os artefatos: '{artifact_copy}'.", flush=True)
 
 def main():
     cache_pred_file = "data/iara_processed/cnn_all_representations_predictions.pkl"
@@ -403,15 +410,30 @@ def main():
 
         # 3. Treinar CNN DEMON (253-D)
         print("\n--- Treinando CNN 2D no DEMON (253-D, 10 Folds 5x2cv) ---", flush=True)
-        demon_preds = run_pytorch_cnn(cache_demon, folds, epochs=20, batch_size=64)
+        demon_preds = run_pytorch_cnn(cache_demon, folds, epochs=20, batch_size=64, writer=ResultsWriter(
+            "cnn2d_demon_w32_b64_e20_4c", script=__file__,
+            params={"model": "PyTorch2DCNN (conv64-conv32-GAP-fc64)", "representation": "DEMON", "dim": 253,
+                    "frame_step_s": 5.12, "image_windows": 32, "image_stride": 16, "epochs": 20, "batch_size": 64, "lr": 1e-3,
+                    "weight_decay": 1e-3, "seed": 42, "early_stopping": False,
+                    "normalization": "z-score escalar global (treino)", "num_classes": 4}))
 
         # 4. Treinar CNN HHT (256-D)
         print("\n--- Treinando CNN 2D no HHT (256-D, 10 Folds 5x2cv) ---", flush=True)
-        hht_preds = run_pytorch_cnn(cache_hht, folds, epochs=20, batch_size=64)
+        hht_preds = run_pytorch_cnn(cache_hht, folds, epochs=20, batch_size=64, writer=ResultsWriter(
+            "cnn2d_hht_w32_b64_e20_4c", script=__file__,
+            params={"model": "PyTorch2DCNN (conv64-conv32-GAP-fc64)", "representation": "HHT", "dim": 256,
+                    "frame_step_s": 5.12, "image_windows": 32, "image_stride": 16, "epochs": 20, "batch_size": 64, "lr": 1e-3,
+                    "weight_decay": 1e-3, "seed": 42, "early_stopping": False,
+                    "normalization": "z-score escalar global (treino)", "num_classes": 4}))
 
         # 5. Treinar CNN LOFAR (1024-D)
         print("\n--- Treinando CNN 2D no LOFAR (1024-D, 10 Folds 5x2cv) ---", flush=True)
-        lofar_preds = run_pytorch_cnn(cache_lofar, folds, epochs=15, batch_size=64)
+        lofar_preds = run_pytorch_cnn(cache_lofar, folds, epochs=15, batch_size=64, writer=ResultsWriter(
+            "cnn2d_lofar5s_w32_b64_e15_4c", script=__file__,
+            params={"model": "PyTorch2DCNN (conv64-conv32-GAP-fc64)", "representation": "LOFAR", "dim": 1024,
+                    "frame_step_s": 5.12, "image_windows": 32, "image_stride": 16, "epochs": 15, "batch_size": 64, "lr": 1e-3,
+                    "weight_decay": 1e-3, "seed": 42, "early_stopping": False,
+                    "normalization": "z-score escalar global (treino)", "num_classes": 4}))
 
         # Salvar predições
         with open(cache_pred_file, "wb") as f:
