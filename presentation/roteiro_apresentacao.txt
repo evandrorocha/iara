@@ -186,12 +186,14 @@ O protocolo de validação é o 5×2cv. Em cada uma das 5 repetições, dividimo
 o dataset em duas metades, treinamos em uma e testamos na outra, depois
 invertemos. Isso dá 10 folds no total.
 
-O ponto crítico é o isolamento por ID de embarcação: uma mesma embarcação
-física nunca aparece simultaneamente no treino e no teste. Isso previne o
-data leakage — sem isso, janelas do mesmo trânsito contaminariam o teste.
+Como no artigo, a partição é feita pelo ID da gravação: as janelas de uma
+mesma gravação nunca aparecem ao mesmo tempo no treino e no teste. Isso evita
+o vazamento entre janelas vizinhas do mesmo trânsito.
 
-Esse protocolo garante que estamos avaliando a generalização real para alvos
-completamente inéditos.
+A partição não isola navios: o mesmo navio pode ter gravações diferentes no
+treino e no teste — 63,5% das gravações de navio no teste têm o mesmo navio
+no treino. Então medimos a generalização para gravações inéditas, não
+necessariamente para navios inéditos.
 
 --------------------------------------------------------------------------------
 [SLIDE 16 — Figuras de Mérito]  (~45 s)
