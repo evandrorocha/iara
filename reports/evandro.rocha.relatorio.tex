@@ -183,7 +183,7 @@ onde $\rho$ é a razão $\ell_1/\ell_2$ (padrão: $\rho = 0{,}15$). Isso permite
 
 Adotou-se o protocolo $5\times2$cv~\cite{alpaydin1999}: em cada uma das 5 repetições, o dataset é dividido em duas metades (A e B), treinando-se em A e testando em B, depois invertendo. Totalizam-se 10 folds independentes.
 
-\textbf{Isolamento de navios}: a partição é feita por ID físico de navio — o mesmo navio nunca aparece simultaneamente em treino e teste. Isso previne vazamento de dados (\textit{data leakage}) temporal e garante avaliação real de generalização para alvos completamente inéditos.
+\textbf{Partição por gravação}: como no artigo, a partição é feita pelo identificador da gravação (\texttt{ID}, \texttt{exclusive\_header='ID'}): as janelas de uma mesma gravação nunca aparecem simultaneamente em treino e teste, o que evita o vazamento entre janelas vizinhas. A partição \textbf{não} isola navios: o mesmo navio (\texttt{Ship ID}) pode ter gravações diferentes em treino e teste --- 63,5\% das gravações de navio no teste têm o mesmo navio no treino. Os resultados medem, portanto, a generalização para \textbf{gravações} inéditas, e não necessariamente para navios inéditos.
 
 \subsection{Métricas de Avaliação}
 

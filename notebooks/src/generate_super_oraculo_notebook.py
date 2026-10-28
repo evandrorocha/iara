@@ -1,9 +1,9 @@
 """
-Script de geração do notebook 25: notebooks/25_analise_falhas_super_oraculo.ipynb
+Script de geração do notebook 27: notebooks/27_analise_falhas_super_oraculo.ipynb
 Análise das instâncias (arquivo x fold) em que nenhum dos 16 especialistas (4 famílias x 4 representações) acerta.
 
 Fontes: data/iara_processed/{rf,mlp,svm,cnn}_all_representations_predictions.pkl (predições por arquivo dos 16
-especialistas, as mesmas do gate do NB24), cache_gating_metafeatures.pkl, src/iara/dataset_info/iara.csv e
+especialistas, as mesmas do gate do NB26), cache_gating_metafeatures.pkl, src/iara/dataset_info/iara.csv e
 results_heterogeneous_gating.pkl. Todos os números do markdown são calculados aqui, na geração
 (notebooks/gating_comum.py). Rodar na raiz do repositório:
     python notebooks/generate_super_oraculo_notebook.py
@@ -77,7 +77,7 @@ def compute():
             "counts": G.dataset_counts()}
 
 
-def create_notebook(filename="notebooks/25_analise_falhas_super_oraculo.ipynb"):
+def create_notebook(filename="notebooks/27_analise_falhas_super_oraculo.ipynb"):
     X = compute()
     df, total, sup, med, grp = X["df"], X["total"], X["sup"], X["med"], X["grp"]
     n = len(df)
@@ -104,9 +104,9 @@ def create_notebook(filename="notebooks/25_analise_falhas_super_oraculo.ipynb"):
     cells = []
     cells.append(md(f"""
 # Análise das Falhas Unânimes do Super-Oráculo – Dataset IARA
-### Notebook 25: Instâncias em que nenhum dos 16 especialistas acerta
+### Notebook 27: Instâncias em que nenhum dos 16 especialistas acerta
 
-No estudo de roteamento dinâmico (Gating, Notebook 24) sobre o dataset **IARA** (*Silva et al.*, IEEE Access 2025), o **Super-Oráculo** combina 16 especialistas (4 representações espectrais $\\times$ 4 famílias de classificadores) e conta acerto quando **pelo menos um** dos 16 acerta. Ele usa o rótulo verdadeiro para escolher o especialista: **não é um sistema realizável**. Nos 10 folds do $5\\times2\\text{{cv}}$:
+No estudo de roteamento dinâmico (Gating, Notebook 26) sobre o dataset **IARA** (*Silva et al.*, IEEE Access 2025), o **Super-Oráculo** combina 16 especialistas (4 representações espectrais $\\times$ 4 famílias de classificadores) e conta acerto quando **pelo menos um** dos 16 acerta. Ele usa o rótulo verdadeiro para escolher o especialista: **não é um sistema realizável**. Nos 10 folds do $5\\times2\\text{{cv}}$:
 * **Índice SP:** {pm(sup['sp'])}%
 * **Acurácia Global (micro):** {pm(X['acc'])}%
 * **Acurácia Balanceada:** {pm(X['bal'])}%
@@ -138,6 +138,8 @@ except ImportError:
     display = print
 
 sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.path.abspath('src'))  # módulos movidos para notebooks/src
+sys.path.insert(0, os.path.abspath('notebooks/src'))
 import gating_comum as G   # predições por arquivo dos 16 especialistas, meta-features e iara.csv
 
 # Configuração de estilo visual (sem dependência externa de seaborn)
@@ -167,7 +169,7 @@ print("Ambiente configurado com sucesso.")
 Carregamos os 10 folds de validação cruzada para as 4 famílias de modelos nas 4 representações:
 * **Modelos:** Random Forest (RF), Multi-Layer Perceptron (MLP), Support Vector Machine (SVM Nyström RBF) e CNN 2D.
 * **Representações:** MEL, LOFAR, HHT e DEMON.
-* **Total:** $4 \\times 4 = 16$ especialistas para cada áudio. A procedência de cada especialista (pipeline oficial ou script ad hoc, especialistas colapsados) está na Seção 3.1 do Notebook 24.
+* **Total:** $4 \\times 4 = 16$ especialistas para cada áudio. A procedência de cada especialista (pipeline oficial ou script ad hoc, especialistas colapsados) está na Seção 3.1 do Notebook 26.
 
 Cruzamos cada áudio com:
 1. `src/iara/dataset_info/iara.csv` (nome do navio, comprimento, tipo AIS, estado do mar, vento e chuva);
@@ -362,7 +364,7 @@ display(df_full_display.head(25))
    * As {n} instâncias ({br(n / total * 100)}%) em que todos erram vêm de {n_rec} gravações; a mesma gravação costuma reaparecer em vários folds. Elas mostram onde os 16 especialistas concordam no erro, mas não provam que essas gravações sejam "inclassificáveis".
 2. **Comprimento AIS vs. assinatura acústica (hipótese):**
    * As classes são definidas por comprimento (< 50 m, 50–100 m, > 100 m). Nos grupos 2 e 4, embarcações de {L('A2')} (principalmente {grp['A2']['types'].index[0]}) e de {L('A4')} (principalmente {grp['A4']['types'].index[0]}) foram classificadas como LARGE. Isso é compatível com a hipótese de que o comprimento nem sempre se reflete na assinatura acústica, mas os dados disponíveis não permitem testá-la (não há potência de máquina, rotação ou regime de operação).
-3. **Relação com o Gating (Notebook 24):**
+3. **Relação com o Gating (Notebook 26):**
    * Os sistemas de gating sem vazamento ficam em SP {pm(X['hfix'])} (H-MoE especializado) e {pm(X['hauto'])} (H-MoE automático), contra {pm(X['mlp_lofar'])} do MLP-LOFAR isolado (F-test 5×2cv: {p_txt(hp)} e {p_txt(ap)}). Nenhum deles se aproxima do Super-Oráculo, e a distância entre eles e o oráculo não deve ser lida como "espaço a ser conquistado": boa parte dela vem do próprio mecanismo do oráculo.
 """))
 

@@ -1,10 +1,12 @@
 # Implementação e Avaliação do Sistema Gating Front-End Multimodal
 
+> **Correção de 23/10/2026 — extração HHT.** O cache HHT usado neste documento misturava duas configurações de EMD (`MAX_ITERATION` ≥ 100 em 571 gravações e 30 nas demais; nenhuma gravação BACKGROUND no primeiro grupo). O HHT foi re-extraído com configuração única (8 IMFs, `MAX_ITERATION=30`) e todos os experimentos HHT foram retreinados; a auditoria e o antes × depois estão no `notebooks/28_correcao_extracao_hht.ipynb`. Os números HHT abaixo são **anteriores à correção** (e alguns vêm de execuções ainda mais antigas que as predições em disco). Valores atuais, recalculados das predições: RF HHT isolado 57,77 (antes 60,64, na convenção de voto do pickle do gating); Gated RF 64,04 (antes 64,56); H-MoE especializado 65,36 (antes 65,41); os roteadores mudam menos de 0,6 p.p. As frações de rota para o HHT também mudaram (ver Notebook 26).
+
 **Data:** Outubro de 2026  
 **Autor:** Evandro Rocha (UFRJ / COPPE / PEE)  
 **Dataset:** IARA (1.825 áudios reais de tráfego marítimo na Bacia de Santos)  
 **Protocolo:** Validação Cruzada $5\times2\text{cv}$ Oficial (10 folds estratificados, particionados por gravação `ID` como no artigo; o mesmo navio, `Ship ID`, pode ter gravações em treino e teste)  
-**Notebook Demonstrativo:** [notebooks/24_sistema_gating_frontend.ipynb](file:///c:/Users/ev_ro/git/IARA/notebooks/24_sistema_gating_frontend.ipynb)  
+**Notebook Demonstrativo:** [notebooks/26_sistema_gating_frontend.ipynb](file:///c:/Users/ev_ro/git/IARA/notebooks/26_sistema_gating_frontend.ipynb)  
 
 ---
 

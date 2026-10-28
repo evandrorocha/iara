@@ -1,5 +1,5 @@
 """Executa notebooks in-place (cwd = notebooks/). Uso no container:
-    docker exec -w /workspace/IARA iara-dev python scratch/execute_notebooks.py notebooks/5_analise_demon.ipynb [...]
+    docker exec -w /workspace/IARA iara-dev python scratch/execute_notebooks.py notebooks/8_analise_demon.ipynb [...]
 """
 import os
 import sys

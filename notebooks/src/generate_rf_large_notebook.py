@@ -1,5 +1,5 @@
 """
-Script de geração do notebook 19: notebooks/19_analise_complementaridade_rf_large.ipynb
+Script de geração do notebook 21: notebooks/21_analise_complementaridade_rf_large.ipynb
 Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest para a Classe LARGE (Dataset IARA).
 
 Os números do markdown são calculados na geração (notebooks/rf_complementaridade_comum.py + iara_results.py)
@@ -39,7 +39,7 @@ sintese = pd.DataFrame(linhas).set_index(['Classe', 'Família'])
 display(sintese)"""
 
 
-def create_notebook(filename="notebooks/19_analise_complementaridade_rf_large.ipynb"):
+def create_notebook(filename="notebooks/21_analise_complementaridade_rf_large.ipynb"):
     ns = C.run_helper()
     tri_cells, A_fam = C.secao_trilateral(ns, CLASSE, NB, 8)
     a = A_fam["RF"]
@@ -63,7 +63,7 @@ def create_notebook(filename="notebooks/19_analise_complementaridade_rf_large.ip
 
 A classe **`LARGE`** (embarcações com comprimento ≥ 100 m, conforme `src/iara/default.py`) foi avaliada em **{br(a['n_inst'])} instâncias de teste** (arquivo × fold; **{br(a['n_grav'])} gravações distintas** de **{br(a['n_navios'])} navios**) nos 10 folds do protocolo 5×2cv, com **Random Forest (100 árvores, `class_weight='balanced'`)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).
 
-O objetivo é confrontar os resultados do SVM (Notebook 13) e do MLP (Notebook 16) com os do Random Forest na classe `LARGE`.
+O objetivo é confrontar os resultados do SVM (Notebook 15) e do MLP (Notebook 18) com os do Random Forest na classe `LARGE`.
 
 {C.aviso_modelos(ns)}
 
@@ -94,7 +94,7 @@ O objetivo é confrontar os resultados do SVM (Notebook 13) e do MLP (Notebook 1
 
     sintese_md = f"""## 9. Síntese: SVM vs. MLP vs. Random Forest nas Três Classes de Navio
 
-Consolidação dos Notebooks 10 a 19, calculada na célula abaixo com o mesmo código (instâncias arquivo × fold; as famílias não são homogêneas — ver Seção 8):
+Consolidação dos Notebooks 13 a 21, calculada na célula abaixo com o mesmo código (instâncias arquivo × fold; as famílias não são homogêneas — ver Seção 8):
 
 1. **Oráculos (não realizáveis):** o maior oráculo é do {top_orc['SMALL']} em `SMALL`, do {top_orc['MEDIUM']} em `MEDIUM` e do {top_orc['LARGE']} em `LARGE`. {"Em todos os 9 casos o oráculo observado fica abaixo do esperado sob erros independentes: as entradas erram de forma correlacionada." if abaixo else "Nem sempre o oráculo observado fica abaixo do esperado sob erros independentes."}
 2. **Maior número de resgates exclusivos por família:** {champ_txt}. Esses resgates são contados em instâncias e são, em grande parte, instáveis entre folds.

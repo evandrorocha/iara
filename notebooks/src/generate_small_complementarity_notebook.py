@@ -1,9 +1,9 @@
 """
-Script de geração do notebook 10: notebooks/10_analise_complementaridade_small.ipynb
+Script de geração do notebook 13: notebooks/13_analise_complementaridade_small.ipynb
 Análise de complementaridade, oráculo (observado vs. esperado sob independência), grau de consenso,
 voto real e risco de efeito reverso das 4 entradas do SVM (MEL, LOFAR, HHT, DEMON) na classe SMALL.
 
-Os geradores dos notebooks 12 (MEDIUM) e 13 (LARGE) reutilizam ANALYSIS_CODE e build_notebook() deste arquivo.
+Os geradores dos notebooks 14 (MEDIUM) e 13 (LARGE) reutilizam ANALYSIS_CODE e build_notebook() deste arquivo.
 Todos os números citados no markdown são calculados aqui, a partir das predições por janela em
 results/trainings/{tests,multirep} via notebooks/iara_results.py, com o MESMO código que vai para o notebook.
 """
@@ -222,6 +222,8 @@ except ImportError:
     display = print
 
 sys.path.insert(0, os.path.abspath('.') if os.path.exists('iara_results.py') else os.path.abspath('notebooks'))
+sys.path.insert(0, os.path.abspath('src'))  # módulos movidos para notebooks/src
+sys.path.insert(0, os.path.abspath('notebooks/src'))
 
 plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')
 plt.rcParams.update({'font.family': 'sans-serif', 'font.size': 11, 'axes.labelsize': 12, 'axes.titlesize': 13,
@@ -576,7 +578,7 @@ def cross_class_md(nss, nb_nums):
     return t
 
 
-def create_notebook(filename="notebooks/10_analise_complementaridade_small.ipynb"):
+def create_notebook(filename="notebooks/13_analise_complementaridade_small.ipynb"):
     ns = compute(0, "SMALL")
     cells = [summary_cell(ns, 10, "SMALL",
                           "A classe **`SMALL`** (embarcações de pequeno porte, comprimento $< 50\\text{ m}$) é a de menor recall para os SVMs deste estudo (dataset IARA, *Silva et al.*, IEEE Access 2025).",

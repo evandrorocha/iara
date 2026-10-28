@@ -112,6 +112,64 @@ def compute_hilbert_marginal_spectrum(
     return freq_grid, marginal_spec
 
 
+def compute_hilbert_2d_spectrogram(
+    imfs: np.ndarray,
+    fs: float,
+    n_time_bins: int = 32,
+    n_freq_bins: int = 128,
+    max_freq_hz: float = 1000.0,
+    log_scale: bool = True
+) -> typing.Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Computes the 2D Hilbert-Huang spectrogram (time-frequency energy distribution) by binning the
+    instantaneous energy amp^2 of each IMF into a (time, frequency) grid. The output is normalized by
+    its own maximum (after log1p when log_scale=True), so absolute level across windows is lost.
+
+    Args:
+        imfs (np.ndarray): Array of IMFs (shape: n_imfs, n_samples).
+        fs (float): Sampling rate in Hz.
+        n_time_bins (int): Number of bins along the local time axis.
+        n_freq_bins (int): Number of bins along the frequency axis.
+        max_freq_hz (float): Maximum frequency bin in Hz.
+        log_scale (bool): If True, applies log1p dynamic range compression.
+
+    Returns:
+        Tuple of (time_grid, freq_grid, spectrogram_2d) where spectrogram_2d has shape (n_time_bins, n_freq_bins).
+    """
+    if imfs.ndim != 2 or imfs.shape[0] == 0:
+        raise ValueError("imfs must be a 2D array of shape (n_imfs, n_samples).")
+
+    n_samples = imfs.shape[1]
+    duration = n_samples / fs
+
+    time_grid = np.linspace(0.0, duration, n_time_bins)
+    freq_grid = np.linspace(1.0, max_freq_hz, n_freq_bins)
+    df = (max_freq_hz - 1.0) / max(1, n_freq_bins - 1)
+
+    t_indices = np.clip((np.arange(n_samples) * n_time_bins) // n_samples, 0, n_time_bins - 1)
+    spectrogram = np.zeros((n_time_bins, n_freq_bins), dtype=np.float32)
+
+    amps, freqs = compute_instantaneous_properties(imfs, fs)
+
+    for amp, freq in zip(amps, freqs):
+        valid = (freq >= 1.0) & (freq <= max_freq_hz)
+        if not np.any(valid):
+            continue
+        f_bins = np.clip(np.floor((freq[valid] - 1.0) / df).astype(int), 0, n_freq_bins - 1)
+        t_bins = t_indices[valid]
+        energy = (amp[valid] ** 2).astype(np.float32)
+        np.add.at(spectrogram, (t_bins, f_bins), energy)
+
+    if log_scale:
+        spectrogram = np.log1p(spectrogram)
+
+    s_max = np.max(spectrogram)
+    if s_max > 0:
+        spectrogram /= s_max
+
+    return time_grid, freq_grid, spectrogram
+
+
 def compute_vmd_modes(
     signal: np.ndarray,
     fs: float,

@@ -1,5 +1,7 @@
 # Estudo de Viabilidade: Transformada de Hilbert-Huang (HHT) vs. DEMON no Dataset IARA
 
+> **Correção de 23/10/2026 — extração HHT.** O cache HHT usado neste documento misturava duas configurações de EMD (`MAX_ITERATION` ≥ 100 em 571 gravações e 30 nas demais; nenhuma gravação BACKGROUND no primeiro grupo). O HHT foi re-extraído com configuração única (8 IMFs, `MAX_ITERATION=30`) e todos os experimentos HHT foram retreinados; a auditoria e o antes × depois estão no `notebooks/28_correcao_extracao_hht.ipynb`. Os números HHT abaixo são **anteriores à correção** (e alguns vêm de execuções ainda mais antigas que as predições em disco). Valores atuais, recalculados das predições: RF HHT 4c SP 57,64 ± 2,14 (antes 60,70; F-test p = 0,042, a única mudança significativa), MLP HHT 56,31 ± 1,77, SVM HHT m=6000 51,18 ± 6,09, CNN espectral 1D 59,52 ± 2,48. Ver também `reports/comparacao_modelos.md`.
+
 ## 1. Contexto e Motivação Científica
 
 Após o sucesso da fusão multimodal **MEL + DEMON** (que elevou o Índice SP do SVM para **$64{,}85\%$** e o recall de embarcações pequenas **SMALL** para **$60{,}90\%$**), investigou-se a viabilidade de utilizar a **Transformada de Hilbert-Huang (HHT)** no lugar do DEMON clássico ou como extrator de características adaptativo para sonar passivo.

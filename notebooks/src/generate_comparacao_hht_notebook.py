@@ -26,8 +26,14 @@ HHT = {  # rótulo: (exp 4C, exp 3C retreinado)
     'MLP PyTorch [32, 16]': ('mlp_hht_h32-16_e30_noseed_4c', 'mlp_hht_h32-16_e30_noseed_3c'),
     'SVM Nyström (m=6000)': ('svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_4c', 'svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_3c'),
     'CNN 2D PyTorch [64, 32] (COLAPSADA)': ('cnn2d_hht_w32_b32_e25_4c', 'cnn2d_hht_w32_b32_e25_3c'),
+    'CNN espectral 1D (1 janela)': ('speccnn_hht_ctx0_e60p8_4c', 'speccnn_hht_ctx0_e60p8_3c'),
+    'CNN espectral 1D (5 janelas)': ('speccnn_hht_ctx2_e60p8_4c', 'speccnn_hht_ctx2_e60p8_3c'),
+    'CNN 2D Hilbert (32×128 por janela)': ('hht_2d_cnn_e40p7_4c', 'hht_2d_cnn_e40p7_3c'),
 }
 HHT_LABELS = list(HHT)
+LAB_RF, LAB_CNN = 'Random Forest (100 árvores)', 'CNN 2D PyTorch [64, 32] (COLAPSADA)'
+LAB_SC0, LAB_SC2 = 'CNN espectral 1D (1 janela)', 'CNN espectral 1D (5 janelas)'
+LAB_H2D = 'CNN 2D Hilbert (32×128 por janela)'
 EXP_BIGRU_HHT = ('bigru_att_hht_h64_s15-5_e20_4c', 'bigru_att_hht_h64_s15-5_e20_3c')
 EXP_SVM_LOFAR = 'svm_nystroem_6000_lofar_elasticnet_l1r0.15'
 EXP_SVM_MEL = 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0'
@@ -44,7 +50,7 @@ PAIRS_DEMON = [
      + '{:.2f} ± {:.2f}'.format(*R.summary('svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c')['SP']).replace('.', ',') + ')'),
     ('BiGRU + atenção', 'bigru_att_hht_h64_s15-5_e20_4c', 'bigru_att_demon_h64_s15-5_e20_4c', 'mesma configuração'),
 ]
-# SVMs do estudo de complementaridade do Notebook 10 (mesmos experimentos)
+# SVMs do estudo de complementaridade do Notebook 13 (mesmos experimentos)
 NB10_SVMS = {
     'MEL': 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0',
     'LOFAR': 'svm_nystroem_6000_lofar_elasticnet_l1r0.15',
@@ -121,13 +127,13 @@ PAIR_RES = [(arq, R.summary(h)['SP'], R.summary(d)['SP'], R.f_test_5x2(h, d), ob
 CNN_FOLDS = R.fold_metrics(HHT['CNN 2D PyTorch [64, 32] (COLAPSADA)'][0])
 rec_small_rank = sorted(HHT_LABELS, key=lambda lab: -S4[lab]['R_SMALL'][0])
 rec_bg_rank = sorted(HHT_LABELS, key=lambda lab: -S4[lab]['R_BACKGROUND'][0])
-large_vals = [S4[lab]['R_LARGE'][0] for lab in HHT_LABELS if 'CNN' not in lab]
+large_vals = [S4[lab]['R_LARGE'][0] for lab in HHT_LABELS if 'COLAPSADA' not in lab]
 
 CM4 = {lab: matriz_confusao(e4, [0, 1, 2, 3]) for lab, (e4, _) in HHT.items()}
 CM3 = {lab: matriz_confusao(e3, [0, 1, 2]) for lab, (_, e3) in HHT.items()}
 N_AVAL = CM4[HHT_LABELS[0]][1]
 
-# Erro do SVM MEL em SMALL (o mesmo modelo do Notebook 10) e sobreposição com o RF HHT
+# Erro do SVM MEL em SMALL (o mesmo modelo do Notebook 13) e sobreposição com o RF HHT
 _mel = pd.concat(R.file_predictions(NB10_SVMS["MEL"]).values(), ignore_index=True)
 _ms = _mel[_mel.Target == 0]
 MEL_SMALL_N, MEL_SMALL_ERR = len(_ms), int((_ms.Prediction != 0).sum())
@@ -136,10 +142,43 @@ _rf = HHT['Random Forest (100 árvores)'][0]
 _both = pd.concat(R.aligned([NB10_SVMS["MEL"], _rf]).values(), ignore_index=True)
 _mm = _both[(_both.Target == 0) & (_both[NB10_SVMS['MEL']] == 1)]
 MEL_TO_MED_N, RF_ALSO_MED, RF_OK = len(_mm), int((_mm[_rf] == 1).sum()), int((_mm[_rf] == 0).sum())
+_sc = HHT['CNN espectral 1D (1 janela)'][0]
+_both_sc = pd.concat(R.aligned([NB10_SVMS["MEL"], _sc]).values(), ignore_index=True)
+_mm_sc = _both_sc[(_both_sc.Target == 0) & (_both_sc[NB10_SVMS['MEL']] == 1)]
+assert len(_mm_sc) == MEL_TO_MED_N
+SC_ALSO_MED, SC_OK = int((_mm_sc[_sc] == 1).sum()), int((_mm_sc[_sc] == 0).sum())
 ORA4 = R.oracle_recall(list(NB10_SVMS.values()))
 EXCL, EXCL_TOT = exclusivos_small(NB10_SVMS)
 REC_SMALL_NB10 = {k: R.summary(v)['R_SMALL'][0] for k, v in NB10_SVMS.items()}
 REC_SMALL_HHT6000 = S4['SVM Nyström (m=6000)']['R_SMALL'][0]
+
+# CNN espectral 1D (Seção 5.4)
+F_SC_CTX4 = R.f_test_5x2(HHT[LAB_SC0][0], HHT[LAB_SC2][0])
+F_SC_CTX3 = R.f_test_5x2(HHT[LAB_SC0][1], HHT[LAB_SC2][1], mode_a='3c', mode_b='3c')
+SC_BEST4 = max((LAB_SC0, LAB_SC2), key=lambda lab: S4[lab]['SP'][0])
+SC_BEST3 = max((LAB_SC0, LAB_SC2), key=lambda lab: S3[lab]['SP'][0])
+SC_VS4 = [(nome, S, R.f_test_5x2(HHT[SC_BEST4][0], e)) for nome, e, S in [
+    ('CNN 2D antiga (colapsada)', HHT[LAB_CNN][0], S4[LAB_CNN]),
+    ('Random Forest HHT', HHT[LAB_RF][0], S4[LAB_RF]),
+    ('BiGRU + atenção HHT', EXP_BIGRU_HHT[0], REF['bigru4']),
+    ('MLP [32, 16] HHT', HHT['MLP PyTorch [32, 16]'][0], S4['MLP PyTorch [32, 16]']),
+    ('SVM Nyström m=6000 HHT', HHT['SVM Nyström (m=6000)'][0], S4['SVM Nyström (m=6000)']),
+    ('MLP LOFAR (≈ artigo)', EXP_MLP_LOFAR, REF['mlp_lofar']),
+]]
+SC_VS3 = [(nome, S, R.f_test_5x2(HHT[SC_BEST3][1], e, mode_a='3c', mode_b='3c')) for nome, e, S in [
+    ('Random Forest HHT', HHT[LAB_RF][1], S3[LAB_RF]),
+    ('BiGRU + atenção HHT', EXP_BIGRU_HHT[1], REF['bigru3']),
+]]
+SC_FOLDS = {lab: R.fold_metrics(HHT[lab][0]) for lab in (LAB_SC0, LAB_SC2)}
+
+# CNN 2D no espectrograma de Hilbert (Seção 5.5): F-test contra todos os outros modelos HHT
+H2D_VS4 = [(lab, R.f_test_5x2(HHT[LAB_H2D][0], HHT[lab][0])) for lab in HHT_LABELS if lab != LAB_H2D]
+H2D_VS4.append(('BiGRU + atenção HHT', R.f_test_5x2(HHT[LAB_H2D][0], EXP_BIGRU_HHT[0])))
+H2D_VS3 = [(lab, R.f_test_5x2(HHT[LAB_H2D][1], HHT[lab][1], mode_a='3c', mode_b='3c')) for lab in HHT_LABELS if lab != LAB_H2D]
+H2D_VS3.append(('BiGRU + atenção HHT', R.f_test_5x2(HHT[LAB_H2D][1], EXP_BIGRU_HHT[1], mode_a='3c', mode_b='3c')))
+H2D_SIG4 = [lab for lab, ft in H2D_VS4 if ft[1] < 0.05]
+H2D_FOLDS = R.fold_metrics(HHT[LAB_H2D][0])
+S_OTHER = lambda lab, m: (REF['bigru4'] if m == 4 else REF['bigru3']) if lab.startswith('BiGRU') else (S4 if m == 4 else S3)[lab]  # noqa: E731
 
 SETUP = [
     "import os\n",
@@ -183,7 +222,7 @@ SETUP = [
 
 
 def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht.ipynb"):
-    lab_rf, lab_mlp, lab_svm, lab_cnn = HHT_LABELS
+    lab_rf, lab_cnn = LAB_RF, LAB_CNN
     cells = [
         {
             "cell_type": "markdown",
@@ -198,10 +237,20 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
                 "2. **Multi-Layer Perceptron (MLP PyTorch `[32, 16]`):** rede feedforward com `BatchNorm1d` e `Dropout 0.2`, 30 épocas sem early stopping e sem semente fixa.\n",
                 "3. **SVM Nyström Gaussiano ($m=6000$):** núcleo RBF aproximado com penalidade ElasticNet (`max_iter=200`, early stopping).\n",
                 "4. **CNN 2D PyTorch `[64, 32]`:** convoluções 2D em imagens de $32 \\times 256$ (32 janelas HHT consecutivas). **Este modelo colapsou** (ver Seção 2).\n",
+                "5. **CNN espectral 1D (`iara.ml.models.spectral_cnn.SpectralCNN`), a segunda CNN do projeto, feita para a HHT:** convolução 1D ao longo da frequência sobre cada janela de 5,12 s "
+                "(4 blocos Conv1d 32-64-64-128, kernel 7, dilatações 1-1-2-4, `AdaptiveAvgPool1d(8)`, cabeça 64), entrada `log(x+1e-3)` com z-score por bin, early stopping numa validação interna "
+                "(15% das gravações de treino), semente fixa, aumento leve (deslocamento de ±1 bin e máscara de frequência). Duas configurações definidas antes de rodar: **1 janela** e **5 janelas** "
+                "(a janela e 2 vizinhas de cada lado como canais). Treino: `scratch/eval_hht_spectral_cnn_5x2cv.py`. A CNN 2D oficial do LOFAR/MEL (`iara.ml.models.cnn.CNN`) não foi alterada.\n",
+                "6. **CNN 2D no espectrograma de Hilbert (`iara.ml.models.hilbert_2d_cnn.Hilbert2DCNN`):** outra feature, extraída por `scratch/extract_all_hht_2d.py` com a mesma cadeia do HHT 1D "
+                "(8 IMFs, `MAX_ITERATION=30`, janelas de 2,56 s a cada 5,12 s), mas mantendo o tempo dentro da janela: **32 passos de 80 ms × 128 bins de 7,9 Hz** (`log1p`, normalizado pelo pico da janela). "
+                "Convoluções 2D 32-64-128 com `AdaptiveAvgPool2d((2, 8))`, z-score por bin de frequência, early stopping na mesma validação interna de 15%, semente fixa. "
+                "Treino: `scratch/eval_hht_2d_cnn_5x2cv.py` (hiperparâmetros do script, sem ajuste). Limites: passos de 80 ms só resolvem modulações abaixo de ~6 Hz e os passos das bordas carregam efeitos de borda da EMD/Hilbert.\n",
                 "\n",
-                "Todos os modelos foram avaliados por `scratch/eval_hht_models_5x2cv.py` nos **10 folds oficiais do $5\\times2$cv** com **particionamento estratificado por gravação de áudio (`ID`)** sobre os **1.706 áudios de UO** do IARA (o mesmo protocolo do artigo de *Silva et al.*, IEEE Access 2025; o isolamento é por gravação, não por navio), com voto majoritário por arquivo.\n",
+                "Os modelos 1–4 foram avaliados por `scratch/eval_hht_models_5x2cv.py`, o 5 por `scratch/eval_hht_spectral_cnn_5x2cv.py` e o 6 por `scratch/eval_hht_2d_cnn_5x2cv.py`, todos nos **10 folds oficiais do $5\\times2$cv** com **particionamento estratificado por gravação de áudio (`ID`)** sobre os **1.706 áudios de UO** do IARA (o mesmo protocolo do artigo de *Silva et al.*, IEEE Access 2025; o isolamento é por gravação, não por navio), com voto majoritário por arquivo.\n",
                 "\n",
                 "> **Limitação da feature:** o `cache_hht.pkl` usa janelas de 2,56 s com passo de 5,12 s; **metade de cada gravação não é analisada**.\n",
+                "\n",
+                "> **Correção de 23/10/2026:** o cache HHT original misturava duas configurações de EMD (associadas à classe). Todos os números deste notebook vêm do HHT re-extraído com configuração única (8 IMFs, `MAX_ITERATION=30`) e dos modelos retreinados; a auditoria e o antes × depois estão no Notebook 28 (`28_correcao_extracao_hht.ipynb`).\n",
                 "\n",
                 "Todas as tabelas e figuras são calculadas na execução por `notebooks/iara_results.py` a partir das predições por janela em `results/trainings/{multirep,tests}/<exp>/eval/fold_k/`. **ACC = acurácia balanceada** (média dos recalls), como a coluna ACC da Tabela 7 do artigo.\n"
             ]
@@ -363,7 +412,8 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
                 f"5. **CNN 2D colapsada:** SP {fmtc(S4[lab_cnn]['SP'])} em 4 classes, com SP por fold de {pt(CNN_FOLDS['SP'].min(), 1)} a {pt(CNN_FOLDS['SP'].max(), 1)} "
                 f"e recall de SMALL de {pt(CNN_FOLDS['R_SMALL'].min(), 1)} a {pt(CNN_FOLDS['R_SMALL'].max(), 1)}% por fold. "
                 "Com o passo de 5,12 s, uma imagem de 32 janelas cobre ~164 s e cada gravação gera só 1 ou 2 imagens (as curtas, completadas por *wrap padding*). "
-                "O resultado reflete esse desenho de treino, não uma propriedade da HHT; o modelo não deve ser usado como baseline nem para concluir que \"convoluções borram as raias\".\n",
+                "O resultado reflete esse desenho de treino, não uma propriedade da HHT; o modelo não deve ser usado como baseline nem para concluir que \"convoluções borram as raias\" "
+                "(a CNN espectral 1D, com o mesmo dado, é discutida na Seção 5.4).\n",
             ]
         },
         {
@@ -387,11 +437,11 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
                 "\n",
                 "fig, ax = plt.subplots(figsize=(13, 6))\n",
                 "x = np.arange(len(classes))\n",
-                "width = 0.20\n",
-                "colors = ['#27ae60', '#3498db', '#8e44ad', '#e74c3c']\n",
+                "width = 0.8 / len(models_subset)\n",
+                "colors = ['#27ae60', '#3498db', '#8e44ad', '#e74c3c', '#f39c12', '#16a085'][:len(models_subset)]\n",
                 "\n",
                 "for i, (m_name, color) in enumerate(zip(models_subset, colors)):\n",
-                "    offset = (i - 1.5) * width\n",
+                "    offset = (i - (len(models_subset) - 1) / 2) * width\n",
                 "    rects = ax.bar(x + offset, recalls_matrix[i], width, label=m_name, color=color, alpha=0.9)\n",
                 "    for rect in rects:\n",
                 "        h = rect.get_height()\n",
@@ -419,7 +469,7 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
                 "A explicação de que as árvores \"capturam transientes de alta frequência\" é uma hipótese, não testada aqui.\n",
                 f"2. **AMBIENTAL:** o maior recall é o do {rec_bg_rank[0]} ({pt(S4[rec_bg_rank[0]]['R_BACKGROUND'][0])}%). Atribuir isso à `BatchNorm1d` não é sustentado por nenhum experimento de ablação.\n",
                 f"3. **LARGE:** nos três modelos que não colapsaram o recall vai de {pt(min(large_vals))}% a {pt(max(large_vals))}%. "
-                "O máximo local em ~19 Hz visto no Notebook 9 vem de **uma** gravação LARGE e não basta para explicar o desempenho na classe.\n"
+                "O máximo local em ~19 Hz visto no Notebook 10 vem de **uma** gravação LARGE e não basta para explicar o desempenho na classe.\n"
             ]
         },
         {
@@ -439,8 +489,11 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
             "outputs": [],
             "source": [
                 "classes = ['SMALL', 'MEDIUM', 'LARGE', 'AMBIENTAL']\n",
-                "fig, axes = plt.subplots(2, 2, figsize=(15, 13))\n",
+                "_nl = (len(HHT) + 1) // 2\n",
+                "fig, axes = plt.subplots(_nl, 2, figsize=(15, 6.5 * _nl))\n",
                 "axes = axes.flatten()\n",
+                "for ax in axes[len(HHT):]:\n",
+                "    ax.axis('off')\n",
                 "\n",
                 "for idx, (rot, (e4, _)) in enumerate(HHT.items()):\n",
                 "    cm, n = matriz_confusao(e4, [0, 1, 2, 3])\n",
@@ -483,8 +536,11 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
             "outputs": [],
             "source": [
                 "classes_3c = ['SMALL', 'MEDIUM', 'LARGE']\n",
-                "fig, axes = plt.subplots(2, 2, figsize=(15, 13))\n",
+                "_nl = (len(HHT) + 1) // 2\n",
+                "fig, axes = plt.subplots(_nl, 2, figsize=(15, 6.5 * _nl))\n",
                 "axes = axes.flatten()\n",
+                "for ax in axes[len(HHT):]:\n",
+                "    ax.axis('off')\n",
                 "\n",
                 "for idx, (rot, (_, e3)) in enumerate(HHT.items()):\n",
                 "    cm, n = matriz_confusao(e3, [0, 1, 2])\n",
@@ -517,12 +573,15 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
             "source": [
                 "### Análise do Padrão de Erro em SMALL e o que ela permite concluir:\n",
                 f"1. **Direção da confusão de SMALL no HHT (3 classes):** SMALL → LARGE em {pt(CM3[lab_rf][0][0, 2], 1)}% das instâncias de SMALL no RF "
-                f"e {pt(CM3[lab_cnn][0][0, 2], 1)}% na CNN (colapsada); SMALL → MEDIUM em {pt(CM3[lab_rf][0][0, 1], 1)}% no RF.\n",
-                f"2. **SVM MEL (4 classes, o mesmo modelo do Notebook 10):** dos {MEL_SMALL_ERR} erros em {MEL_SMALL_N} instâncias de SMALL, "
+                f"e {pt(CM3[lab_cnn][0][0, 2], 1)}% na CNN 2D (colapsada); SMALL → MEDIUM em {pt(CM3[lab_rf][0][0, 1], 1)}% no RF. "
+                f"Na CNN espectral 1D (1 janela): SMALL → LARGE em {pt(CM3[LAB_SC0][0][0, 2], 1)}% e SMALL → MEDIUM em {pt(CM3[LAB_SC0][0][0, 1], 1)}%"
+                f" (recall de SMALL em 3C: {pt(CM3[LAB_SC0][0][0, 0], 1)}%, contra {pt(CM3[lab_rf][0][0, 0], 1)}% no RF).\n",
+                f"2. **SVM MEL (4 classes, o mesmo modelo do Notebook 13):** dos {MEL_SMALL_ERR} erros em {MEL_SMALL_N} instâncias de SMALL, "
                 f"{MEL_SMALL_TO_MED} ({pt(100 * MEL_SMALL_TO_MED / MEL_SMALL_ERR, 1)}%) foram para MEDIUM ({pt(100 * MEL_SMALL_TO_MED / MEL_SMALL_N, 2)}% de todas as instâncias de SMALL).\n",
                 f"3. **Não é \"complementaridade perfeita\":** nas {MEL_TO_MED_N} instâncias em que o SVM MEL errou SMALL → MEDIUM, o RF HHT (4 classes) acertou {RF_OK} "
-                f"({pt(100 * RF_OK / MEL_TO_MED_N, 1)}%) e errou **para a mesma classe** (MEDIUM) em {RF_ALSO_MED} ({pt(100 * RF_ALSO_MED / MEL_TO_MED_N, 1)}%).\n",
-                f"4. **Oráculo do Notebook 10 (SVMs MEL, LOFAR, HHT e DEMON):** recall de SMALL do oráculo observado = {pt(ORA4.iloc[0, 0], 1)}%, "
+                f"({pt(100 * RF_OK / MEL_TO_MED_N, 1)}%) e errou **para a mesma classe** (MEDIUM) em {RF_ALSO_MED} ({pt(100 * RF_ALSO_MED / MEL_TO_MED_N, 1)}%); "
+                f"a CNN espectral 1D (1 janela) acertou {SC_OK} ({pt(100 * SC_OK / MEL_TO_MED_N, 1)}%) e errou para MEDIUM em {SC_ALSO_MED} ({pt(100 * SC_ALSO_MED / MEL_TO_MED_N, 1)}%).\n",
+                f"4. **Oráculo do Notebook 13 (SVMs MEL, LOFAR, HHT e DEMON):** recall de SMALL do oráculo observado = {pt(ORA4.iloc[0, 0], 1)}%, "
                 f"**abaixo** do esperado se os erros fossem independentes ({pt(ORA4.iloc[0, 1], 1)}% = $1-\\prod_i(1-r_i)$). Ou seja, os erros são positivamente correlacionados. "
                 "Além disso, um oráculo (acerta se *algum* modelo acerta) não é um sistema realizável: precisa saber a resposta para escolher o modelo.\n"
             ]
@@ -534,7 +593,7 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
             "outputs": [],
             "source": [
                 "# Conferência dos números da análise acima\n",
-                "print('Oráculo dos 4 SVMs do Notebook 10 (observado vs. esperado com erros independentes):')\n",
+                "print('Oráculo dos 4 SVMs do Notebook 13 (observado vs. esperado com erros independentes):')\n",
                 "display(R.oracle_recall(list(NB10_SVMS.values())).round(2))\n",
                 "excl, tot = exclusivos_small(NB10_SVMS)\n",
                 "print(f'Instâncias arquivo x fold de SMALL acertadas por um único SVM (de {tot}):', excl)\n",
@@ -562,20 +621,73 @@ def create_comparacao_hht_notebook(filename="notebooks/11_comparacao_modelos_hht
                 for arq, sh, sd, ft, obs in PAIR_RES
             ] + [
                 "\n",
-                f"* A HHT tem SP médio maior que o DEMON nos {len(PAIR_RES)} pares, mas a diferença só é significativa a 5% em "
-                + (", ".join(arq for arq, _, _, ft, _ in PAIR_RES if ft[1] < 0.05) or "nenhum") + ". A CNN não entra na comparação porque as duas versões (HHT e DEMON) colapsaram.\n",
+                f"* A HHT tem SP médio maior que o DEMON em {sum(sh[0] > sd[0] for _, sh, sd, _, _ in PAIR_RES)} dos {len(PAIR_RES)} pares, mas a diferença só é significativa a 5% em "
+                + (", ".join(arq for arq, _, _, ft, _ in PAIR_RES if ft[1] < 0.05) or "nenhum") + ". A CNN 2D antiga não entra na comparação porque as duas versões (HHT e DEMON) colapsaram; a CNN espectral 1D foi desenhada para a HHT e não tem versão DEMON equivalente.\n",
                 "* As faixas de frequência (HHT: 1–1000 Hz; DEMON: 0,39–25 Hz de modulação) são compatíveis com essa diferença, mas não a explicam por si.\n",
                 f"* **LOFAR e MEL seguem à frente:** MLP LOFAR do artigo SP {pt(ART[('MLP', 'LOFAR')]['SP'][0])} (local: {fmtc(REF['mlp_lofar']['SP'])}); SVM MEL local {fmtc(REF['svm_mel']['SP'])}; "
                 f"no mesmo classificador (RF), LOFAR local {fmtc(REF['rf_lofar']['SP'])} vs. HHT {fmtc(S4[lab_rf]['SP'])} ({pval(F_RF_LOFAR[1])}).\n",
                 "\n",
                 "### 5.3 O Papel da HHT no Projeto IARA\n",
-                f"1. **SMALL:** no conjunto de SVMs do Notebook 10, o SVM HHT ($m=4000$) tem recall de SMALL de {pt(REC_SMALL_NB10['HHT'])}% "
+                f"1. **SMALL:** no conjunto de SVMs do Notebook 13, o SVM HHT ($m=4000$) tem recall de SMALL de {pt(REC_SMALL_NB10['HHT'])}% "
                 f"(o SVM HHT $m=6000$ da Tabela Mestra: {pt(REC_SMALL_HHT6000)}%), contra {pt(REC_SMALL_NB10['MEL'])}% do MEL. "
                 f"Em acertos exclusivos de SMALL (instâncias arquivo × fold, de {EXCL_TOT}), HHT = {EXCL['HHT']}, MEL = {EXCL['MEL']}, DEMON = {EXCL['DEMON']}, LOFAR = {EXCL['LOFAR']}: "
                 + ("HHT e MEL ficam praticamente empatados" if abs(EXCL['HHT'] - EXCL['MEL']) <= 0.05 * max(EXCL['HHT'], EXCL['MEL']) else
                    ("a HHT tem mais acertos exclusivos" if EXCL['HHT'] > EXCL['MEL'] else "o MEL tem mais acertos exclusivos"))
                 + ". Essas contagens são instâncias de fold (a mesma gravação aparece em vários folds) e, como mostra o oráculo acima, não indicam erros independentes.\n",
-                "2. **Gating / roteamento dinâmico:** usar a HHT como especialista num sistema de roteamento é uma hipótese a testar com um roteador validado fora do teste e F-test contra a melhor entrada isolada; os dados deste notebook não a demonstram.\n"
+                "2. **Gating / roteamento dinâmico:** usar a HHT como especialista num sistema de roteamento é uma hipótese a testar com um roteador validado fora do teste e F-test contra a melhor entrada isolada; os dados deste notebook não a demonstram.\n",
+                "\n",
+                "### 5.4 A segunda CNN: CNN espectral 1D para a HHT\n",
+                f"* **Contexto temporal:** 1 janela SP {fmtc(S4[LAB_SC0]['SP'])} × 5 janelas SP {fmtc(S4[LAB_SC2]['SP'])} em 4 classes ({pval(F_SC_CTX4[1])}); "
+                f"em 3 classes, {fmtc(S3[LAB_SC0]['SP'])} × {fmtc(S3[LAB_SC2]['SP'])} ({pval(F_SC_CTX3[1])}). "
+                + ("As duas configurações são estatisticamente equivalentes; " if F_SC_CTX4[1] >= 0.05 else "A diferença é significativa em 4 classes; ")
+                + f"abaixo, usamos a de maior SP médio ({SC_BEST4} em 4C, {SC_BEST3} em 3C). As duas foram definidas antes de rodar e ambas estão nas tabelas, "
+                "mas escolher a melhor das duas pelo teste ainda introduz um pequeno viés otimista.\n",
+                f"* **Estabilidade:** desvio do SP entre folds de {pt(S4[LAB_SC0]['SP'][1])} e {pt(S4[LAB_SC2]['SP'][1])} p.p., contra {pt(S4[LAB_CNN]['SP'][1])} p.p. da CNN 2D antiga; "
+                f"SP mínimo por fold de {pt(SC_FOLDS[LAB_SC0]['SP'].min(), 1)} e {pt(SC_FOLDS[LAB_SC2]['SP'].min(), 1)}.\n",
+                "\n",
+                f"| {SC_BEST4} (4C) contra | SP do outro | Δ (p.p.) | p |\n",
+                "| :--- | :---: | :---: | :---: |\n",
+            ] + [
+                f"| {nome} | {fmtc(S['SP'])} | {pt(S4[SC_BEST4]['SP'][0] - S['SP'][0])} | {pt(ft[1], 3)} |\n" for nome, S, ft in SC_VS4
+            ] + [
+                f"| *3C ({SC_BEST3}) contra:* {nome} | {fmtc(S['SP'])} | {pt(S3[SC_BEST3]['SP'][0] - S['SP'][0])} | {pt(ft[1], 3)} |\n" for nome, S, ft in SC_VS3
+            ] + [
+                "\n",
+                f"* **SMALL:** recall {pt(S4[SC_BEST4]['R_SMALL'][0])}% ± {pt(S4[SC_BEST4]['R_SMALL'][1])} na CNN espectral contra {pt(S4[LAB_RF]['R_SMALL'][0])}% do RF HHT, "
+                f"{pt(REF['bigru4']['R_SMALL'][0])}% da BiGRU e {pt(S4[LAB_CNN]['R_SMALL'][0])}% da CNN 2D antiga.\n",
+                f"* **Contra a CNN 2D antiga:** apesar de Δ = {pt(S4[SC_BEST4]['SP'][0] - S4[LAB_CNN]['SP'][0])} p.p., o F-test dá {pval(SC_VS4[0][2][1])}"
+                + (" (não significativo a 5%): o fold em que a CNN 2D tem SP 0 infla a variância das diferenças, que entra no denominador do teste. "
+                   if SC_VS4[0][2][1] >= 0.05 else ". ")
+                + "A melhora é visível em todos os folds (SP mínimo acima do SP máximo da CNN 2D), mas o teste formal não a confirma a 5%.\n"
+                if SC_VS4[0][2][1] >= 0.05 and min(SC_FOLDS[SC_BEST4]['SP']) > max(CNN_FOLDS['SP']) else
+                f"* **Contra a CNN 2D antiga:** Δ = {pt(S4[SC_BEST4]['SP'][0] - S4[LAB_CNN]['SP'][0])} p.p., {pval(SC_VS4[0][2][1])}.\n",
+                "* **Leitura:** com a mesma feature, a CNN deixa de colapsar e fica estatisticamente equivalente aos melhores modelos HHT (RF, BiGRU, MLP), "
+                "mas não os supera, e continua abaixo do LOFAR. A mudança combina vários fatores ao mesmo tempo (uma amostra por janela, convolução 1D na frequência, "
+                "`log` + z-score por bin, early stopping, aumento de dados); sem ablação, não dá para atribuir o ganho a um deles em particular. "
+                "No SMALL, a classe-alvo do projeto, a CNN espectral fica no nível da BiGRU e abaixo do RF.\n",
+                "\n",
+                "### 5.5 CNN 2D no espectrograma de Hilbert\n",
+                f"* **SP:** {fmtc(S4[LAB_H2D]['SP'])} em 4 classes e {fmtc(S3[LAB_H2D]['SP'])} em 3 classes; SP por fold de {pt(H2D_FOLDS['SP'].min(), 1)} a {pt(H2D_FOLDS['SP'].max(), 1)} (4C).\n",
+                "\n",
+                "| Contra | SP 4C do outro | Δ 4C (p.p.) | p 4C | SP 3C do outro | Δ 3C (p.p.) | p 3C |\n",
+                "| :--- | :---: | :---: | :---: | :---: | :---: | :---: |\n",
+            ] + [
+                f"| {lab} | {fmtc(S_OTHER(lab, 4)['SP'])} | {pt(S4[LAB_H2D]['SP'][0] - S_OTHER(lab, 4)['SP'][0])} | {pt(f4[1], 3)} | "
+                f"{fmtc(S_OTHER(lab, 3)['SP'])} | {pt(S3[LAB_H2D]['SP'][0] - S_OTHER(lab, 3)['SP'][0])} | {pt(f3[1], 3)} |\n"
+                for (lab, f4), (_, f3) in zip(H2D_VS4, H2D_VS3)
+            ] + [
+                "\n",
+                "* **Significância:** em 4 classes, a diferença só é significativa a 5% contra " + (", ".join(H2D_SIG4) or "nenhum modelo")
+                + "; contra os demais (incluindo RF, CNN espectral 1D e BiGRU) o F-test não separa os modelos. "
+                + ("Ter o maior SP médio entre os modelos HHT não basta para chamá-lo de melhor. " if rank4[0] == LAB_H2D else "")
+                + "Os hiperparâmetros vieram do script e não foram ajustados; houve uma única rodada.\n",
+                (f"* **Classes:** recall de SMALL {pt(S4[LAB_H2D]['R_SMALL'][0])}% ± {pt(S4[LAB_H2D]['R_SMALL'][1])} em 4C, o mais baixo entre os modelos HHT que não colapsaram "
+                 f"(RF {pt(S4[LAB_RF]['R_SMALL'][0])}%, CNN espectral 1 janela {pt(S4[LAB_SC0]['R_SMALL'][0])}%); o SP vem de MEDIUM ({pt(S4[LAB_H2D]['R_MEDIUM'][0])}%) "
+                 f"e BACKGROUND ({pt(S4[LAB_H2D]['R_BACKGROUND'][0])}%). Em 3 classes, SMALL sobe para {pt(S3[LAB_H2D]['R_SMALL'][0])}%.\n"
+                 if all(S4[LAB_H2D]['R_SMALL'][0] <= S4[lab]['R_SMALL'][0] for lab in HHT_LABELS if 'COLAPSADA' not in lab) else
+                 f"* **Classes:** recall de SMALL {pt(S4[LAB_H2D]['R_SMALL'][0])}% ± {pt(S4[LAB_H2D]['R_SMALL'][1])} em 4C e {pt(S3[LAB_H2D]['R_SMALL'][0])}% em 3C.\n"),
+                "* **Leitura:** manter o tempo dentro da janela não trouxe ganho demonstrável sobre o espectro marginal (CNN espectral 1D, RF); "
+                "não há ablação que separe o efeito da feature 2D do efeito da arquitetura.\n",
             ]
         }
     ]

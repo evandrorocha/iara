@@ -1,5 +1,5 @@
 """
-Script de geração do notebook 18: notebooks/18_analise_complementaridade_rf_medium.ipynb
+Script de geração do notebook 20: notebooks/20_analise_complementaridade_rf_medium.ipynb
 Análise de Ortogonalidade, Efeito Oráculo e Grau de Consenso no Random Forest para a Classe MEDIUM (Dataset IARA).
 
 Os números do markdown são calculados na geração (notebooks/rf_complementaridade_comum.py + iara_results.py)
@@ -21,7 +21,7 @@ HIPOTESES = """> **Hipóteses físicas (não testadas nesta análise).** Conject
 > - o nível de ruído ambiente/de superfície poderia aproximar assinaturas intermediárias da classe `SMALL`."""
 
 
-def create_notebook(filename="notebooks/18_analise_complementaridade_rf_medium.ipynb"):
+def create_notebook(filename="notebooks/20_analise_complementaridade_rf_medium.ipynb"):
     ns = C.run_helper()
     tri_cells, A_fam = C.secao_trilateral(ns, CLASSE, NB, 8)
     a = A_fam["RF"]
@@ -48,7 +48,7 @@ def create_notebook(filename="notebooks/18_analise_complementaridade_rf_medium.i
 
 A classe **`MEDIUM`** (embarcações de 50 m a 100 m, conforme `src/iara/default.py`) foi avaliada em **{br(a['n_inst'])} instâncias de teste** (arquivo × fold; **{br(a['n_grav'])} gravações distintas** de **{br(a['n_navios'])} navios**) nos 10 folds do protocolo 5×2cv, com **Random Forest (100 árvores, `class_weight='balanced'`)** nas 4 representações (**MEL, LOFAR, HHT e DEMON**).
 
-O objetivo é confrontar os resultados do SVM (Notebook 12) e do MLP (Notebook 15) com os do Random Forest em navios de porte intermediário.
+O objetivo é confrontar os resultados do SVM (Notebook 14) e do MLP (Notebook 17) com os do Random Forest em navios de porte intermediário.
 
 {C.aviso_modelos(ns)}
 

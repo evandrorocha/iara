@@ -1,5 +1,5 @@
 """
-Gera notebooks/7_comparacao_modelos_demon.ipynb: comparação multimodelo com o extrator DEMON puro
+Gera notebooks/9_comparacao_modelos_demon.ipynb: comparação multimodelo com o extrator DEMON puro
 (SVM Nyström, Random Forest, MLP, CNN 2D ad hoc) ao lado das referências MEL/LOFAR.
 
 Todos os números (tabelas, matrizes de confusão e valores citados no markdown) são recalculados a partir das
@@ -66,25 +66,28 @@ DEMON = [  # results/trainings/multirep; DEMON 253-D, um vetor a cada 5,12 s
     ('Random Forest 100 árv.', 'rf_demon_n100_balanced'),                          # eval_demon_baselines_5x2cv.py
     ('SVM Nyström m=1000', 'svm_nystroem_1000_demon_C2.0_elasticnet_l1r0.15_it1000'),
     ('CNN 2D ad hoc', 'cnn2d_demon_w32_b32_e20'),                                  # eval_demon_baselines_5x2cv.py
+    ('CNN espectral 1D (arq. HHT)', 'speccnn_demon_ctx0_e60p8'),                   # eval_hht_spectral_cnn_5x2cv.py --rep demon
+    ('CNN harmônica, 1 janela', 'hcnn_demon_tpsw_med1_e60p8'),                     # eval_demon_harmonic_cnn_5x2cv.py --median 1
+    ('CNN harmônica, mediana 5', 'hcnn_demon_tpsw_med5_e60p8'),                    # eval_demon_harmonic_cnn_5x2cv.py --median 5
 ]
 EXTRA = [  # outras configurações DEMON que aparecem em outros notebooks (só para rastreabilidade)
-    ('MLP [32,16] 30 ép., seed 42 (NBs 14–16, gate)', 'mlp_demon_h32-16_e30_4c'),     # generate_mlp_predictions_and_analysis.py
-    ('MLP [32,16] 35 ép. (grade da fusão, NB8)', 'mlp_demon_h32-16_e35_4c'),           # eval_fusion_mel_demon_5x2cv.py
-    ('SVM m=4000 early stopping [INSTÁVEL] (NBs 10–13)', 'svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c'),
+    ('MLP [32,16] 30 ép., seed 42 (NBs 16–18, gate)', 'mlp_demon_h32-16_e30_4c'),     # generate_mlp_predictions_and_analysis.py
+    ('MLP [32,16] 35 ép. (grade da fusão, NB12)', 'mlp_demon_h32-16_e35_4c'),           # eval_fusion_mel_demon_5x2cv.py
+    ('SVM m=4000 early stopping [INSTÁVEL] (NBs 13–15)', 'svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c'),
 ]
 LOCAL_REF = [  # referências MEL/LOFAR do pipeline iara oficial (results/trainings/tests, janelas de 0,512 s)
     ('SVM m=6000 | LOFAR', 'svm_nystroem_6000_lofar_elasticnet_l1r0.15'),
     ('SVM m=4000 PCA64 | LOFAR', 'svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0'),
     ('SVM m=4000 | MEL', 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0'),
-    ('MLP (oficial) | MEL', 'mlp'),
-    ('MLP (oficial) | LOFAR', 'mlp_lofar'),
-    ('CNN (oficial) | MEL', 'cnn'),
+    ('MLP (≈ artigo) | MEL', 'mlp'),
+    ('MLP (≈ artigo) | LOFAR', 'mlp_lofar'),
+    ('CNN repo (≠ artigo) | MEL', 'cnn'),
 ]
 MET = ('SP', 'ACC', 'F1')
 ROWS_4C = [(l, e) for l, e in LOCAL_REF] + [(f'DEMON | {l}', e + '_4c') for l, e in DEMON] + \
           [(f'DEMON | {l}', e) for l, e in EXTRA]
 ROWS_3C = [(f'DEMON | {l}', e + '_3c', '3c') for l, e in DEMON] + \
-          [('DEMON | MLP [32,16] 35 ép. (grade da fusão, NB8)', 'mlp_demon_h32-16_e35_3c', '3c')]
+          [('DEMON | MLP [32,16] 35 ép. (grade da fusão, NB12)', 'mlp_demon_h32-16_e35_3c', '3c')]
 
 # Tabela 7 do artigo (Silva et al., IEEE Access 2025): só SP, ACC e F1 em 4 classes
 tab_artigo = pd.DataFrame([{'Modelo': f'{m} | {r} (Tabela 7 do artigo)',
@@ -130,13 +133,14 @@ plt.show()
 
 PLOT_RECALL_CODE = r'''
 classes = ['SMALL', 'MEDIUM', 'LARGE', 'BACKGROUND']
-subset = ['DEMON | MLP [32,16] 25 ép.', 'DEMON | SVM Nyström m=6000', 'DEMON | Random Forest 100 árv.', 'DEMON | CNN 2D ad hoc']
+subset = ['DEMON | MLP [32,16] 25 ép.', 'DEMON | SVM Nyström m=6000', 'DEMON | Random Forest 100 árv.', 'DEMON | CNN 2D ad hoc',
+          'DEMON | CNN harmônica, mediana 5']
 recalls_matrix = np.array([[S4[m][f'R_{c}'][0] for c in classes] for m in subset])
 display(pd.DataFrame(recalls_matrix.round(2), index=subset, columns=classes))
 fig, ax = plt.subplots(figsize=(13, 6))
-x = np.arange(len(classes)); width = 0.20
-for i, (m, color) in enumerate(zip(subset, ['#3498db', '#9b59b6', '#e67e22', '#e74c3c'])):
-    rects = ax.bar(x + (i - 1.5) * width, recalls_matrix[i], width, label=m.replace('DEMON | ', ''), color=color, alpha=0.9)
+x = np.arange(len(classes)); width = 0.8 / len(subset)
+for i, (m, color) in enumerate(zip(subset, ['#3498db', '#9b59b6', '#e67e22', '#e74c3c', '#16a085'])):
+    rects = ax.bar(x + (i - (len(subset) - 1) / 2) * width, recalls_matrix[i], width, label=m.replace('DEMON | ', ''), color=color, alpha=0.9)
     for rect in rects:
         ax.annotate(f'{rect.get_height():.1f}', xy=(rect.get_x() + rect.get_width() / 2, rect.get_height()),
                     xytext=(0, 2), textcoords='offset points', ha='center', va='bottom', fontsize=8.5, fontweight='bold')
@@ -166,14 +170,18 @@ def confusion(exp):
 CM_MODELS = [('SVM Nyström m=6000', 'svm_nystroem_6000_demon_C2.0_elasticnet_l1r0.15_it1000'),
              ('Random Forest 100 árv.', 'rf_demon_n100_balanced'),
              ('MLP [32,16] 25 ép.', 'mlp_demon_h32-16_e25'),
-             ('CNN 2D ad hoc', 'cnn2d_demon_w32_b32_e20')]
+             ('CNN 2D ad hoc', 'cnn2d_demon_w32_b32_e20'),
+             ('CNN harmônica, mediana 5', 'hcnn_demon_tpsw_med5_e60p8')]
 CM4 = {l: confusion(e + '_4c') for l, e in CM_MODELS}
 CM3 = {l: confusion(e + '_3c') for l, e in CM_MODELS}
 N_FILES = len(set().union(*[set(d.File) for d in R.file_predictions(CM_MODELS[0][1] + '_4c').values()]))
 
 
 def plot_cms(CMS, S, prefix, cmap, suptitle):
-    fig, axes = plt.subplots(2, 2, figsize=(15, 13))
+    nl = (len(CMS) + 1) // 2
+    fig, axes = plt.subplots(nl, 2, figsize=(15, 6.5 * nl))
+    for ax in axes.flatten()[len(CMS):]:
+        ax.axis('off')
     for ax, (l, (cm, n)) in zip(axes.flatten(), CMS.items()):
         sp = S[f'DEMON | {l}']['SP']
         im = ax.imshow(cm.values, cmap=cmap, vmin=0, vmax=100)
@@ -195,15 +203,22 @@ def plot_cms(CMS, S, prefix, cmap, suptitle):
 TESTS_CODE = r'''
 # F-test 5x2cv combinado (Alpaydin), como no artigo. Modelos 4c; recall de SMALL é idêntico em 4c e 4c_sem_bg.
 PAIRS = [
-    ('DEMON | MLP [32,16] 25 ép.', 'MLP (oficial) | LOFAR', 'SP'),
+    ('DEMON | MLP [32,16] 25 ép.', 'MLP (≈ artigo) | LOFAR', 'SP'),
     ('DEMON | MLP [32,16] 25 ép.', 'SVM m=4000 | MEL', 'SP'),
     ('DEMON | MLP [32,16] 25 ép.', 'DEMON | SVM Nyström m=6000', 'SP'),
     ('DEMON | MLP [32,16] 25 ép.', 'DEMON | Random Forest 100 árv.', 'SP'),
-    ('DEMON | MLP [32,16] 25 ép.', 'DEMON | MLP [32,16] 35 ép. (grade da fusão, NB8)', 'SP'),
+    ('DEMON | MLP [32,16] 25 ép.', 'DEMON | MLP [32,16] 35 ép. (grade da fusão, NB12)', 'SP'),
     ('DEMON | Random Forest 100 árv.', 'SVM m=6000 | LOFAR', 'R_SMALL'),
     ('DEMON | Random Forest 100 árv.', 'SVM m=4000 PCA64 | LOFAR', 'R_SMALL'),
-    ('DEMON | Random Forest 100 árv.', 'MLP (oficial) | LOFAR', 'R_SMALL'),
+    ('DEMON | Random Forest 100 árv.', 'MLP (≈ artigo) | LOFAR', 'R_SMALL'),
     ('DEMON | Random Forest 100 árv.', 'SVM m=4000 | MEL', 'R_SMALL'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | MLP [32,16] 25 ép.', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | MLP [32,16] 35 ép. (grade da fusão, NB12)', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | Random Forest 100 árv.', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | CNN 2D ad hoc', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | CNN harmônica, 1 janela', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | CNN espectral 1D (arq. HHT)', 'SP'),
+    ('DEMON | CNN harmônica, mediana 5', 'DEMON | Random Forest 100 árv.', 'R_SMALL'),
 ]
 rows = []
 for a, b, met in PAIRS:
@@ -217,7 +232,7 @@ display(df_tests)
 
 NOTEBOOKS_DIR = os.path.abspath(os.path.join(HERE, ".."))
 
-def build(filename=os.path.join(NOTEBOOKS_DIR, "7_comparacao_modelos_demon.ipynb")):
+def build(filename=os.path.join(NOTEBOOKS_DIR, "9_comparacao_modelos_demon.ipynb")):
     ns = {}
     exec(SETUP_CODE, ns)
     exec(TABLES_CODE, ns)
@@ -232,13 +247,13 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "7_comparacao_modelos_demon.ipynb
         r = T[(T.A == a) & (T.B == b) & (T["métrica"] == met)].iloc[0]
         return f"F = {br(r.F)}, {pv(r.p)}", r.p
 
-    mlp25, mlp30, mlp35 = ("DEMON | MLP [32,16] 25 ép.", "DEMON | MLP [32,16] 30 ép., seed 42 (NBs 14–16, gate)",
-                           "DEMON | MLP [32,16] 35 ép. (grade da fusão, NB8)")
+    mlp25, mlp30, mlp35 = ("DEMON | MLP [32,16] 25 ép.", "DEMON | MLP [32,16] 30 ép., seed 42 (NBs 16–18, gate)",
+                           "DEMON | MLP [32,16] 35 ép. (grade da fusão, NB12)")
     svm6, svm4, svm1 = "DEMON | SVM Nyström m=6000", "DEMON | SVM Nyström m=4000", "DEMON | SVM Nyström m=1000"
     rf, cnn = "DEMON | Random Forest 100 árv.", "DEMON | CNN 2D ad hoc"
-    uns = "DEMON | SVM m=4000 early stopping [INSTÁVEL] (NBs 10–13)"
+    uns = "DEMON | SVM m=4000 early stopping [INSTÁVEL] (NBs 13–15)"
     lof6, lof4, mel4 = "SVM m=6000 | LOFAR", "SVM m=4000 PCA64 | LOFAR", "SVM m=4000 | MEL"
-    mlpl, mlpm, cnnm = "MLP (oficial) | LOFAR", "MLP (oficial) | MEL", "CNN (oficial) | MEL"
+    mlpl, mlpm, cnnm = "MLP (≈ artigo) | LOFAR", "MLP (≈ artigo) | MEL", "CNN repo (≠ artigo) | MEL"
     art_mlpl = R.ARTICLE_TABLE7[("MLP", "LOFAR")]["SP"]
     demon4 = [f"DEMON | {l}" for l, _ in ns["DEMON"]]
     best = max(demon4, key=lambda l: S4[l]["SP"][0])
@@ -260,10 +275,25 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "7_comparacao_modelos_demon.ipynb
     def sig(p):
         return "significativa" if p < 0.05 else "**não** significativa"
 
+    # Novas CNNs DEMON (seção 6.2)
+    scd, hc1, hc5 = "DEMON | CNN espectral 1D (arq. HHT)", "DEMON | CNN harmônica, 1 janela", "DEMON | CNN harmônica, mediana 5"
+    t_h5_mlp, p_h5_mlp = t(hc5, mlp25, "SP")
+    t_h5_35, p_h5_35 = t(hc5, mlp35, "SP")
+    t_h5_rf, p_h5_rf = t(hc5, rf, "SP")
+    t_h5_cnn, p_h5_cnn = t(hc5, cnn, "SP")
+    t_h5_h1, p_h5_h1 = t(hc5, hc1, "SP")
+    t_h5_sc, p_h5_sc = t(hc5, scd, "SP")
+    t_h5_rfs, p_h5_rfs = t(hc5, rf, "R_SMALL")
+    p_h5_bigru = R.f_test_5x2(ns["E4"][hc5], 'bigru_att_demon_h64_s15-5_e20_4c')[1]
+    bigru3 = R.summary('bigru_att_demon_h64_s15-5_e20_3c', '3c')
+    p_h5_bigru3 = R.f_test_5x2('hcnn_demon_tpsw_med5_e60p8_3c', 'bigru_att_demon_h64_s15-5_e20_3c', mode_a='3c', mode_b='3c')[1]
+    p_h5_mlp3 = R.f_test_5x2('hcnn_demon_tpsw_med5_e60p8_3c', 'mlp_demon_h32-16_e25_3c', mode_a='3c', mode_b='3c')[1]
+    bigru_full = R.summary('bigru_att_demon_h64_s15-5_e20_4c')
+
     cells = []
     cells.append(md(r"""
 # Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
-### Notebook 7: Comparativo Multimodelo com o Extrator DEMON (SVM, Random Forest, MLP e CNN)
+### Notebook 9: Comparativo Multimodelo com o Extrator DEMON (SVM, Random Forest, MLP e CNN)
 
 Neste notebook, investigamos o comportamento do extrator **DEMON** (*Demodulation of Envelope Modulation on Noise*) puro ($0{,}39\text{ Hz}$ a $25\text{ Hz}$) através de **quatro famílias de aprendizado de máquina**:
 
@@ -271,6 +301,7 @@ Neste notebook, investigamos o comportamento do extrator **DEMON** (*Demodulatio
 2. **Random Forest (100 árvores):** ensemble de árvores com `class_weight='balanced'`.
 3. **Multi-Layer Perceptron (MLP PyTorch `[32, 16]`):** rede feedforward com `BatchNorm1d` e `Dropout 0.2`.
 4. **CNN 2D ad hoc (PyTorch):** convoluções 2D sobre blocos de 32 vetores DEMON consecutivos ($32 \times 253$).
+5. **Duas CNNs 1D novas (seção 6.2):** a **CNN espectral** desenhada para a HHT (`iara.ml.models.spectral_cnn.SpectralCNN`), aplicada ao DEMON sem mudanças de arquitetura, e a **CNN harmônica** feita para o DEMON (`iara.ml.models.harmonic_cnn.HarmonicCNN`: normalização TPSW pelo fundo e empilhamento harmônico $X(h \cdot f_0)$, $h = 0{,}5, 1, \dots, 5$), com 1 janela ou com a mediana de 5 janelas vizinhas.
 
 Todos os modelos foram avaliados sob o protocolo oficial de **$5\times2$ validação cruzada (10 folds)** com **particionamento por gravação de áudio (`ID`, `exclusive_header='ID'` em `src/iara/ml/experiment.py`)** — janelas de um mesmo arquivo nunca ficam em treino e teste ao mesmo tempo — sobre os **__NFILES__ áudios de UO** do IARA (*Silva et al.*, IEEE Access 2025). O particionamento **não** isola navios: gravações diferentes do mesmo navio (`Ship ID`) podem cair em treino e teste.
 
@@ -285,8 +316,8 @@ Todos os modelos foram avaliados sob o protocolo oficial de **$5\times2$ valida�
 > * **ACC = acurácia balanceada** (média dos recalls) em todas as tabelas, inclusive na Tabela 7 do artigo. Versões anteriores deste notebook misturavam acurácia micro (UACC) e balanceada na mesma coluna.
 > * **Três modos, sempre rotulados:** `4c` (4 classes); `4c_sem_bg` (o mesmo modelo 4c avaliado só em navios, prever BACKGROUND = erro; os recalls por classe são os mesmos do 4c); `3c` (modelo **retreinado** sem BACKGROUND — só existe para o DEMON). Comparações entre DEMON e MEL/LOFAR "em 3 classes" só são válidas no modo `4c_sem_bg`.
 > * **Referências locais MEL/LOFAR** vêm do pipeline iara oficial (`results/trainings/tests`, janelas de 0,512 s); o DEMON usa um vetor a cada 5,12 s. O recall de `SMALL` do `SVM m=6000 | LOFAR` é **{br(S4[lof6]['R_SMALL'][0])}%** (versões anteriores traziam 42,58%).
-> * **Três MLP DEMON [32,16] distintos** existem no projeto: **25 épocas** (`mlp_demon_h32-16_e25_*`, `eval_demon_baselines_5x2cv.py`, usado aqui; SP 4c {pm(S4[mlp25]['SP'])}%), **30 épocas com seed 42** (`mlp_demon_h32-16_e30_4c`, `generate_mlp_predictions_and_analysis.py`, usado nos NBs 14–16 e no gate; SP {pm(S4[mlp30]['SP'])}%) e **35 épocas** (`mlp_demon_h32-16_e35_*`, `eval_fusion_mel_demon_5x2cv.py`, usado no NB8; SP {pm(S4[mlp35]['SP'])}%). A diferença 25 × 35 épocas não é significativa (F-test 5x2cv: {t_35}).
-> * O `SVM m=4000` com early stopping (`svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c`, usado nos NBs 10–13) é **instável** (SP {pm(S4[uns]['SP'])}%; folds: {', '.join(br(x, 1) for x in ns['SP_FOLDS'][uns])}) e aparece só para rastreabilidade.
+> * **Três MLP DEMON [32,16] distintos** existem no projeto: **25 épocas** (`mlp_demon_h32-16_e25_*`, `eval_demon_baselines_5x2cv.py`, usado aqui; SP 4c {pm(S4[mlp25]['SP'])}%), **30 épocas com seed 42** (`mlp_demon_h32-16_e30_4c`, `generate_mlp_predictions_and_analysis.py`, usado nos NBs 16–18 e no gate; SP {pm(S4[mlp30]['SP'])}%) e **35 épocas** (`mlp_demon_h32-16_e35_*`, `eval_fusion_mel_demon_5x2cv.py`, usado no NB12; SP {pm(S4[mlp35]['SP'])}%). A diferença 25 × 35 épocas não é significativa (F-test 5x2cv: {t_35}).
+> * O `SVM m=4000` com early stopping (`svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c`, usado nos NBs 13–15) é **instável** (SP {pm(S4[uns]['SP'])}%; folds: {', '.join(br(x, 1) for x in ns['SP_FOLDS'][uns])}) e aparece só para rastreabilidade.
 """))
     cells.append(code(TABLES_CODE + r'''
 print('Tabela 7 do artigo (4 classes):'); display(tab_artigo)
@@ -359,16 +390,33 @@ Toda afirmação de "supera" abaixo depende deste teste (Alpaydin, 1999; o mesmo
 
 ### 6.1 A CNN 2D ad hoc colapsou no DEMON
 * SP 4c = **{pm(S4[cnn]['SP'])}%** (folds: {', '.join(br(x, 1) for x in fcnn)}), recall SMALL {br(S4[cnn]['R_SMALL'][0])}%; no 3c, SP = {pm(S3[cnn]['SP'])}% (folds: {', '.join(br(x, 1) for x in fcnn3)}). Com esse desempenho e essa variância, o modelo deve ser tratado como **colapsado** (20 épocas sem early stopping, conforme `config.json`), e não como evidência sobre a adequação de convoluções ao DEMON.
-* *Hipótese (não testada):* o espectro DEMON é formado por raias finas e esparsas, e convoluções com pooling tenderiam a suavizá-las.
+* *Hipótese (não testada):* o espectro DEMON é formado por raias finas e esparsas, e convoluções com pooling tenderiam a suavizá-las. A seção 6.2 mostra que CNNs com outro desenho não colapsam no mesmo dado.
 
-### 6.2 O teto do DEMON isolado
-* O melhor SP 4c entre os modelos DEMON desta tabela é **{pm(S4[best]['SP'])}%** ({best.replace('DEMON | ', '')}); a melhor configuração DEMON em disco nas 4 famílias é {bestall.replace('DEMON | ', '')} com {pm(S4[bestall]['SP'])}%. Fora dessas 4 famílias, a BiGRU com atenção sobre sequências DEMON (`bigru_att_demon_h64_s15-5_e20_4c`, Notebook 23) chega a {pm(bigru_sp)}%.
+### 6.2 Duas CNNs novas no DEMON
+Treino comum: uma amostra por janela de 5,12 s, validação interna com 15% das gravações de treino (separadas por gravação), early stopping, semente fixa por fold, voto majoritário por gravação. As configurações foram fixadas antes de rodar.
+
+| Modelo | SP 4c | SP 3c (retreinado) | Recall SMALL 4c | Recall BACKGROUND 4c |
+| :--- | :---: | :---: | :---: | :---: |
+| CNN espectral 1D (arquitetura HHT, sem mudanças) | {pm(S4[scd]['SP'])} | {pm(S3[scd]['SP'])} | {br(S4[scd]['R_SMALL'][0])}% | {br(S4[scd]['R_BACKGROUND'][0])}% |
+| CNN harmônica, 1 janela | {pm(S4[hc1]['SP'])} | {pm(S3[hc1]['SP'])} | {br(S4[hc1]['R_SMALL'][0])}% | {br(S4[hc1]['R_BACKGROUND'][0])}% |
+| CNN harmônica, mediana de 5 janelas | {pm(S4[hc5]['SP'])} | {pm(S3[hc5]['SP'])} | {br(S4[hc5]['R_SMALL'][0])}% | {br(S4[hc5]['R_BACKGROUND'][0])}% |
+| MLP [32,16] 25 ép. (referência) | {pm(S4[mlp25]['SP'])} | {pm(S3[mlp25]['SP'])} | {br(S4[mlp25]['R_SMALL'][0])}% | {br(S4[mlp25]['R_BACKGROUND'][0])}% |
+| BiGRU + atenção (Notebook 25, referência) | {pm(bigru_full['SP'])} | {pm(bigru3['SP'])} | {br(bigru_full['R_SMALL'][0])}% | {br(bigru_full['R_BACKGROUND'][0])}% |
+
+* **A CNN harmônica com mediana de 5 janelas não colapsa e empata com os melhores modelos DEMON:** contra o MLP 25 ép. {t_h5_mlp}; contra o MLP 35 ép. {t_h5_35}; contra a BiGRU {pv(p_h5_bigru)} (4c) e {pv(p_h5_bigru3)} (3c); contra o MLP 25 ép. em 3c {pv(p_h5_mlp3)}. Supera {"significativamente " if p_h5_rf < 0.05 else ""}o RF ({t_h5_rf}) e a CNN 2D ad hoc ({t_h5_cnn}){"" if p_h5_cnn < 0.05 else ", mas esta última diferença não é significativa a 5%"}.
+* **A mediana temporal é decisiva:** sem ela (1 janela) o SP cai para {pm(S4[hc1]['SP'])} ({t_h5_h1}) e o modelo prevê BACKGROUND para quase tudo (recall BACKGROUND {br(S4[hc1]['R_BACKGROUND'][0])}%, SMALL {br(S4[hc1]['R_SMALL'][0])}%). *Hipótese (não testada):* numa janela isolada o TPSW realça ruído tanto quanto raias; a mediana de 5 janelas deixa só as raias estáveis, como as do eixo da hélice.
+* **A arquitetura da HHT não serve ao DEMON sem adaptação:** a CNN espectral fica em {pm(S4[scd]['SP'])} (contra a CNN harmônica com mediana: {t_h5_sc}). Ela foi desenhada e configurada no HHT, então a comparação a desfavorece.
+* **SMALL continua sendo o ponto fraco:** recall de SMALL da CNN harmônica {br(S4[hc5]['R_SMALL'][0])}%, abaixo do RF DEMON ({br(S4[rf]['R_SMALL'][0])}%; {t_h5_rfs}), cujo recall de SMALL vem acompanhado de um viés para SMALL (seção 3).
+* **Limites:** não houve ablação; não dá para separar o efeito do TPSW, do empilhamento harmônico e da mediana. Os parâmetros do TPSW (n = 16, g = 3, α = 2) e os harmônicos foram fixados a priori, sem ajuste.
+
+### 6.3 O teto do DEMON isolado
+* O melhor SP 4c entre os modelos DEMON desta tabela é **{pm(S4[best]['SP'])}%** ({best.replace('DEMON | ', '')}); a melhor configuração DEMON em disco entre esses modelos é {bestall.replace('DEMON | ', '')} com {pm(S4[bestall]['SP'])}%. Fora desses modelos, a BiGRU com atenção sobre sequências DEMON (`bigru_att_demon_h64_s15-5_e20_4c`, Notebook 25) chega a {pm(bigru_sp)}%.
 * Isso fica **{br(art_mlpl[0] - S4[best]['SP'][0], 1)} p.p.** abaixo da MLP LOFAR da Tabela 7 do artigo ({pm(art_mlpl)}%), {br(S4[mlpl]['SP'][0] - S4[best]['SP'][0], 1)} p.p. abaixo da MLP LOFAR local ({pm(S4[mlpl]['SP'])}%; F-test {t_lofar}) e {br(S4[mel4]['SP'][0] - S4[best]['SP'][0], 1)} p.p. abaixo do SVM MEL m=4000 ({pm(S4[mel4]['SP'])}%; F-test {t_mel}).
-* Como a diferença se repete nas 4 famílias, os dados **sugerem** que a limitação está na representação: o DEMON descarta o espectro direto (raias de máquinas, energia de banda larga) e retém só a envoltória de 1–2 kHz entre 0,39 e 25 Hz.
+* Como a diferença se repete em todas as famílias de modelos, os dados **sugerem** que a limitação está na representação: o DEMON descarta o espectro direto (raias de máquinas, energia de banda larga) e retém só a envoltória de 1–2 kHz entre 0,39 e 25 Hz.
 
-### 6.3 O papel do DEMON na arquitetura IARA
+### 6.4 O papel do DEMON na arquitetura IARA
 1. **Não usar monoliticamente:** o DEMON não deve ser o classificador primário de 4 classes.
-2. **Fusão Multimodal (`MEL + DEMON`):** avaliada no Notebook 8.
+2. **Fusão Multimodal (`MEL + DEMON`):** avaliada no Notebook 12.
 3. **Especialista entre embarcações — o que os dados permitem dizer:**
    - Comparação válida em SMALL (modelos 4c, mesmo modo de avaliação): RF DEMON {br(S4[rf]['R_SMALL'][0])}% contra {br(S4[lof6]['R_SMALL'][0])}% (SVM LOFAR m=6000; {t_s6}), {br(S4[lof4]['R_SMALL'][0])}% (SVM LOFAR m=4000 PCA64; {t_s4}), {br(S4[mlpl]['R_SMALL'][0])}% (MLP LOFAR local; {t_sm}) e {br(S4[mel4]['R_SMALL'][0])}% (SVM MEL m=4000; {t_smel}). {sig_small}, e o recall de SMALL do RF vem junto com {br(cm_rf.loc['BACKGROUND', 'SMALL'], 1)}% do fundo classificado como SMALL (seção 3).
    - Uma versão anterior afirmava que o DEMON "supera com folga o LOFAR" em SMALL, comparando o recall de modelos DEMON **retreinados sem BG** ({br(S3[svm6]['R_SMALL'][0])}% SVM m=6000, {br(S3['DEMON | Random Forest 100 árv.']['R_SMALL'][0])}% RF) com o recall de um LOFAR **4c**. Essa comparação mistura problemas diferentes e foi retirada. Para sustentar o DEMON como especialista seria preciso retreinar também MEL/LOFAR sem BG e aplicar o F-test.

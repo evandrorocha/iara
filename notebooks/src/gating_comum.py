@@ -1,5 +1,5 @@
 """
-Funções comuns aos notebooks 24 (Gating Front-End) e 25 (falhas do Super-Oráculo).
+Funções comuns aos notebooks 26 (Gating Front-End) e 25 (falhas do Super-Oráculo).
 
 Reproduz exatamente o roteador de scratch/test_competence_gating_all_models.py,
 scratch/test_competence_gating_svm.py e scratch/run_heterogeneous_gating_experiment.py
@@ -9,7 +9,7 @@ SP POR FOLD, necessário para o F-test 5x2cv e para a análise de sensibilidade 
 
 Observação: as predições por arquivo destes pickles usam voto majoritário com desempate pela MENOR classe
 (np.argmax(np.bincount)); notebooks/iara_results.py usa Counter.most_common (empate -> 1ª janela), como o
-pipeline iara. Os dois diferem só nos arquivos empatados (ver a tabela de especialistas do NB24).
+pipeline iara. Os dois diferem só nos arquivos empatados (ver a tabela de especialistas do NB26).
 """
 import itertools
 import numbers
@@ -61,10 +61,10 @@ EXPERTS_EXP = {
 EXPERTS_NOTE = {
     "RF": "scratch/generate_rf_predictions_and_analysis.py: 100 árvores, class_weight='balanced', sem max_depth "
           "(o artigo usa 50/30 e 200/20); MEL e LOFAR vêm dos caches com média em 5,12 s (resolução 10× menor que a do artigo)",
-    "MLP": "MEL e LOFAR: pipeline iara oficial (results/trainings/tests/mlp e mlp_lofar, com early stopping); "
+    "MLP": "MEL e LOFAR: pipeline iara (results/trainings/tests/mlp e mlp_lofar, com early stopping; arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0); "
            "HHT e DEMON: MLP ad hoc [32,16], 30 épocas fixas, sem validação (scratch/generate_mlp_predictions_and_analysis.py)",
     "SVM": "MEL: Nyström m=4000; LOFAR: m=6000 (pipeline oficial); HHT e DEMON: m=2000 (exportação em nível de arquivo)",
-    "CNN": "MEL: CNN do pipeline oficial (results/trainings/tests/cnn); LOFAR/HHT/DEMON: CNN 2D ad hoc "
+    "CNN": "MEL: CNN do repositório (results/trainings/tests/cnn, test_scripts/cnn.py: 128/64, lr 1e-5 — não é a arquitetura do artigo); LOFAR/HHT/DEMON: CNN 2D ad hoc "
            "(15–20 épocas, sem early stopping; LOFAR do cache de 5,12 s)",
 }
 COLLAPSE_STD = 5.0  # desvio do SP entre folds acima do qual o especialista é sinalizado como instável/colapsado

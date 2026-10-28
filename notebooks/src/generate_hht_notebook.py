@@ -1,5 +1,5 @@
 """
-Script to generate notebooks/9_analise_hht_teste_cego.ipynb with complete analysis, plots, and metrics.
+Script to generate notebooks/10_analise_hht_teste_cego.ipynb with complete analysis, plots, and metrics.
 Covers:
 1. HHT theory and mathematical foundations (EMD, IMFs, Hilbert Transform, Marginal Spectrum).
 2. Distinction between HHT Pura (autonomous category) vs. LOFAR vs. MEL vs. DEMON.
@@ -41,14 +41,16 @@ def fmtc(ms, nd=2):
 def pval(p):
     return 'p < 0,001' if p < 0.001 else f"p = {pt(p, 3)}"
 
-def create_hht_notebook(filename="notebooks/9_analise_hht_teste_cego.ipynb"):
+def create_hht_notebook(filename="notebooks/10_analise_hht_teste_cego.ipynb"):
     cells = [
         {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
                 "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
-                "### Notebook 9: Investigação da Transformada de Hilbert-Huang (HHT) e Teste Cego\n",
+                "### Notebook 10: Investigação da Transformada de Hilbert-Huang (HHT) e Teste Cego\n",
+                "\n",
+                "> **Correção de 23/10/2026:** o cache HHT original misturava duas configurações de EMD (associadas à classe); os resultados de classificação citados aqui vêm do HHT re-extraído com configuração única (8 IMFs, `MAX_ITERATION=30`). Auditoria e antes × depois no Notebook 28 (`28_correcao_extracao_hht.ipynb`).\n",
                 "\n",
                 "Neste notebook, investigamos a aplicação da **Transformada de Hilbert-Huang (HHT)** (*Huang et al.*, 1998) em sinais de áudio de sonar passivo na Bacia de Santos (acervo UO do dataset IARA). Avaliamos:\n",
                 "\n",

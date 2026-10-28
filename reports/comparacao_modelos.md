@@ -69,10 +69,10 @@ A Tabela 1 consolida as métricas globais na partição de teste para as classes
 | **MLP [32,16] (25 ép.)** | DEMON | 51.76 ± 2.75 | 54.04 ± 2.54 | 50.39 ± 3.25 | `mlp_demon_h32-16_e25_4c` |
 | **CNN 2D ad hoc [COLAPSADA]** | DEMON | 36.28 ± 6.38 | 44.48 ± 2.03 | 39.46 ± 3.32 | `cnn2d_demon_w32_b32_e20_4c` |
 | *---* | *---* | *---* | *---* | *---* | *---* |
-| **RF (100 árvores)** | HHT | 60.70 ± 1.89 | 60.97 ± 1.86 | 62.05 ± 1.78 | `rf_hht_n100_balanced_4c` |
-| **MLP [32,16]** | HHT | 57.35 ± 2.67 | 59.17 ± 2.14 | 56.40 ± 2.52 | `mlp_hht_h32-16_e30_noseed_4c` |
-| **SVM (m=6000) (elasticnet)** | HHT | 53.15 ± 3.07 | 55.39 ± 2.15 | 54.05 ± 3.13 | `svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_4c` |
-| **CNN 2D ad hoc [COLAPSADA]** | HHT | 37.53 ± 13.05 | 45.17 ± 3.79 | 40.16 ± 5.52 | `cnn2d_hht_w32_b32_e25_4c` |
+| **RF (100 árvores)** | HHT | 57.64 ± 2.14 | 58.11 ± 2.03 | 60.21 ± 2.04 | `rf_hht_n100_balanced_4c` |
+| **MLP [32,16]** | HHT | 56.31 ± 1.77 | 58.09 ± 1.34 | 55.04 ± 1.54 | `mlp_hht_h32-16_e30_noseed_4c` |
+| **SVM (m=6000) (elasticnet)** | HHT | 51.18 ± 6.09 | 54.58 ± 2.36 | 52.80 ± 5.17 | `svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15_4c` |
+| **CNN 2D ad hoc [COLAPSADA]** | HHT | 38.25 ± 7.88 | 44.29 ± 4.01 | 38.31 ± 6.63 | `cnn2d_hht_w32_b32_e25_4c` |
 | *---* | *---* | *---* | *---* | *---* | *---* |
 | **MLP [64,32] Fusão (MEL 5,12 s + DEMON)** | MULTIMODAL | 66.92 ± 1.59 | 67.40 ± 1.58 | 66.99 ± 1.54 | `mlp_mel5s-demon_h64-32_e35_4c` |
 | **SVM (m=6000) Fusão (MEL 5,12 s + DEMON)** | MULTIMODAL | 64.67 ± 1.41 | 65.60 ± 1.27 | 64.91 ± 1.51 | `svm_nystroem_6000_mel5s-demon_C2.0_elasticnet_l1r0.15_4c` |
@@ -185,7 +185,7 @@ O DEMON (253 bins de 0,39 a 25 Hz, um vetor a cada 5,12 s) foi avaliado nos 10 f
 * **MLP [32,16] (25 ép.):** SP 51.76 ± 2.75%, ACC 54.04 ± 2.54%. Contra o SVM m=6000 (SP 44.95 ± 4.58): p = 0.064, **sem diferença significativa**; contra o RF (SP 44.44 ± 2.24): p = 0.047, diferença **significativa**. Recall de BACKGROUND 78.78%; fração de SMALL predita como LARGE: 42.4% no SVM m=6000 e 22.5% no MLP. Com o modelo retreinado em 3 classes (`mlp_demon_h32-16_e25_3c`), SP 55.50 ± 2.61% (SMALL 63.0%, MEDIUM 46.5%, LARGE 58.6%).
 * **Random Forest:** SP 44.44 ± 2.24%; recall de SMALL 52.47% (4 classes) e 60.06% (3 classes, retreinado); 48.6% dos arquivos de BACKGROUND são preditos SMALL e o recall de BACKGROUND é 27.96%.
 * **CNN 2D ad hoc:** SP 36.28 ± 6.38% — **colapsada** (desvio alto, folds com classe zerada). O resultado indica falha de treino dessa CNN ad hoc; não permite concluir que "convoluções espaciais são inadequadas" para o DEMON.
-* **Comparação com MEL/LOFAR:** o DEMON isolado fica abaixo do MLP LOFAR do artigo (66.51%) em MLP 14.7, SVM m=6000 21.6, RF 22.1, CNN 30.2 p.p. e abaixo do SVM MEL local (63.78%) em MLP 12.0, SVM m=6000 18.8, RF 19.3, CNN 27.5 p.p. Isso indica que o DEMON sozinho é uma representação mais fraca nestes modelos; não "comprova" um teto teórico. Detalhes no Notebook 5, em `reports/decisao_metodo_demon.md` e em `reports/comparacao_modelos_demon.md`.
+* **Comparação com MEL/LOFAR:** o DEMON isolado fica abaixo do MLP LOFAR do artigo (66.51%) em MLP 14.7, SVM m=6000 21.6, RF 22.1, CNN 30.2 p.p. e abaixo do SVM MEL local (63.78%) em MLP 12.0, SVM m=6000 18.8, RF 19.3, CNN 27.5 p.p. Isso indica que o DEMON sozinho é uma representação mais fraca nestes modelos; não "comprova" um teto teórico. Detalhes no Notebook 8, em `reports/decisao_metodo_demon.md` e em `reports/comparacao_modelos_demon.md`.
 
 ### 5.7 Fusão Multimodal Direta (MEL + DEMON)
 A combinação do MEL (256 filtros, cache de 5,12 s) com o DEMON (253 bins) foi testada no protocolo $5\times2$cv (particionamento por gravação, 1706 áudios):
@@ -298,7 +298,7 @@ Sistema em dois estágios:
 
 ## 10. Fusão Multimodal Direta (MEL + DEMON) entre Famílias de Modelos
 
-Avaliou-se o espaço de **509 dimensões** (256 Mel + 253 DEMON, janelas de 5,12 s sincronizadas) nas famílias do benchmark, sob o protocolo $5\times2$cv com particionamento por gravação (`exclusive_header='ID'`), mesma grade do Notebook 8.
+Avaliou-se o espaço de **509 dimensões** (256 Mel + 253 DEMON, janelas de 5,12 s sincronizadas) nas famílias do benchmark, sob o protocolo $5\times2$cv com particionamento por gravação (`exclusive_header='ID'`), mesma grade do Notebook 12.
 
 ### Tabela 5: Classificadores na Fusão Multimodal (5x2cv)
 

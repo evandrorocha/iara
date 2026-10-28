@@ -1,5 +1,7 @@
 # Análise Comparativa Completa: BiGRU com Atenção Temporal (MEL vs LOFAR e Fusões Multimodais)
 
+> **Correção de 23/10/2026 — extração HHT.** O cache HHT usado neste documento misturava duas configurações de EMD (`MAX_ITERATION` ≥ 100 em 571 gravações e 30 nas demais; nenhuma gravação BACKGROUND no primeiro grupo). O HHT foi re-extraído com configuração única (8 IMFs, `MAX_ITERATION=30`) e todos os experimentos HHT foram retreinados; a auditoria e o antes × depois estão no `notebooks/28_correcao_extracao_hht.ipynb`. Os números HHT abaixo são **anteriores à correção** (e alguns vêm de execuções ainda mais antigas que as predições em disco). Valores atuais, recalculados das predições: BiGRU HHT 4c SP 58,18 e 3c 57,65; MEL + HHT 4c 63,95 e 3c 62,69; LOFAR + HHT 4c 63,99 e 3c 60,40 (nenhuma mudança significativa no F-test 5x2cv). A BiGRU não tem semente fixa.
+
 **Protocolo:** Validação Cruzada $5\times2\text{cv}$ Oficial (10 Folds com isolamento estrito de navios)  
 **Aceleração:** NVIDIA GeForce RTX 5060 Ti (PyTorch / CUDA)  
 **Arquitetura:** BiGRU bidirecional (128 unidades ocultas, 2 camadas) + Atenção Temporal + Agregação por Votação por Arquivo de Áudio ($L=15$, $stride=5$)

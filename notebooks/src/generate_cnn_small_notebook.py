@@ -1,6 +1,6 @@
 """
-Script de geração do notebook 20: notebooks/20_analise_complementaridade_cnn_small.ipynb
-(e construtor comum dos notebooks 21 e 22 — ver build_cnn_notebook).
+Script de geração do notebook 22: notebooks/22_analise_complementaridade_cnn_small.ipynb
+(e construtor comum dos notebooks 23 e 24 — ver build_cnn_notebook).
 
 Análise de complementaridade, efeito oráculo e grau de consenso na CNN 2D para uma classe.
 Todos os números vêm das predições em disco (notebooks/iara_results.py + notebooks/cnn_complementaridade_comum.py);
@@ -101,7 +101,7 @@ def build_cnn_notebook(c, filename):
 
 A classe **`{cls}`** ({info['desc']}) é analisada nas **{th(n)} instâncias de teste** acumuladas nos 10 folds do 5×2cv oficial (as mesmas **{nf} gravações** aparecem, em média, {nm(n / nf)} vezes no teste; não são {th(n)} áudios distintos), com a CNN 2D em 4 representações (**MEL, LOFAR, HHT e DEMON**).
 
-> **Aviso principal — três das quatro CNNs colapsaram.** A CNN MEL é a do pipeline `iara` oficial (SP {nm(S['MEL']['SP'][0])} ± {nm(S['MEL']['SP'][1])}%; artigo: {nm(art_cnn_mel[0])}%). As CNNs LOFAR, HHT e DEMON são uma **CNN ad hoc** (`scratch/generate_cnn_predictions_and_analysis.py`) treinada sobre caches com média em 5,12 s: {col_txt}. A CNN LOFAR do artigo tem SP **{nm(art_cnn_lofar[0])} ± {nm(art_cnn_lofar[1])}%** (Tabela 7). Com modelos assim, a "complementaridade" abaixo mede sobretudo a **instabilidade** desses modelos (em cada fold eles favorecem uma classe diferente), e **não diz nada sobre a informação contida nas representações** LOFAR, HHT e DEMON.
+> **Aviso principal — três das quatro CNNs colapsaram.** A CNN MEL foi treinada pelo pipeline `iara`, mas **não tem a arquitetura do artigo** (`test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo; SP {nm(S['MEL']['SP'][0])} ± {nm(S['MEL']['SP'][1])}%; CNN MEL do artigo: {nm(art_cnn_mel[0])}%). As CNNs LOFAR, HHT e DEMON são uma **CNN ad hoc** (`scratch/generate_cnn_predictions_and_analysis.py`) treinada sobre caches com média em 5,12 s: {col_txt}. A CNN LOFAR do artigo tem SP **{nm(art_cnn_lofar[0])} ± {nm(art_cnn_lofar[1])}%** (Tabela 7). Com modelos assim, a "complementaridade" abaixo mede sobretudo a **instabilidade** desses modelos (em cada fold eles favorecem uma classe diferente), e **não diz nada sobre a informação contida nas representações** LOFAR, HHT e DEMON.
 
 ### Principais resultados (recalculados)
 1. **Oráculo não é um sistema realizável.** O oráculo (acerta se ao menos uma CNN acerta) chega a **{pc(A['oracle_hits'] / n * 100)}** ({th(A['oracle_hits'])} / {th(n)}), mas o esperado se os erros fossem independentes seria **{pc(A['oracle_exp'])}**: os erros são **correlacionados**, e não ortogonais. O **voto real** das 4 CNNs (pluralidade, empate sorteado) tem recall de `{cls}` de **{pc(A['vote_recall'])}**, contra {pc(A['recall'][base])} da melhor CNN isolada ({base}; F-test 5×2cv sobre o recall, p = {pv(p_vr)}). Em SP global, o voto fica em **{nm(A['vote_sp'][0])} ± {nm(A['vote_sp'][1])}%**, abaixo da CNN {A['best_sp_rep']} isolada ({nm(A['best_sp'][0])}%; p = {pv(p_vote)}{', diferença significativa' if p_vote < 0.05 else ''}).
@@ -123,6 +123,8 @@ except ImportError:
 
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('notebooks'))
+sys.path.insert(0, os.path.abspath('src'))  # módulos movidos para notebooks/src
+sys.path.insert(0, os.path.abspath('notebooks/src'))
 import iara_results as R
 import cnn_complementaridade_comum as C
 
@@ -141,7 +143,7 @@ print("Ambiente configurado. Resultados lidos de", R.ROOT)
 '''))
 
     # ------------------------------------------------------------------ 2. metodologia + colapso
-    exps_txt = "\n".join(f"  - **{r}** — `{e}` ({'pipeline iara oficial, `results/trainings/tests/`' if r == 'MEL' else 'CNN ad hoc, `results/trainings/multirep/`'})" for r, e in C.CNN.items())
+    exps_txt = "\n".join(f"  - **{r}** — `{e}` ({'pipeline iara, `results/trainings/tests/`, `test_scripts/cnn.py` (128/64, lr 1e-5 — não é a arquitetura do artigo)' if r == 'MEL' else 'CNN ad hoc, `results/trainings/multirep/`'})" for r, e in C.CNN.items())
     tb_txt = "; ".join(f"{r}: SP {nm(S[r]['SP'][0])}% → {nm(tb[r]['SP'].mean())}%, recall `{cls}` {nm(S[r][f'R_{cls}'][0])}% → {nm(tb[r][f'R_{cls}'].mean())}%" for r in collapsed)
     cells.append(md(f"""
 ## 2. Metodologia e Diagnóstico dos Modelos
@@ -154,7 +156,7 @@ print("Ambiente configurado. Resultados lidos de", R.ROOT)
 
 ### 2.1 Por que as CNNs ad hoc colapsaram
 - Cada imagem da CNN ad hoc tem {cfg['image_windows']} frames de {nm(cfg['frame_step_s'])} s, ou seja, **≈ {nm(img_s, 0)} s de áudio**, com passo de {cfg['image_stride']} frames. No cache LOFAR, **{pc(p_pad, 1)}** das gravações têm menos de 32 frames e viram uma única imagem completada por *wrap padding*; {pc(p_one, 1)} geram uma imagem sem padding; {pc(p_two, 1)} geram 2 imagens (o máximo, já que nenhuma gravação passa de {int(frames.max())} frames). Nos testes, {pc((imgs == 1).mean() * 100, 1)} dos arquivos têm 1 imagem e o restante, 2. Isso dá ≈ {th(n_img_trn)} imagens de treino no fold 0 ({n_files_trn} gravações), para uma CNN treinada do zero, por {cfg['epochs']} épocas fixas, sem validação nem *early stopping*.
-- Em cada fold o modelo tende a "escolher" uma classe: o recall de `{cls}` da CNN LOFAR varia de {nm(rec_rng['LOFAR'][0], 1)}% a {nm(rec_rng['LOFAR'][1], 1)}% entre folds; o da HHT, de {nm(rec_rng['HHT'][0], 1)}% a {nm(rec_rng['HHT'][1], 1)}%; o da DEMON, de {nm(rec_rng['DEMON'][0], 1)}% a {nm(rec_rng['DEMON'][1], 1)}%. A CNN MEL oficial fica entre {nm(rec_rng['MEL'][0], 1)}% e {nm(rec_rng['MEL'][1], 1)}%.
+- Em cada fold o modelo tende a "escolher" uma classe: o recall de `{cls}` da CNN LOFAR varia de {nm(rec_rng['LOFAR'][0], 1)}% a {nm(rec_rng['LOFAR'][1], 1)}% entre folds; o da HHT, de {nm(rec_rng['HHT'][0], 1)}% a {nm(rec_rng['HHT'][1], 1)}%; o da DEMON, de {nm(rec_rng['DEMON'][0], 1)}% a {nm(rec_rng['DEMON'][1], 1)}%. A CNN MEL do repositório fica entre {nm(rec_rng['MEL'][0], 1)}% e {nm(rec_rng['MEL'][1], 1)}%.
 - **Sensibilidade ao desempate:** com 2 imagens por arquivo os empates são frequentes. Este notebook usa a regra do pipeline `iara` (`Counter.most_common`: empate → classe da primeira imagem). O script de scratch usa `argmax(bincount)` (empate → menor índice de classe, ou seja, favorece `SMALL`). Trocando a regra: {tb_txt}. Uma métrica que muda tanto com a regra de desempate não é estável o suficiente para sustentar conclusões sobre as representações.
 """))
     cells.append(code(r'''
@@ -389,7 +391,7 @@ display(fam_df)
     print(f"Notebook gerado com sucesso em '{filename}'!")
 
 
-def create_notebook(filename="notebooks/20_analise_complementaridade_cnn_small.ipynb"):
+def create_notebook(filename="notebooks/22_analise_complementaridade_cnn_small.ipynb"):
     build_cnn_notebook(0, filename)
 
 

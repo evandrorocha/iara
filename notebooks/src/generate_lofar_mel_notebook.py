@@ -1,5 +1,5 @@
 """
-Script to generate notebooks/6_analise_lofar_mel.ipynb detailing LOFAR and MEL feature extraction,
+Script to generate notebooks/5_analise_lofar_mel.ipynb detailing LOFAR and MEL feature extraction,
 TPSW background normalization, physical acoustics, real spectrograms, and comparison.
 Ensures every cell is self-contained with robust imports and dual-path resolution.
 """
@@ -202,14 +202,14 @@ def _zeros_txt(fid):
     return f"{pt(ZEROS[fid][0], 1)}% de zeros na matriz inteira ({pt(ZEROS[fid][1], 1)}% nos 250 bins exibidos)"
 
 
-def create_lofar_mel_notebook(filename="notebooks/6_analise_lofar_mel.ipynb"):
+def create_lofar_mel_notebook(filename="notebooks/5_analise_lofar_mel.ipynb"):
     cells = [
         {
             "cell_type": "markdown",
             "metadata": {},
             "source": [
                 "# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA\n",
-                "### Notebook 6: Análise Aprofundada dos Extratores Espectrais LOFAR e MEL\n",
+                "### Notebook 5: Análise Aprofundada dos Extratores Espectrais LOFAR e MEL\n",
                 "\n",
                 "Neste notebook, exploramos detalhadamente os dois principais extratores espectrais do projeto IARA, derivados da formulação de referência de **Fábio Silva et al. (2025)** e da biblioteca `labsonar`:\n",
                 "1. **LOFAR (Low Frequency Analysis and Recording):** Espectro linear de banda estreita com normalizador de fundo **TPSW (Two-Pass Split Window)** para realce de raias tonais mecânicas.\n",
@@ -512,7 +512,7 @@ def create_lofar_mel_notebook(filename="notebooks/6_analise_lofar_mel.ipynb"):
                 "    ('MEL SVM (m=4000, 256-D, C=2,0)', '" + EXP_MEL + "'),\n",
                 "    ('HÍBRIDO SVM (MEL + LOFAR-PCA64, C=0,5)', '" + EXP_HYB + "'),\n",
                 "    ('HÍBRIDO SVM (MEL + LOFAR-PCA64, C=2,0)', '" + EXP_HYB_C2 + "'),\n",
-                "    ('MLP LOFAR (re-execução local)', '" + EXP_MLP_LOFAR + "'),\n",
+                "    ('MLP LOFAR (≈ artigo)', '" + EXP_MLP_LOFAR + "'),\n",
                 "]\n",
                 "df_comp = R.table(linhas, metrics=('SP', 'ACC', 'ACC_micro', 'F1'))\n",
                 "art = R.ARTICLE_TABLE7[('MLP', 'LOFAR')]\n",

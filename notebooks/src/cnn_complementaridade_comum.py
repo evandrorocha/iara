@@ -1,8 +1,9 @@
 """
-Análise de complementaridade da CNN 2D (NBs 20-22), lida das predições em disco via iara_results.
+Análise de complementaridade da CNN 2D (NBs 22-24), lida das predições em disco via iara_results.
 
 Experimentos:
-  MEL   -> results/trainings/tests/cnn                         (pipeline iara oficial, features de 0,512 s)
+  MEL   -> results/trainings/tests/cnn                         (pipeline iara, features de 0,512 s; test_scripts/cnn.py,
+                                                                 arquitetura 128/64 que NÃO é a CNN MEL do artigo)
   LOFAR -> results/trainings/multirep/cnn2d_lofar5s_w32_b64_e15_4c  (CNN ad hoc, scratch/generate_cnn_predictions_and_analysis.py)
   HHT   -> results/trainings/multirep/cnn2d_hht_w32_b64_e20_4c
   DEMON -> results/trainings/multirep/cnn2d_demon_w32_b64_e20_4c
@@ -28,7 +29,7 @@ CNN = {
 }
 REPS = list(CNN)
 
-# Famílias da Seção 8 (mesmos experimentos dos NBs 10-19)
+# Famílias da Seção 8 (mesmos experimentos dos NBs 13-21)
 FAMILIES = {
     "SVM Nyström": {
         "MEL": "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0",

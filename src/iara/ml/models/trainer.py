@@ -332,9 +332,21 @@ class BaseTrainer():
                 file_ids.extend([file_id] * n_samples)
                 all_targets.extend([int(target)] * n_samples)
 
-            samples = dataset.get_samples()
-            predictions = self.predict(model=model, samples=samples)
-            
+            input_type = dataset.input_type if hasattr(dataset, 'input_type') else \
+                            getattr(getattr(dataset, 'original_dataset', None), 'input_type', None)
+
+            if input_type is not None and input_type.n_windows > 1:
+                # Entradas em imagem (CNN): get_samples() devolve janelas soltas, então as imagens
+                # são montadas por arquivo, como antes de f04bb3b.
+                with torch.no_grad():
+                    predictions = torch.cat([
+                            self.predict(model=model,
+                                         samples=dataset.get_file_samples(file_id=file_id)[0])
+                            for file_id in dataset.get_file_ids()])
+            else:
+                samples = dataset.get_samples()
+                predictions = self.predict(model=model, samples=samples)
+
             if torch.is_tensor(predictions):
                 all_predictions = predictions.cpu().numpy()
             else:

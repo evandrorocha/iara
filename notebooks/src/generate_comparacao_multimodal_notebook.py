@@ -1,5 +1,5 @@
 """
-Gera notebooks/8_comparacao_multimodal_mel_demon_lofar.ipynb: comparação de MEL, DEMON, LOFAR e FUSÃO (MEL+DEMON)
+Gera notebooks/12_comparacao_multimodal_mel_demon_lofar.ipynb: comparação de MEL, DEMON, LOFAR e FUSÃO (MEL+DEMON)
 em MLP, SVM Nyström, Random Forest e CNN 2D sob o protocolo 5x2cv.
 
 Todos os números (tabelas, matrizes de confusão, testes e valores citados no markdown) são recalculados a partir
@@ -64,7 +64,7 @@ REPS = ['DEMON', 'MEL', 'LOFAR', 'FUSÃO (MEL+DEMON)']
 GRID = {
     ('MLP', 'DEMON'): ('MLP [32,16] 35 ép. | DEMON', 'mlp_demon_h32-16_e35_4c', 'mlp_demon_h32-16_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py'),
     ('MLP', 'MEL'): ('MLP [32,16] 35 ép. | MEL 5,12 s', 'mlp_mel5s_h32-16_e35_4c', 'mlp_mel5s_h32-16_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py'),
-    ('MLP', 'LOFAR'): ('MLP oficial | LOFAR', 'mlp_lofar', None, '0,512 s', 'pipeline iara (early stopping)'),
+    ('MLP', 'LOFAR'): ('MLP ≈ artigo | LOFAR', 'mlp_lofar', None, '0,512 s', 'pipeline iara (early stopping); arquitetura do artigo, mas paciência 16 em vez de 8 e, dropout 0,2 em vez de 0'),
     ('MLP', 'FUSÃO (MEL+DEMON)'): ('MLP [64,32] 35 ép. | FUSÃO', 'mlp_mel5s-demon_h64-32_e35_4c', 'mlp_mel5s-demon_h64-32_e35_3c', '5,12 s', 'eval_fusion_mel_demon_5x2cv.py (rede MAIOR)'),
     ('SVM Nyström', 'DEMON'): ('SVM m=6000 | DEMON', 'svm_nystroem_6000_demon_C2.0_elasticnet_l1r0.15_it1000_4c', 'svm_nystroem_6000_demon_C2.0_elasticnet_l1r0.15_it1000_3c', '5,12 s', 'eval_demon_svm_5x2cv.py'),
     ('SVM Nyström', 'MEL'): ('SVM m=4000 | MEL', 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0', None, '0,512 s', 'pipeline iara (m=4000, não 6000)'),
@@ -75,7 +75,7 @@ GRID = {
     ('Random Forest', 'LOFAR'): ('RF 100 árv. | LOFAR 5,12 s', 'rf_lofar5s_n100_balanced_4c', None, '5,12 s', 'generate_rf_predictions_and_analysis.py'),
     ('Random Forest', 'FUSÃO (MEL+DEMON)'): ('RF 100 árv. | FUSÃO', 'rf_mel5s-demon_n100_balanced_4c', 'rf_mel5s-demon_n100_balanced_3c', '5,12 s', 'eval_rf_fusion_5x2cv.py'),
     ('CNN 2D', 'DEMON'): ('CNN 2D ad hoc | DEMON', 'cnn2d_demon_w32_b32_e20_4c', 'cnn2d_demon_w32_b32_e20_3c', '5,12 s', 'eval_demon_baselines_5x2cv.py [COLAPSADA]'),
-    ('CNN 2D', 'MEL'): ('CNN oficial | MEL', 'cnn', None, '0,512 s', 'pipeline iara'),
+    ('CNN 2D', 'MEL'): ('CNN repo | MEL', 'cnn', None, '0,512 s', 'pipeline iara'),
     ('CNN 2D', 'LOFAR'): ('CNN 2D ad hoc | LOFAR 5,12 s', 'cnn2d_lofar5s_w32_b64_e15_4c', None, '5,12 s', 'generate_cnn_predictions_and_analysis.py [COLAPSADA]'),
     ('CNN 2D', 'FUSÃO (MEL+DEMON)'): ('CNN 2D ad hoc | FUSÃO', 'cnn2d_mel5s-demon_w32_b32_e25_4c', 'cnn2d_mel5s-demon_w32_b32_e25_3c', '5,12 s', 'eval_fusion_svm_cnn_5x2cv.py [COLAPSADA]'),
 }
@@ -110,7 +110,7 @@ LOCAL_OF_ARTICLE = {('RF', 'MEL'): ('Random Forest', 'MEL'), ('RF', 'LOFAR'): ('
 rast = []
 for (m, r), v in R.ARTICLE_TABLE7.items():
     if LOCAL_OF_ARTICLE[(m, r)] is None:
-        lbl, exp, grade = 'MLP oficial | MEL', 'mlp', '0,512 s'
+        lbl, exp, grade = 'MLP ≈ artigo | MEL', 'mlp', '0,512 s'
     else:
         lbl, exp, _, grade, _ = GRID[LOCAL_OF_ARTICLE[(m, r)]]
     s = R.summary(exp)
@@ -119,7 +119,7 @@ for (m, r), v in R.ARTICLE_TABLE7.items():
                  'Local Rec SMALL': round(s['R_SMALL'][0], 2), 'Experimento': exp})
 df_rast = pd.DataFrame(rast).set_index('Par')
 
-MLP_DEMON = [('25 ép. (NB7)', 'mlp_demon_h32-16_e25_4c'), ('30 ép., seed 42 (NBs 14–16, gate)', 'mlp_demon_h32-16_e30_4c'),
+MLP_DEMON = [('25 ép. (NB9)', 'mlp_demon_h32-16_e25_4c'), ('30 ép., seed 42 (NBs 16–18, gate)', 'mlp_demon_h32-16_e30_4c'),
              ('35 ép. (grade da fusão, este NB)', 'mlp_demon_h32-16_e35_4c')]
 tab_mlp_demon = R.table([(f'MLP [32,16] DEMON {l}', e) for l, e in MLP_DEMON], metrics=('SP', 'ACC', 'F1'))
 SP_FOLDS = {k: R.fold_metrics(GRID[k][1])['SP'].round(1).tolist() for k in KEYS}
@@ -215,17 +215,17 @@ for a, b in PAIRS:
                      'média B': round(S4[b][met][0], 2), 'F': round(f, 2), 'p': round(p, 4), 'p < 0,05': p < 0.05,
                      '_a': a, '_b': b})
 df_tests = pd.DataFrame(rows)
-# Extra: MLP oficial MEL (0,512 s) contra MLP MEL 5,12 s, para medir o efeito da grade temporal
+# Extra: MLP MEL ≈ artigo (0,512 s) contra MLP MEL 5,12 s, para medir o efeito da grade temporal
 f, p = R.f_test_5x2('mlp', 'mlp_mel5s_h32-16_e35_4c')
 grid_effect = {'F': f, 'p': p, 'oficial': R.summary('mlp')['SP'], 'mel5s': S4[('MLP', 'MEL')]['SP']}
 display(df_tests.drop(columns=['_a', '_b']))
-print(f"MLP MEL oficial (0,512 s) vs MLP MEL 5,12 s: F = {f:.2f}, p = {p:.4f}")
+print(f"MLP MEL ≈ artigo (0,512 s) vs MLP MEL 5,12 s: F = {f:.2f}, p = {p:.4f}")
 '''
 
 
 NOTEBOOKS_DIR = os.path.abspath(os.path.join(HERE, ".."))
 
-def build(filename=os.path.join(NOTEBOOKS_DIR, "8_comparacao_multimodal_mel_demon_lofar.ipynb")):
+def build(filename=os.path.join(NOTEBOOKS_DIR, "12_comparacao_multimodal_mel_demon_lofar.ipynb")):
     ns = {}
     exec(SETUP_CODE, ns)
     exec(TABLES_CODE, ns)
@@ -264,7 +264,7 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "8_comparacao_multimodal_mel_demo
     cells = []
     cells.append(md(r"""
 # Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
-### Notebook 8: Comparativo Multimodal Global — MEL, DEMON, LOFAR e FUSÃO (MEL + DEMON)
+### Notebook 12: Comparativo Multimodal Global — MEL, DEMON, LOFAR e FUSÃO (MEL + DEMON)
 #### Modelos Avaliados: Multi-Layer Perceptron (MLP), SVM Nyström, Random Forest e CNN 2D
 
 Este notebook avalia a interação entre **quatro representações acústicas** e **quatro famílias de aprendizado de máquina** sob o protocolo oficial de **$5\times2$ validação cruzada (10 folds)** com **particionamento por gravação de áudio (`ID`, `exclusive_header='ID'` em `src/iara/ml/experiment.py`)** sobre os **__NFILES__ áudios de UO** (*Silva et al.*, IEEE Access 2025, Seção V-D: *"samples from the same audio recording were not placed in different sets"*). O particionamento não isola navios: gravações diferentes do mesmo navio podem cair em treino e teste.
@@ -289,7 +289,7 @@ Este notebook avalia a interação entre **quatro representações acústicas** 
 1. **MLP (PyTorch):** camadas densas com `BatchNorm1d` e `Dropout`. **Atenção:** a MLP da FUSÃO usa `[64, 32]`; as MLP de MEL 5,12 s e DEMON usam `[32, 16]`.
 2. **SVM Nyström:** kernel RBF aproximado com penalização ElasticNet; $m=6000$ para DEMON, LOFAR e FUSÃO e **$m=4000$ para MEL** (o único SVM MEL oficial em disco).
 3. **Random Forest (100 árvores):** `class_weight='balanced'`.
-4. **CNN 2D:** CNN oficial do artigo para MEL; CNNs **ad hoc** (PyTorch) para DEMON, LOFAR 5,12 s e FUSÃO — estas três colapsaram e não devem ser usadas como baseline.
+4. **CNN 2D:** para MEL, a CNN do repositório (`test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo); CNNs **ad hoc** (PyTorch) para DEMON, LOFAR 5,12 s e FUSÃO — estas três colapsaram e não devem ser usadas como baseline.
 """))
     cells[0]["source"] = [x.replace("__NFILES__", br(n_files, 0)) for x in cells[0]["source"]]
     cells.append(code(SETUP_CODE))
@@ -300,7 +300,7 @@ Os 16 pares (Modelo × Representação), com o experimento em disco, a grade tem
 
 * O recall SMALL do `SVM m=6000 | LOFAR` é **{br(S4[k_sl]['R_SMALL'][0])}%** (uma versão anterior trazia 42,58%, provavelmente um valor 3C).
 * A linha SVM | MEL é o modelo **m=4000** (uma versão anterior a rotulava como m=6000).
-* **Três MLP DEMON [32,16]** distintos existem no projeto (tabela abaixo): 25 épocas ({pm(md_sp['25 ép. (NB7)'])}%, NB7), 30 épocas com seed 42 ({pm(md_sp['30 ép., seed 42 (NBs 14–16, gate)'])}%, NBs 14–16 e gate) e 35 épocas ({pm(md_sp['35 ép. (grade da fusão, este NB)'])}%, usada aqui por estar na mesma grade e no mesmo script da FUSÃO).
+* **Três MLP DEMON [32,16]** distintos existem no projeto (tabela abaixo): 25 épocas ({pm(md_sp['25 ép. (NB9)'])}%, NB9), 30 épocas com seed 42 ({pm(md_sp['30 ép., seed 42 (NBs 16–18, gate)'])}%, NBs 16–18 e gate) e 35 épocas ({pm(md_sp['35 ép. (grade da fusão, este NB)'])}%, usada aqui por estar na mesma grade e no mesmo script da FUSÃO).
 """))
     cells.append(code(TABLES_CODE + r'''
 print('4 classes (modelos 4c):'); display(df_master)
@@ -354,7 +354,7 @@ FUSÃO contra cada entrada isolada da mesma família (SP e recall SMALL por fold
 ## 6. Conclusões
 
 1. **{headline}**
-   * **MLP:** FUSÃO {pm(S4[k_mf]['SP'])}% × MLP LOFAR oficial {pm(S4[k_ml]['SP'])}% ({tm_l}: {eq(pm_l)}); a MLP LOFAR da Tabela 7 do artigo tem {pm(art_mlpl)}%. A comparação **favorece a FUSÃO**: a MLP da FUSÃO tem rede maior (`[64, 32]` contra `[32, 16]`) e outra grade temporal (5,12 s contra 0,512 s). Contra a MLP MEL 5,12 s `[32,16]` (mesma grade e script), {tm_m}: {eq(pm_m)}; contra a MLP DEMON, {tm_d}: {eq(pm_d)}.
+   * **MLP:** FUSÃO {pm(S4[k_mf]['SP'])}% × MLP LOFAR (≈ artigo) {pm(S4[k_ml]['SP'])}% ({tm_l}: {eq(pm_l)}); a MLP LOFAR da Tabela 7 do artigo tem {pm(art_mlpl)}%. A comparação **favorece a FUSÃO**: a MLP da FUSÃO tem rede maior (`[64, 32]` contra `[32, 16]`) e outra grade temporal (5,12 s contra 0,512 s). Contra a MLP MEL 5,12 s `[32,16]` (mesma grade e script), {tm_m}: {eq(pm_m)}; contra a MLP DEMON, {tm_d}: {eq(pm_d)}.
    * **SVM:** FUSÃO (m=6000) {pm(S4[k_sf]['SP'])}% × SVM LOFAR m=6000 {pm(S4[k_sl]['SP'])}% ({ts_l}: {eq(ps_l)}) e × SVM MEL m=4000 {pm(S4[k_sm]['SP'])}% ({ts_m}: {eq(ps_m)}).
    * **Random Forest:** FUSÃO {pm(S4[k_rf]['SP'])}% × RF LOFAR 5,12 s local {pm(S4[k_rl]['SP'])}% ({tr_l}: {eq(pr_l)}) e × RF MEL 5,12 s {pm(S4[k_rm]['SP'])}% ({tr_m}: {eq(pr_m)}). O RF LOFAR local tem SP média **{'maior' if S4[k_rl]['SP'][0] > S4[k_rf]['SP'][0] else 'menor'}** que a RF FUSÃO. (O RF LOFAR da Tabela 7 do artigo, {pm(art_rfl)}%, não é comparável: grade e hiperparâmetros diferentes.)
    * **Recall SMALL:** a FUSÃO eleva o recall de SMALL em relação ao LOFAR na RF ({br(S4[k_rf]['R_SMALL'][0])}% × {br(S4[k_rl]['R_SMALL'][0])}%; {trs_l}: {eq(prs_l)}); na MLP ({br(S4[k_mf]['R_SMALL'][0])}% × {br(S4[k_ml]['R_SMALL'][0])}%; {tms_l}: {eq(pms_l)}) e no SVM ({br(S4[k_sf]['R_SMALL'][0])}% × {br(S4[k_sl]['R_SMALL'][0])}%; {tss_l}: {eq(pss_l)}).
@@ -362,7 +362,7 @@ FUSÃO contra cada entrada isolada da mesma família (SP e recall SMALL por fold
 
 2. **A CNN 2D ad hoc colapsa na fusão:** SP {pm(S4[k_cf]['SP'])}% (folds: {', '.join(br(x, 1) for x in cnn_f_folds)}). A CNN ad hoc também colapsa em DEMON ({pm(S4[('CNN 2D', 'DEMON')]['SP'])}%) e em LOFAR 5,12 s ({pm(S4[('CNN 2D', 'LOFAR')]['SP'])}%, contra {pm(art_cnnl)}% da CNN LOFAR da Tabela 7 do artigo), então o colapso não pode ser atribuído à fusão. *Hipótese (não testada):* a fronteira artificial entre os 256 canais MEL e os 253 canais DEMON não tem continuidade física para convoluções 2D.
 
-3. **MLP FUSÃO:** tem a maior SP média local ({pm(S4[k_mf]['SP'])}%, recall SMALL {br(S4[k_mf]['R_SMALL'][0])}%, {br(cm_m.loc['SMALL', 'MEDIUM'], 1)}% dos SMALL indo para MEDIUM na matriz acumulada), mas **sem diferença estatística** para a MLP LOFAR oficial. O efeito da grade temporal também precisa ser considerado: MLP MEL oficial (0,512 s) {pm(ge['oficial'])}% × MLP MEL 5,12 s {pm(ge['mel5s'])}% (F = {br(ge['F'])}, {pv(ge['p'])}).
+3. **MLP FUSÃO:** tem a maior SP média local ({pm(S4[k_mf]['SP'])}%, recall SMALL {br(S4[k_mf]['R_SMALL'][0])}%, {br(cm_m.loc['SMALL', 'MEDIUM'], 1)}% dos SMALL indo para MEDIUM na matriz acumulada), mas **sem diferença estatística** para a MLP LOFAR (≈ artigo). O efeito da grade temporal também precisa ser considerado: MLP MEL ≈ artigo (0,512 s) {pm(ge['oficial'])}% × MLP MEL 5,12 s {pm(ge['mel5s'])}% (F = {br(ge['F'])}, {pv(ge['p'])}).
 """))
 
     notebook = {

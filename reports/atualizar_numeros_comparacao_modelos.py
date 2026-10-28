@@ -19,7 +19,7 @@ import numpy as np
 import pandas as pd
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-sys.path.insert(0, os.path.join(ROOT, "notebooks"))
+sys.path.insert(0, os.path.join(ROOT, "notebooks", "src"))
 os.chdir(ROOT)
 import iara_results as R  # noqa: E402
 
@@ -169,7 +169,7 @@ DEMON = {"SVM m=1000": "svm_nystroem_1000_demon_C2.0_elasticnet_l1r0.15_it1000",
          "RF": "rf_demon_n100_balanced", "MLP": "mlp_demon_h32-16_e25", "CNN": "cnn2d_demon_w32_b32_e20"}
 HHT = {"RF": "rf_hht_n100_balanced", "MLP": "mlp_hht_h32-16_e30_noseed",
        "SVM": "svm_nystroem_6000_hht_C2.0_elasticnet_l1r0.15", "CNN": "cnn2d_hht_w32_b32_e25"}
-# Grade da fusão (mesma do NB8): (exp 4c, exp 3c retreinado ou None, observação)
+# Grade da fusão (mesma do NB12): (exp 4c, exp 3c retreinado ou None, observação)
 GRID = {
     ("MLP", "DEMON"): ("mlp_demon_h32-16_e35_4c", "mlp_demon_h32-16_e35_3c", "[32,16], 35 ép., 5,12 s"),
     ("MLP", "MEL"): ("mlp_mel5s_h32-16_e35_4c", "mlp_mel5s_h32-16_e35_3c", "[32,16], 35 ép., MEL 5,12 s"),
@@ -371,7 +371,7 @@ use("gap SVM MEL local - DEMON", gap_mel)
 best_demon = max(fam4, key=lambda k: dm[k]["SP"][0])
 
 # ==============================================================================================
-# Seção 5.7 / 10 — Fusão MEL + DEMON (grade do NB8)
+# Seção 5.7 / 10 — Fusão MEL + DEMON (grade do NB12)
 # ==============================================================================================
 G4 = {k: {m: S(v[0], m) for m in ("SP", "ACC", "R_SMALL", "R_LARGE", "R_BACKGROUND")} for k, v in GRID.items()}
 G3 = {k: {m: S(v[1], m, mode="3c") for m in ("SP", "ACC", "R_SMALL", "R_LARGE")} for k, v in GRID.items() if v[1]}
@@ -501,7 +501,7 @@ assert VZ_NEW[0] == 0
 
 
 def cascata_arquivo_historica():
-    """Mesma reconstrução do NB6 (cascata por arquivo com o especialista SL de jun/2026, vazado)."""
+    """Mesma reconstrução do NB5 (cascata por arquivo com o especialista SL de jun/2026, vazado)."""
     sl = {s: votos_sl(SL_DIR_OLD, s) for s in ("trn", "val", "test")}
     rows = []
     for k, df in files(SVM_LOFAR_6000).items():
@@ -740,7 +740,7 @@ O DEMON (253 bins de 0,39 a 25 Hz, um vetor a cada 5,12 s) foi avaliado nos 10 f
 * **MLP [32,16] (25 ép.):** SP {F(dem['MLP']['SP'])}%, ACC {F(dem['MLP']['ACC'])}%. Contra o SVM m=6000 (SP {F(dem['SVM m=6000']['SP'])}): {P(p_mlp_vs_svm_demon)}, {sig(p_mlp_vs_svm_demon)}; contra o RF (SP {F(dem['RF']['SP'])}): {P(p_mlp_vs_rf_demon)}, {sig(p_mlp_vs_rf_demon)}. Recall de BACKGROUND {dem['MLP']['R_BACKGROUND'][0]:.2f}%; fração de SMALL predita como LARGE: {sm_to_l_svm[0]:.1f}% no SVM m=6000 e {sm_to_l_mlp[0]:.1f}% no MLP.{f" Com o modelo retreinado em 3 classes (`{D3['MLP']}`), SP {F(mlp3['SP'])}% (SMALL {mlp3['R_SMALL'][0]:.1f}%, MEDIUM {mlp3['R_MEDIUM'][0]:.1f}%, LARGE {mlp3['R_LARGE'][0]:.1f}%)." if mlp3 else ""}
 * **Random Forest:** SP {F(dem['RF']['SP'])}%; recall de SMALL {dem['RF']['R_SMALL'][0]:.2f}% (4 classes){f" e {dm3['RF']['R_SMALL'][0]:.2f}% (3 classes, retreinado)" if 'RF' in dm3 else ""}; {bg_to_s_rf[0]:.1f}% dos arquivos de BACKGROUND são preditos SMALL e o recall de BACKGROUND é {dem['RF']['R_BACKGROUND'][0]:.2f}%.
 * **CNN 2D ad hoc:** SP {F(dem['CNN']['SP'])}% — **colapsada** (desvio alto, folds com classe zerada). O resultado indica falha de treino dessa CNN ad hoc; não permite concluir que "convoluções espaciais são inadequadas" para o DEMON.
-* **Comparação com MEL/LOFAR:** o DEMON isolado fica abaixo do MLP LOFAR do artigo ({a_mlpl['SP'][0]:.2f}%) em {diffs_txt} p.p. e abaixo do SVM MEL local ({s_mel_sp[0]:.2f}%) em {diffs_mel_txt} p.p. Isso indica que o DEMON sozinho é uma representação mais fraca nestes modelos; não "comprova" um teto teórico. Detalhes no Notebook 5, em `reports/decisao_metodo_demon.md` e em `reports/comparacao_modelos_demon.md`.
+* **Comparação com MEL/LOFAR:** o DEMON isolado fica abaixo do MLP LOFAR do artigo ({a_mlpl['SP'][0]:.2f}%) em {diffs_txt} p.p. e abaixo do SVM MEL local ({s_mel_sp[0]:.2f}%) em {diffs_mel_txt} p.p. Isso indica que o DEMON sozinho é uma representação mais fraca nestes modelos; não "comprova" um teto teórico. Detalhes no Notebook 8, em `reports/decisao_metodo_demon.md` e em `reports/comparacao_modelos_demon.md`.
 
 ### 5.7 Fusão Multimodal Direta (MEL + DEMON)
 A combinação do MEL (256 filtros, cache de 5,12 s) com o DEMON (253 bins) foi testada no protocolo $5\\times2$cv (particionamento por gravação, {N_FILES_UO} áudios):
@@ -827,7 +827,7 @@ Sistema em dois estágios:
 
 ## 10. Fusão Multimodal Direta (MEL + DEMON) entre Famílias de Modelos
 
-Avaliou-se o espaço de **509 dimensões** (256 Mel + 253 DEMON, janelas de 5,12 s sincronizadas) nas famílias do benchmark, sob o protocolo $5\\times2$cv com particionamento por gravação (`exclusive_header='ID'`), mesma grade do Notebook 8.
+Avaliou-se o espaço de **509 dimensões** (256 Mel + 253 DEMON, janelas de 5,12 s sincronizadas) nas famílias do benchmark, sob o protocolo $5\\times2$cv com particionamento por gravação (`exclusive_header='ID'`), mesma grade do Notebook 12.
 
 ### Tabela 5: Classificadores na Fusão Multimodal (5x2cv)
 

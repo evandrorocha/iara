@@ -1,5 +1,5 @@
 """
-Gera notebooks/23_avaliacao_multiclasse_bigru.ipynb: avaliação do BiGRU com Atenção Temporal
+Gera notebooks/25_avaliacao_multiclasse_bigru.ipynb: avaliação do BiGRU com Atenção Temporal
 (MEL, LOFAR, DEMON, HHT e fusões) em 4 e 3 classes sob o 5x2cv oficial.
 
 Todos os números vêm das predições gravadas em disco, via notebooks/iara_results.py:
@@ -36,9 +36,9 @@ BIGRU = [  # (rótulo curto, rótulo, tag do experimento sem o sufixo _4c/_3c, d
     ("LOF+HHT", "FUSÃO LOFAR + HHT", "bigru_att_lofar5s-hht_h128_s15-5_e15", 1280),
 ]
 BASELINES = [
-    ("MLP LOFAR (re-execução local)", "mlp_lofar"),
-    ("MLP MEL (re-execução local)", "mlp"),
-    ("CNN MEL (re-execução local)", "cnn"),
+    ("MLP LOFAR (≈ artigo)", "mlp_lofar"),
+    ("MLP MEL (≈ artigo)", "mlp"),
+    ("CNN MEL (repo, ≠ artigo)", "cnn"),
     ("SVM Nyström m=4000 MEL", "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0"),
     ("SVM Nyström m=6000 LOFAR", "svm_nystroem_6000_lofar_elasticnet_l1r0.15"),
 ]
@@ -118,8 +118,8 @@ NSEQ_MIN, NSEQ_MAX, NSEQ_MEAN = int(_nw.min()), int(_nw.max()), _nw.mean()
 
 lab_lofar, lab_mel, lab_ld = "LOFAR (lofar5s)", "MEL (mel5s)", "FUSÃO LOFAR + DEMON"
 neural_small = {**{f"BiGRU {lab} (4c)": S4[lab]["R_SMALL"][0] for lab in S4},
-                "MLP LOFAR (local)": SB["mlp_lofar"]["R_SMALL"][0], "MLP MEL (local)": SB["mlp"]["R_SMALL"][0],
-                "CNN MEL (local)": SB["cnn"]["R_SMALL"][0], "CRNN 2D LOFAR (local)": SCRNN["R_SMALL"][0]}
+                "MLP LOFAR (≈ artigo)": SB["mlp_lofar"]["R_SMALL"][0], "MLP MEL (≈ artigo)": SB["mlp"]["R_SMALL"][0],
+                "CNN MEL (repo, ≠ artigo)": SB["cnn"]["R_SMALL"][0], "CRNN 2D LOFAR (local)": SCRNN["R_SMALL"][0]}
 CRNN_SUMMARY_SP = pd.read_csv(os.path.join(R.ROOT, 'results', 'trainings', 'tests', CRNN, 'metrics_summary.csv')).set_index('metric').loc['sp', 'mean']
 best_small_name = max(neural_small, key=neural_small.get)
 
@@ -146,11 +146,11 @@ def code(text):
             "source": [l + "\n" for l in lines[:-1]] + [lines[-1]]}
 
 
-def create_bigru_notebook(filename="notebooks/23_avaliacao_multiclasse_bigru.ipynb"):
+def create_bigru_notebook(filename="notebooks/25_avaliacao_multiclasse_bigru.ipynb"):
     cells = []
     cells.append(md(f"""
 # Estudo de Redes Neurais Recorrentes — Dataset IARA
-### Notebook 23: Avaliação Completa do BiGRU com Atenção Temporal (MEL, LOFAR, DEMON, HHT e Fusões Multimodais)
+### Notebook 25: Avaliação Completa do BiGRU com Atenção Temporal (MEL, LOFAR, DEMON, HHT e Fusões Multimodais)
 
 Neste notebook, investigamos a arquitetura **Bidirectional Gated Recurrent Unit (BiGRU) com Mecanismo de Atenção Temporal** no problema de classificação acústica submarina passiva (*Underwater Acoustic Target Recognition* - UATR) sobre o dataset **IARA** (*Silva et al.*, IEEE Access 2025).
 
@@ -182,6 +182,8 @@ except ImportError:
 
 sys.path.insert(0, os.path.abspath('.'))
 sys.path.insert(0, os.path.abspath('notebooks'))
+sys.path.insert(0, os.path.abspath('src'))  # módulos movidos para notebooks/src
+sys.path.insert(0, os.path.abspath('notebooks/src'))
 import iara_results as R
 
 plt.style.use('seaborn-v0_8-whitegrid' if 'seaborn-v0_8-whitegrid' in plt.style.available else 'default')

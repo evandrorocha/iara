@@ -1,5 +1,5 @@
 """
-Código comum aos geradores dos notebooks 17, 18 e 19 (complementaridade MEL/LOFAR/HHT/DEMON no Random Forest).
+Código comum aos geradores dos notebooks 19, 20 e 21 (complementaridade MEL/LOFAR/HHT/DEMON no Random Forest).
 
 * HELPER_SRC é o código de análise. Ele é inserido como célula nos notebooks e executado aqui (exec) para
   calcular os números citados no markdown. Assim, texto e células usam exatamente o mesmo cálculo.
@@ -31,12 +31,12 @@ FAMILIAS = {
     # class_weight='balanced'. MEL e LOFAR usam caches com média em 5,12 s (mel5s/lofar5s).
     'RF': {'MEL': 'rf_mel5s_n100_balanced_4c', 'LOFAR': 'rf_lofar5s_n100_balanced_4c',
            'HHT': 'rf_hht_n100_balanced_4c', 'DEMON': 'rf_demon_n100_balanced_4c'},
-    # SVM Nyström (Notebooks 10/12/13; scratch/save_svm_all_representations.py)
+    # SVM Nyström (Notebooks 13/12/13; scratch/save_svm_all_representations.py)
     'SVM': {'MEL': 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0',
             'LOFAR': 'svm_nystroem_6000_lofar_elasticnet_l1r0.15',
             'HHT': 'svm_nystroem_4000_hht_C2.0_elasticnet_l1r0.15_4c',
             'DEMON': 'svm_nystroem_4000_demon_C2.0_elasticnet_l1r0.15_4c'},
-    # MLP (Notebooks 14/15/16; scratch/generate_mlp_predictions_and_analysis.py)
+    # MLP (Notebooks 16/15/16; scratch/generate_mlp_predictions_and_analysis.py)
     'MLP': {'MEL': 'mlp', 'LOFAR': 'mlp_lofar',
             'HHT': 'mlp_hht_h32-16_e30_4c', 'DEMON': 'mlp_demon_h32-16_e30_4c'},
 }
@@ -268,7 +268,7 @@ def write_notebook(cells, filename):
 
 
 # --------------------------------------------------------------------------------------------------------------
-# Construção comum dos notebooks 17-19
+# Construção comum dos notebooks 19-21
 # --------------------------------------------------------------------------------------------------------------
 NB_OUTRAS = {"SMALL": (10, 14), "MEDIUM": (12, 15), "LARGE": (13, 16)}
 

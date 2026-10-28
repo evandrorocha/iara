@@ -1,0 +1,26 @@
+{
+  "ultima_edicao_extract_all_hht": "2026-10-15T04:55:56",
+  "primeiro_pkl_antigo": "2026-10-15T03:57:29",
+  "ultimo_pkl_antigo": "2026-10-15T05:02:15",
+  "reextracao": {
+    "n_imfs": 8,
+    "MAX_ITERATION": 30,
+    "script": "scratch/extract_all_hht.py",
+    "data": "2026-10-23T16:18:51"
+  },
+  "amostra_reproducao": {
+    "por_grupo": 8,
+    "janelas": [
+      0,
+      3,
+      10,
+      30
+    ],
+    "iteracoes": [
+      30,
+      100,
+      1000
+    ],
+    "semente": 0
+  }
+}

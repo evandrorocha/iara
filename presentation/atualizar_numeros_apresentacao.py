@@ -116,7 +116,7 @@ CASC_JAN = PFX + "lofarmc6000_nosm_elasticnet_l1r0.15"          # "Cascata LOFAR
 CASC_JAN_SMONLY = PFX + "lofarmc6000_smonly_elasticnet_l1r0.15"
 CASC_JAN_HYB = PFX + "hybmc4000C2.0_elasticnet_l1r0.15"
 CASC_JAN_HYB_SLRO = PFX + "hybmc4000C2.0_slro_elasticnet_l1r0.15"
-CASC_ARQ = "cascade_file_lofarmc6000_sl6000pca8_4c"               # cascata por arquivo (NB6, seção 5.1)
+CASC_ARQ = "cascade_file_lofarmc6000_sl6000pca8_4c"               # cascata por arquivo (NB5, seção 5.1)
 SL = "svm_nystroem_6000_hybrid_binary_small_large_pca8_elasticnet_l1r0.15"
 
 # =============================================================================================

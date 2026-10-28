@@ -1,5 +1,5 @@
 """
-Script de geração do notebook 15: notebooks/15_analise_complementaridade_mlp_medium.ipynb
+Script de geração do notebook 17: notebooks/17_analise_complementaridade_mlp_medium.ipynb
 Análise de complementaridade (oráculo, consenso e resgates exclusivos) do MLP [32, 16] para a classe MEDIUM
 (Dataset IARA), com MEL, LOFAR, HHT e DEMON.
 
@@ -13,7 +13,7 @@ import sys
 import json
 
 CLASS = 1
-FILENAME = "notebooks/15_analise_complementaridade_mlp_medium.ipynb"
+FILENAME = "notebooks/17_analise_complementaridade_mlp_medium.ipynb"
 
 # Código de análise compartilhado entre a geração e o notebook (executado nos dois lugares).
 HELPER = r'''# Funções de análise de complementaridade, calculadas a partir das predições em disco (iara_results).
@@ -32,7 +32,7 @@ REPS = ['MEL', 'LOFAR', 'HHT', 'DEMON']
 #               HHT/DEMON = scratch/generate_mlp_predictions_and_analysis.py (30 épocas, seed 42, sem validação)
 MLP_EXPS = {'MEL': 'mlp', 'LOFAR': 'mlp_lofar',
             'HHT': 'mlp_hht_h32-16_e30_4c', 'DEMON': 'mlp_demon_h32-16_e30_4c'}
-# SVM Nyström declarado nos NBs 10/12/13 (m=4000 para MEL/HHT/DEMON, m=6000 para LOFAR)
+# SVM Nyström declarado nos NBs 13/12/13 (m=4000 para MEL/HHT/DEMON, m=6000 para LOFAR)
 SVM_EXPS = {'MEL': 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0',
             'LOFAR': 'svm_nystroem_6000_lofar_elasticnet_l1r0.15',
             'HHT': 'svm_nystroem_4000_hht_C2.0_elasticnet_l1r0.15_4c',
@@ -361,7 +361,7 @@ print('Experimentos MLP:', MLP_EXPS)
 """))
 
     art_txt = (f"Para referência, a Tabela 7 do artigo (Silva et al., IEEE Access 2025) reporta SP {MS(art['MEL'])} "
-               f"(MLP MEL) e {MS(art['LOFAR'])} (MLP LOFAR); os resultados locais do pipeline oficial são "
+               f"(MLP MEL) e {MS(art['LOFAR'])} (MLP LOFAR); os MLPs locais do pipeline `iara` (arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0) dão "
                f"{sp_m('MEL')} e {sp_m('LOFAR')}.")
     cells.append(md(f"""
 ## 2. Metodologia Experimental e Base de Dados de Teste

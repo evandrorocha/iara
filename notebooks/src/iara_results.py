@@ -75,6 +75,11 @@ ARTICLE_TABLE7 = {
 
 
 def exp_dir(name):
+    # 'pasta/<exp>' = caminho relativo a results/trainings (ex.: backups como _backup_hht_iter_misto_20261015/<exp>)
+    if "/" in name:
+        d = os.path.join(ROOT, "results", "trainings", *name.split("/"))
+        if os.path.isdir(os.path.join(d, "eval")):
+            return d
     for base in SEARCH_DIRS:
         d = os.path.join(base, name)
         if os.path.isdir(os.path.join(d, "eval")):
@@ -88,7 +93,7 @@ def file_predictions(name, subset="test"):
     d = exp_dir(name)
     out = {}
     for k in range(10):
-        path = os.path.join(d, "eval", f"fold_{k}", f"{name}_multiclass_{subset}.csv")
+        path = os.path.join(d, "eval", f"fold_{k}", f"{name.split('/')[-1]}_multiclass_{subset}.csv")
         if not os.path.exists(path):
             raise FileNotFoundError(f"{name}: falta o fold {k} ({path})")
         df = pd.read_csv(path, usecols=["File", "Target", "Prediction"])

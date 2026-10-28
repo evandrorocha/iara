@@ -1,5 +1,5 @@
 """
-Script de geração do notebook 24: notebooks/24_sistema_gating_frontend.ipynb
+Script de geração do notebook 26: notebooks/26_sistema_gating_frontend.ipynb
 Sistema de Gating Front-End (roteamento de entradas por meta-features físicas) sob o protocolo 5x2cv.
 
 Fontes (nenhum número do markdown é digitado; todos são calculados aqui, na geração):
@@ -92,7 +92,7 @@ def compute():
             "sup": sup, "grid": grid, "best_single": best_single, "mlp_lofar": mlp_lofar}
 
 
-def create_gating_notebook(filename="notebooks/24_sistema_gating_frontend.ipynb"):
+def create_gating_notebook(filename="notebooks/26_sistema_gating_frontend.ipynb"):
     X = compute()
     c, fam, grid, sup = X["c"], X["fam"], X["grid"], X["sup"]
     bs_f, bs_r = X["best_single"]
@@ -130,7 +130,7 @@ def create_gating_notebook(filename="notebooks/24_sistema_gating_frontend.ipynb"
     cells = []
     cells.append(md(f"""
 # Sistema de Gating Front-End (Roteamento Dinâmico de Entradas) – Dataset IARA
-### Notebook 24: Arquitetura Multimodal Agnóstica ao Modelo Classificador com Suporte a 4 Representações
+### Notebook 26: Arquitetura Multimodal Agnóstica ao Modelo Classificador com Suporte a 4 Representações
 
 Neste notebook, investigamos a arquitetura de **Gating Front-End (Multiplexador Dinâmico de Entradas)** no problema de reconhecimento de alvos acústicos submarinos passivos (*Underwater Acoustic Target Recognition* - UATR) sobre o dataset **IARA** (*Silva et al.*, IEEE Access 2025).
 
@@ -158,6 +158,8 @@ except ImportError:
     display = print
 
 sys.path.insert(0, os.getcwd())
+sys.path.insert(0, os.path.abspath('src'))  # módulos movidos para notebooks/src
+sys.path.insert(0, os.path.abspath('notebooks/src'))
 import iara_results as R   # métricas dos experimentos isolados a partir dos CSVs por janela
 import gating_comum as G   # réplica do roteador (SP por fold), oráculos e F-test
 

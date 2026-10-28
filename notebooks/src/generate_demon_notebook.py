@@ -1,5 +1,5 @@
 """
-Gera notebooks/5_analise_demon.ipynb (análise do extrator DEMON).
+Gera notebooks/8_analise_demon.ipynb (análise do extrator DEMON).
 
 Todos os números do notebook (tabelas, matrizes de confusão, picos espectrais e valores citados no markdown)
 são calculados a partir dos dados em disco:
@@ -242,7 +242,7 @@ display(df_tests)
 
 NOTEBOOKS_DIR = os.path.abspath(os.path.join(HERE, ".."))
 
-def build(filename=os.path.join(NOTEBOOKS_DIR, "5_analise_demon.ipynb")):
+def build(filename=os.path.join(NOTEBOOKS_DIR, "8_analise_demon.ipynb")):
     import iara_results as R  # noqa: F401  (usado pelos blocos executados)
     ns = {}
     os.environ.setdefault("MPLBACKEND", "Agg")
@@ -312,7 +312,7 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "5_analise_demon.ipynb")):
     cells = []
     cells.append(md(r"""
 # Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
-### Notebook 5: Investigação da Técnica DEMON (Demodulation of Envelope Modulation on Noise)
+### Notebook 8: Investigação da Técnica DEMON (Demodulation of Envelope Modulation on Noise)
 
 Neste notebook, investigamos o comportamento do método **DEMON** aplicado a sinais de áudio de sonar passivo na Bacia de Santos (acervo UO do IARA). Avaliamos:
 1. **Fundamentação Física e Matemática:** Extração da taxa de rotação de eixos e frequências de passagem de pás de hélice via demodulação de banda alta.
@@ -415,7 +415,7 @@ Matrizes **acumuladas** nas 10 dobras (n = {br(N_EVAL, 0).replace(',', '.')} ins
 
 ### 5.3 Diretriz para a Etapa B
 * O DEMON **não** deve ser usado isoladamente.
-* Pode ser testado na **Fusão Híbrida** (MEL + DEMON, Notebook 8) e como entrada de um **especialista em cascata** entre embarcações. Qualquer ganho dessas arquiteturas precisa ser demonstrado com o F-test 5x2cv contra o melhor baseline.
+* Pode ser testado na **Fusão Híbrida** (MEL + DEMON, Notebook 12) e como entrada de um **especialista em cascata** entre embarcações. Qualquer ganho dessas arquiteturas precisa ser demonstrado com o F-test 5x2cv contra o melhor baseline.
 """))
 
     notebook = {
