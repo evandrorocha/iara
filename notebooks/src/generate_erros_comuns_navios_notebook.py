@@ -70,7 +70,7 @@ CLS = dict(enumerate(R.CLASSES))
 MODELOS = {
     'RF MEL': 'rf_mel5s_n100_balanced_4c', 'RF LOFAR': 'rf_lofar5s_n100_balanced_4c', 'RF HHT': 'rf_hht_n100_balanced_4c',
     'SVM MEL': 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0', 'SVM LOFAR': 'svm_nystroem_6000_lofar_elasticnet_l1r0.15',
-    'MLP MEL': 'mlp', 'MLP LOFAR': 'mlp_lofar', 'CNN MEL (repo)': 'cnn',
+    'MLP MEL': 'mlp', 'MLP LOFAR': 'mlp_lofar', 'CNN MEL (artigo)': 'cnn_mel_artigo',
     'CNN HHT 1D': 'speccnn_hht_ctx0_e60p8_4c', 'CNN HHT 2D': 'hht_2d_cnn_e40p7_4c',
 }
 NM = len(MODELOS)
@@ -360,7 +360,7 @@ Todas as tabelas são calculadas na execução a partir das predições por jane
         md("""
 ## 1. Os dez modelos
 
-Todos de 4 classes, avaliados nos 10 folds oficiais (split por `ID`). MLP MEL, MLP LOFAR, CNN MEL (repo: `test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo) e os SVM MEL/LOFAR são do pipeline `iara` (features de 0,512 s); os RF usam caches com média em 5 s (`mel5s`/`lofar5s`); os modelos HHT usam o HHT re-extraído (Notebook 28). A CNN LOFAR disponível (`cnn2d_lofar5s_w32_b64_e15_4c`, SP ~35) colapsou e ficou de fora: concordar pouco com um modelo que colapsou não é complementaridade.
+Todos de 4 classes, avaliados nos 10 folds oficiais (split por `ID`). MLP MEL, MLP LOFAR, CNN MEL (do artigo: `test_scripts/cnn_mel_artigo.py`) e os SVM MEL/LOFAR são do pipeline `iara` (features de 0,512 s); os RF usam caches com média em 5 s (`mel5s`/`lofar5s`); os modelos HHT usam o HHT re-extraído (Notebook 28). A CNN LOFAR disponível (`cnn2d_lofar5s_w32_b64_e15_4c`, SP ~35) colapsou e ficou de fora: concordar pouco com um modelo que colapsou não é complementaridade.
 """), code(DESEMP_CODE),
         md(f"""
 ## 2. Concordância por gravação

@@ -1,0 +1,3 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{Panorama: Modelos e Representações Implementados}{3}{0}{1}
+\beamer@sectionintoc {2}{Próximos Passos}{8}{0}{2}

@@ -85,7 +85,8 @@ OUTROS = {
     'MLP MEL': ('mlp', 'próximo: arquitetura do artigo, paciência 16 (grid: 8)'),
     'RF LOFAR': ('rf_lofar5s_n100_balanced_4c', 'não: janelas de 5 s, 100 árvores, balanceado'),
     'RF MEL': ('rf_mel5s_n100_balanced_4c', 'não: janelas de 5 s, 100 árvores, balanceado'),
-    'CNN MEL': ('cnn', 'não: test_scripts/cnn.py (128/64, lr 1e-5, sem sobreposição)'),
+    'CNN MEL': ('cnn_mel_artigo', 'sim: test_scripts/cnn_mel_artigo.py (configuração do grid search do artigo)'),
+    'CNN MEL (repo)': ('cnn', 'não: test_scripts/cnn.py (128/64, lr 1e-5, sem sobreposição)'),
     'SVM MEL': ('svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0', 'não está no artigo'),
     'SVM LOFAR': ('svm_nystroem_6000_lofar_elasticnet_l1r0.15', 'não está no artigo'),
     'BiGRU MEL': ('bigru_att_mel5s_h64_s15-5_e20_4c', 'não está no artigo'),
@@ -328,7 +329,7 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "34_cnn_lofar_artigo_erros.ipynb"
         b = nv.loc[False, "acerto (%)"] if False in nv.index else float("nan")
         return a, b
     sv, snv = vis(nvS); mv, mnv = vis(nvM)
-    same = FT[FT["igual ao artigo?"].str.startswith("próximo")]
+    same = FT[FT["igual ao artigo?"].str.startswith(("sim", "próximo"))]
     qmax = QO['Q dos erros (todas)'].idxmax()
     sig_nosso = [m for m in FT.index if FT.loc[m, "p (nosso)"] < 0.05]
     nb32 = ES["nb32"]
@@ -368,13 +369,13 @@ Predição por gravação = voto majoritário das janelas (como no artigo); toda
         md("""
 ## 1. Reprodução da Tabela 7 e comparação com os outros modelos
 
-O F-test 5×2cv (Alpaydin, 1999) compara o SP fold a fold, como na Tabela 8 do artigo. A coluna **igual ao artigo?** indica o quanto o modelo do repositório se aproxima do artigo; nenhum é idêntico, e quanto mais diferente, menos o p é comparável ao da Tabela 8.
+O F-test 5×2cv (Alpaydin, 1999) compara o SP fold a fold, como na Tabela 8 do artigo. A coluna **igual ao artigo?** indica o quanto o modelo do repositório se aproxima do artigo; só a CNN MEL usa a configuração do artigo, e quanto mais diferente o modelo, menos o p é comparável ao da Tabela 8. A CNN MEL antiga do repositório (`cnn`) aparece só como referência.
 """), code(REPRO_CODE),
         md(f"""
 **Leitura.**
 - **A CNN LOFAR do artigo foi reproduzida:** SP {br(S['SP'][0])} ± {br(S['SP'][1])} contra {br(ART['CNN LOFAR']['SP'][0])} ± {br(ART['CNN LOFAR']['SP'][1])} (Δ {sg(REPRO.loc['SP', 'Δ'])}, {br(abs(REPRO.loc['SP', 'Δ / desvio do artigo']), 2)} desvio do artigo). O SP por fold vai de {br(rmin)} a {br(rmax)}.
-- **Contra os modelos mais próximos dos do artigo (os MLPs), as conclusões se repetem:** """ + "; ".join(f"{m}: p = {br(same.loc[m, 'p (nosso)'], 2)} (artigo {br(same.loc[m, 'p (artigo, Tab. 8)'], 2)}; SP {br(same.loc[m, 'SP nosso (média)'])} contra {br(ART[m]['SP'][0])} no artigo)" for m in same.index) + f""" — a CNN LOFAR não é significativamente melhor que os MLPs.
-- **Onde os modelos diferem**, os p também diferem: o nosso RF LOFAR é mais forte que o do artigo ({br(FT.loc['RF LOFAR', 'SP nosso (média)'])} contra {br(ART['RF LOFAR']['SP'][0])}), e a nossa CNN MEL não tem a arquitetura do artigo (a CNN MEL do artigo está sendo treinada em `test_scripts/cnn_mel_artigo.py`).
+- **Contra os modelos iguais ou mais próximos dos do artigo (CNN MEL e MLPs), as conclusões se repetem:** """ + "; ".join(f"{m}: p = {br(same.loc[m, 'p (nosso)'], 2)} (artigo {br(same.loc[m, 'p (artigo, Tab. 8)'], 2)}; SP {br(same.loc[m, 'SP nosso (média)'])} contra {br(ART[m]['SP'][0])} no artigo)" for m in same.index) + f""" — a CNN LOFAR não é significativamente melhor que eles.
+- **Onde os modelos diferem**, os p também diferem: o nosso RF LOFAR é mais forte que o do artigo ({br(FT.loc['RF LOFAR', 'SP nosso (média)'])} contra {br(ART['RF LOFAR']['SP'][0])}). A CNN MEL do artigo (`test_scripts/cnn_mel_artigo.py`) dá SP {br(FT.loc['CNN MEL', 'SP nosso (média)'])} contra {br(ART['CNN MEL']['SP'][0])} no artigo; a CNN MEL antiga do repositório, de outra arquitetura, dá {br(FT.loc['CNN MEL (repo)', 'SP nosso (média)'])}.
 - Com p < 0,05 no nosso F-test: {', '.join(f'{m} ({pv(FT.loc[m, "p (nosso)"])})' for m in sig_nosso) if sig_nosso else 'nenhum'}.
 """),
         md("""
@@ -436,7 +437,7 @@ Concordância das janelas (fração que vota na classe vencedora) e margem (dife
 ## 7. Conclusões
 
 1. **A CNN LOFAR do artigo foi reproduzida:** SP {br(S['SP'][0])} ± {br(S['SP'][1])}, contra {br(ART['CNN LOFAR']['SP'][0])} ± {br(ART['CNN LOFAR']['SP'][1])} no artigo. A configuração importa: a versão inicial (sem sobreposição, paciência 16) dava 62,8 no fold 0, contra 68,5 da versão do artigo.
-2. **Contra os MLPs (os modelos mais próximos dos do artigo), a Tabela 8 se repete:** a CNN LOFAR não é significativamente melhor que eles.
+2. **Contra a CNN MEL e os MLPs (os modelos iguais ou mais próximos dos do artigo), a Tabela 8 se repete:** a CNN LOFAR não é significativamente melhor que eles.
 3. **Ter o navio no treino pesa:** {sg(sv - snv, 1)} pontos de acerto no SMALL e {sg(mv - mnv, 1)} no MEDIUM (o split por gravação do artigo põe o mesmo navio em treino e teste).
 4. **O SMALL continua sendo o problema** ({br(CM.loc['SMALL', 'SMALL'], 1)}% de recall), com erros divididos entre MEDIUM e LARGE; o **MEDIUM** se confunde sobretudo com SMALL.
 5. **Os erros da CNN seguem o mesmo padrão dos outros modelos:** gravações na fronteira que oscilam entre folds, erros convictos, espectro grave nas gravações SMALL que ela sempre erra, e o núcleo do NB32 continua sem solução. O melhor modelo do artigo não tem acesso a uma informação que os outros não tenham.

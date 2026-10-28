@@ -81,7 +81,7 @@ FAM = {
     'MLP': {'MEL': 'mlp', 'LOFAR': 'mlp_lofar', 'HHT': 'mlp_hht_h32-16_e30_4c', 'DEMON': 'mlp_demon_h32-16_e30_4c'},
     'BiGRU': {'MEL': 'bigru_att_mel5s_h64_s15-5_e20_4c', 'LOFAR': 'bigru_att_lofar5s_h128_s15-5_e15_4c',
               'HHT': 'bigru_att_hht_h64_s15-5_e20_4c', 'DEMON': 'bigru_att_demon_h64_s15-5_e20_4c'},
-    'CNN': {'MEL': 'cnn', 'LOFAR': 'cnn_lofar', 'HHT': 'hht_2d_cnn_e40p7_4c', 'DEMON': 'hcnn_demon_tpsw_med5_e60p8_4c'},
+    'CNN': {'MEL': 'cnn_mel_artigo', 'LOFAR': 'cnn_lofar', 'HHT': 'hht_2d_cnn_e40p7_4c', 'DEMON': 'hcnn_demon_tpsw_med5_e60p8_4c'},
 }
 for f in FAM:
     FAM[f] = {r: e for r, e in FAM[f].items() if disponivel(e)}
@@ -150,7 +150,7 @@ VARIANTES_CODE = r'''
 # Mesma entrada, arquitetura diferente (referência de "quase o mesmo modelo") e a CNN LOFAR de 5 s que colapsou
 VAR = [('CNN HHT 1D × CNN HHT 2D', 'speccnn_hht_ctx0_e60p8_4c', 'hht_2d_cnn_e40p7_4c', 'mesma entrada'),
        ('CNN DEMON HCNN × CNN DEMON SpecCNN', 'hcnn_demon_tpsw_med5_e60p8_4c', 'speccnn_demon_ctx0_e60p8_4c', 'mesma entrada'),
-       ('CNN MEL (repo) × CNN LOFAR 5 s (colapsou)', 'cnn', 'cnn2d_lofar5s_w32_b64_e15_4c', 'ilustração: modelo colapsado'),
+       ('CNN MEL (artigo) × CNN LOFAR 5 s (colapsou)', 'cnn_mel_artigo', 'cnn2d_lofar5s_w32_b64_e15_4c', 'ilustração: modelo colapsado'),
        ('CNN HHT 2D × CNN LOFAR 5 s (colapsou)', 'hht_2d_cnn_e40p7_4c', 'cnn2d_lofar5s_w32_b64_e15_4c', 'ilustração: modelo colapsado')]
 VQ = pd.DataFrame([{'Par': n, 'Tipo': t, 'SP a': R.summary(a)['SP'][0], 'SP b': R.summary(b)['SP'][0], **par(a, b)}
                    for n, a, b, t in VAR]).set_index('Par')
@@ -288,7 +288,7 @@ Q e Y são calculados em cada fold (639 gravações de teste) e depois feita a m
         md(f"""
 ## 2. Os modelos
 
-Um modelo por família e entrada, todos de 4 classes nos 10 folds oficiais. {'A CNN LOFAR é a do artigo (`test_scripts/cnn_lofar.py`); a CNN MEL (`cnn`) é a do repositório (`test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo).' if cnn_ok else 'A CNN LOFAR do artigo (`test_scripts/cnn_lofar.py`) ainda está em treinamento; a única CNN LOFAR disponível (`cnn2d_lofar5s_w32_b64_e15_4c`, SP ~35) colapsou e fica fora das tabelas principais (Seção 4).'} Na CNN, HHT = CNN 2D Hilbert e DEMON = HCNN (TPSW, mediana 5), as variantes de maior SP. No MLP, MEL e LOFAR são os do pipeline `iara` (janelas de 0,512 s, com early stopping), com a arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0; HHT e DEMON usam janelas de 5 s.
+Um modelo por família e entrada, todos de 4 classes nos 10 folds oficiais. {'As CNNs LOFAR e MEL são as do artigo (`test_scripts/cnn_lofar.py` e `test_scripts/cnn_mel_artigo.py`).' if cnn_ok else 'A CNN LOFAR do artigo (`test_scripts/cnn_lofar.py`) ainda está em treinamento; a única CNN LOFAR disponível (`cnn2d_lofar5s_w32_b64_e15_4c`, SP ~35) colapsou e fica fora das tabelas principais (Seção 4).'} Na CNN, HHT = CNN 2D Hilbert e DEMON = HCNN (TPSW, mediana 5), as variantes de maior SP. No MLP, MEL e LOFAR são os do pipeline `iara` (janelas de 0,512 s, com early stopping), com a arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0; HHT e DEMON usam janelas de 5 s.
 """), code(DESEMP_CODE),
         md("""
 ## 3. Q e Y de Yule entre entradas, por família

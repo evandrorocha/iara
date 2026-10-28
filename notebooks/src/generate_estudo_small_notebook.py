@@ -314,7 +314,7 @@ from scipy.stats import gmean
 PARES_MD = {  # família: (MEL, DEMON)
     'RF': (FAM['RF']['MEL'], FAM['RF']['DEMON']), 'SVM': (FAM['SVM']['MEL'], FAM['SVM']['DEMON']),
     'MLP': (FAM['MLP']['MEL'], FAM['MLP']['DEMON']), 'BiGRU': (FAM['BiGRU']['MEL'], FAM['BiGRU']['DEMON']),
-    'CNN': ('cnn', 'hcnn_demon_tpsw_med5_e60p8_4c'),
+    'CNN': ('cnn_mel_artigo', 'hcnn_demon_tpsw_med5_e60p8_4c'),
 }
 
 def prob_medias(name):

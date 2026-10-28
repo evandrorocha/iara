@@ -79,7 +79,7 @@ FAM = {
     'MLP': {'MEL': 'mlp', 'LOFAR': 'mlp_lofar', 'HHT': 'mlp_hht_h32-16_e30_4c', 'DEMON': 'mlp_demon_h32-16_e30_4c'},
     'BiGRU': {'MEL': 'bigru_att_mel5s_h64_s15-5_e20_4c', 'LOFAR': 'bigru_att_lofar5s_h128_s15-5_e15_4c',
               'HHT': 'bigru_att_hht_h64_s15-5_e20_4c', 'DEMON': 'bigru_att_demon_h64_s15-5_e20_4c'},
-    'CNN': {'MEL': 'cnn', 'LOFAR': 'cnn_lofar', 'HHT': 'hht_2d_cnn_e40p7_4c', 'DEMON': 'hcnn_demon_tpsw_med5_e60p8_4c'},
+    'CNN': {'MEL': 'cnn_mel_artigo', 'LOFAR': 'cnn_lofar', 'HHT': 'hht_2d_cnn_e40p7_4c', 'DEMON': 'hcnn_demon_tpsw_med5_e60p8_4c'},
 }
 for f in FAM:
     FAM[f] = {r: e for r, e in FAM[f].items() if disponivel(e)}
@@ -274,7 +274,7 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "31_diversidade_multimodelo_entra
 
 ---
 
-O Notebook 30 mediu, par a par, se MEL, LOFAR, HHT e DEMON erram juntas para o mesmo classificador (Q e Y de Yule); os modelos são os mesmos (na CNN, o MEL é a `cnn` do repositório, `test_scripts/cnn.py`, com conv 128/64 e lr 1e-5 — não é a arquitetura do artigo). Aqui:
+O Notebook 30 mediu, par a par, se MEL, LOFAR, HHT e DEMON erram juntas para o mesmo classificador (Q e Y de Yule); os modelos são os mesmos (na CNN, MEL e LOFAR são as CNNs do artigo, `test_scripts/cnn_mel_artigo.py` e `test_scripts/cnn_lofar.py`). Aqui:
 
 1. **Par a par, com quatro medidas:** Q e Y de Yule (sobre os erros) e V de Cramér e κ de Cohen (sobre as classes preditas). Elas ordenam os pares do mesmo jeito?
 2. **As quatro entradas ao mesmo tempo:** κ de Fleiss e a distribuição de quantas entradas erram cada gravação, contra o esperado se os erros fossem independentes.

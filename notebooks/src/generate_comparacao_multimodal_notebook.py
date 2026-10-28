@@ -75,7 +75,7 @@ GRID = {
     ('Random Forest', 'LOFAR'): ('RF 100 árv. | LOFAR 5,12 s', 'rf_lofar5s_n100_balanced_4c', None, '5,12 s', 'generate_rf_predictions_and_analysis.py'),
     ('Random Forest', 'FUSÃO (MEL+DEMON)'): ('RF 100 árv. | FUSÃO', 'rf_mel5s-demon_n100_balanced_4c', 'rf_mel5s-demon_n100_balanced_3c', '5,12 s', 'eval_rf_fusion_5x2cv.py'),
     ('CNN 2D', 'DEMON'): ('CNN 2D ad hoc | DEMON', 'cnn2d_demon_w32_b32_e20_4c', 'cnn2d_demon_w32_b32_e20_3c', '5,12 s', 'eval_demon_baselines_5x2cv.py [COLAPSADA]'),
-    ('CNN 2D', 'MEL'): ('CNN repo | MEL', 'cnn', None, '0,512 s', 'pipeline iara'),
+    ('CNN 2D', 'MEL'): ('CNN artigo | MEL', 'cnn_mel_artigo', None, '0,512 s', 'pipeline iara, test_scripts/cnn_mel_artigo.py'),
     ('CNN 2D', 'LOFAR'): ('CNN 2D ad hoc | LOFAR 5,12 s', 'cnn2d_lofar5s_w32_b64_e15_4c', None, '5,12 s', 'generate_cnn_predictions_and_analysis.py [COLAPSADA]'),
     ('CNN 2D', 'FUSÃO (MEL+DEMON)'): ('CNN 2D ad hoc | FUSÃO', 'cnn2d_mel5s-demon_w32_b32_e25_4c', 'cnn2d_mel5s-demon_w32_b32_e25_3c', '5,12 s', 'eval_fusion_svm_cnn_5x2cv.py [COLAPSADA]'),
 }
@@ -289,7 +289,7 @@ Este notebook avalia a interação entre **quatro representações acústicas** 
 1. **MLP (PyTorch):** camadas densas com `BatchNorm1d` e `Dropout`. **Atenção:** a MLP da FUSÃO usa `[64, 32]`; as MLP de MEL 5,12 s e DEMON usam `[32, 16]`.
 2. **SVM Nyström:** kernel RBF aproximado com penalização ElasticNet; $m=6000$ para DEMON, LOFAR e FUSÃO e **$m=4000$ para MEL** (o único SVM MEL oficial em disco).
 3. **Random Forest (100 árvores):** `class_weight='balanced'`.
-4. **CNN 2D:** para MEL, a CNN do repositório (`test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo); CNNs **ad hoc** (PyTorch) para DEMON, LOFAR 5,12 s e FUSÃO — estas três colapsaram e não devem ser usadas como baseline.
+4. **CNN 2D:** para MEL, a CNN do artigo (`test_scripts/cnn_mel_artigo.py`, configuração do grid search do artigo); CNNs **ad hoc** (PyTorch) para DEMON, LOFAR 5,12 s e FUSÃO — estas três colapsaram e não devem ser usadas como baseline.
 """))
     cells[0]["source"] = [x.replace("__NFILES__", br(n_files, 0)) for x in cells[0]["source"]]
     cells.append(code(SETUP_CODE))

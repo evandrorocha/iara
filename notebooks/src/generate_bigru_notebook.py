@@ -6,7 +6,7 @@ Todos os números vêm das predições gravadas em disco, via notebooks/iara_res
   * BiGRU: results/trainings/multirep/bigru_att_*_{4c,3c}
       - scratch/eval_bigru_multiclass_5x2cv.py       (h64:  demon, hht, mel5s, mel5s-demon, mel5s-hht)
       - scratch/eval_bigru_lofar_multiclass_5x2cv.py (h128: lofar5s, lofar5s-demon, lofar5s-hht)
-  * baselines locais: results/trainings/tests/{mlp_lofar, mlp, cnn, svm_nystroem_4000_log_melgram_...,
+  * baselines locais: results/trainings/tests/{mlp_lofar, mlp, cnn_mel_artigo, svm_nystroem_4000_log_melgram_...,
     svm_nystroem_6000_lofar_...} e a CRNN 2D LOFAR (crnn2d_multiclass_lofar_..., arquivos <exp>_test.csv);
   * artigo: R.ARTICLE_TABLE7.
 Os números citados no markdown são calculados aqui, na geração (nada digitado).
@@ -38,7 +38,7 @@ BIGRU = [  # (rótulo curto, rótulo, tag do experimento sem o sufixo _4c/_3c, d
 BASELINES = [
     ("MLP LOFAR (≈ artigo)", "mlp_lofar"),
     ("MLP MEL (≈ artigo)", "mlp"),
-    ("CNN MEL (repo, ≠ artigo)", "cnn"),
+    ("CNN MEL (artigo)", "cnn_mel_artigo"),
     ("SVM Nyström m=4000 MEL", "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0"),
     ("SVM Nyström m=6000 LOFAR", "svm_nystroem_6000_lofar_elasticnet_l1r0.15"),
 ]
@@ -119,7 +119,7 @@ NSEQ_MIN, NSEQ_MAX, NSEQ_MEAN = int(_nw.min()), int(_nw.max()), _nw.mean()
 lab_lofar, lab_mel, lab_ld = "LOFAR (lofar5s)", "MEL (mel5s)", "FUSÃO LOFAR + DEMON"
 neural_small = {**{f"BiGRU {lab} (4c)": S4[lab]["R_SMALL"][0] for lab in S4},
                 "MLP LOFAR (≈ artigo)": SB["mlp_lofar"]["R_SMALL"][0], "MLP MEL (≈ artigo)": SB["mlp"]["R_SMALL"][0],
-                "CNN MEL (repo, ≠ artigo)": SB["cnn"]["R_SMALL"][0], "CRNN 2D LOFAR (local)": SCRNN["R_SMALL"][0]}
+                "CNN MEL (artigo)": SB["cnn_mel_artigo"]["R_SMALL"][0], "CRNN 2D LOFAR (local)": SCRNN["R_SMALL"][0]}
 CRNN_SUMMARY_SP = pd.read_csv(os.path.join(R.ROOT, 'results', 'trainings', 'tests', CRNN, 'metrics_summary.csv')).set_index('metric').loc['sp', 'mean']
 best_small_name = max(neural_small, key=neural_small.get)
 

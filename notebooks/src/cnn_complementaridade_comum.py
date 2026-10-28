@@ -2,8 +2,8 @@
 Análise de complementaridade da CNN 2D (NBs 22-24), lida das predições em disco via iara_results.
 
 Experimentos:
-  MEL   -> results/trainings/tests/cnn                         (pipeline iara, features de 0,512 s; test_scripts/cnn.py,
-                                                                 arquitetura 128/64 que NÃO é a CNN MEL do artigo)
+  MEL   -> results/trainings/tests/cnn_mel_artigo              (pipeline iara, features de 0,512 s; test_scripts/cnn_mel_artigo.py,
+                                                                 arquitetura do artigo)
   LOFAR -> results/trainings/multirep/cnn2d_lofar5s_w32_b64_e15_4c  (CNN ad hoc, scratch/generate_cnn_predictions_and_analysis.py)
   HHT   -> results/trainings/multirep/cnn2d_hht_w32_b64_e20_4c
   DEMON -> results/trainings/multirep/cnn2d_demon_w32_b64_e20_4c
@@ -22,7 +22,7 @@ CLS = {0: "SMALL", 1: "MEDIUM", 2: "LARGE", 3: "BACKGROUND"}
 CLS_ID = {v: k for k, v in CLS.items()}
 
 CNN = {
-    "MEL": "cnn",
+    "MEL": "cnn_mel_artigo",
     "LOFAR": "cnn2d_lofar5s_w32_b64_e15_4c",
     "HHT": "cnn2d_hht_w32_b64_e20_4c",
     "DEMON": "cnn2d_demon_w32_b64_e20_4c",

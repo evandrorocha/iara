@@ -1,7 +1,7 @@
 """
 Gera os notebooks de comparação multimodelo com os extratores do artigo:
 
-    notebooks/6_comparacao_modelos_lofar.ipynb   (LOFAR: MLP, SVM Nyström, Random Forest, CNN 2D, BiGRU)
+    notebooks/6_comparacao_modelos_lofar.ipynb   (LOFAR: MLP, CNN, SVM Nyström, Random Forest, BiGRU)
     notebooks/7_comparacao_modelos_mel.ipynb     (MEL:   MLP, CNN, SVM Nyström, Random Forest, BiGRU)
 
 Mesma estrutura dos notebooks 9 (DEMON) e 11 (HHT). Todos os números (tabelas, figuras, matrizes de confusão
@@ -53,7 +53,7 @@ REPS = {
     "LOFAR": {
         "numero": 6,
         "arquivo": "6_comparacao_modelos_lofar.ipynb",
-        "titulo": "Comparativo Multimodelo com o Extrator LOFAR (MLP, SVM, Random Forest, CNN 2D e BiGRU)",
+        "titulo": "Comparativo Multimodelo com o Extrator LOFAR (MLP, CNN, SVM, Random Forest e BiGRU)",
         "descricao": (
             "o **LOFAR** (*Low Frequency Analysis and Recording*): espectro de magnitude com `n_pts = 1024` bins "
             "(resolução de ~7,8 Hz até 8 kHz), normalizado pelo TPSW (*Two-Pass Split Window*), que realça as raias "
@@ -64,8 +64,10 @@ REPS = {
              "pipeline iara (`test_scripts/svm.py`), ElasticNet l1_ratio=0,15"),
             ("Random Forest 100 árv.", "rf_lofar5s_n100_balanced_4c", None, "5,12 s",
              "`scratch/generate_rf_predictions_and_analysis.py`, média de 10 quadros de 0,512 s"),
+            ("CNN (artigo)", "cnn_lofar", None, "0,512 s",
+             "pipeline iara, `test_scripts/cnn_lofar.py`: configuração do grid search do artigo (conv 512/128, ReLU, max pooling 4×2, dropout 0,4, lr 1e-6, imagens de 32 janelas com 50% de sobreposição, paciência 32)"),
             ("CNN 2D ad hoc", "cnn2d_lofar5s_w32_b64_e15_4c", None, "5,12 s",
-             "`scratch/generate_cnn_predictions_and_analysis.py`, imagens de 32 vetores LOFAR de 5,12 s"),
+             "`scratch/generate_cnn_predictions_and_analysis.py`, imagens de 32 vetores LOFAR de 5,12 s (colapsou; mantida só como referência)"),
             ("BiGRU + atenção", "bigru_att_lofar5s_h128_s15-5_e15_4c", "bigru_att_lofar5s_h128_s15-5_e15_3c", "5,12 s",
              "`scratch/eval_bigru_lofar_multiclass_5x2cv.py`, sequências de 15 vetores"),
         ],
@@ -88,6 +90,7 @@ REPS = {
         "outra": "MEL",
         "pares_outra": [
             ("MLP (≈ artigo, 0,512 s)", "mlp_lofar", "mlp"),
+            ("CNN (artigo, 0,512 s)", "cnn_lofar", "cnn_mel_artigo"),
             ("SVM Nyström (melhor de cada)", "svm_nystroem_6000_lofar_elasticnet_l1r0.15",
              "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0"),
             ("Random Forest (5,12 s)", "rf_lofar5s_n100_balanced_4c", "rf_mel5s_n100_balanced_4c"),
@@ -105,6 +108,7 @@ REPS = {
             "(detalhes no Notebook 5)"),
         "principais": [
             ("MLP (≈ artigo)", "mlp", None, "0,512 s", "pipeline iara, `test_scripts/mlp.py`: arquitetura do artigo ([32,16], dropout 0,2, BatchNorm, ReLU, Sigmoid, lr 1e-4), mas até 512 épocas com paciência 16 (grid search do artigo: 50 épocas, paciência 8)"),
+            ("CNN (artigo)", "cnn_mel_artigo", None, "0,512 s", "pipeline iara, `test_scripts/cnn_mel_artigo.py`: configuração do grid search do artigo (conv 1024/128, LeakyReLU, dropout 0,4, lr 1e-6, imagens de 32 janelas com 50% de sobreposição, paciência 32)"),
             ("CNN (repo)", "cnn", None, "0,512 s", "pipeline iara, `test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo"),
             ("SVM Nyström m=4000", "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0", None, "0,512 s",
              "pipeline iara (`test_scripts/svm.py`), C=2,0, ElasticNet l1_ratio=0,15"),
@@ -130,6 +134,7 @@ REPS = {
         "outra": "LOFAR",
         "pares_outra": [
             ("MLP (≈ artigo, 0,512 s)", "mlp", "mlp_lofar"),
+            ("CNN (artigo, 0,512 s)", "cnn_mel_artigo", "cnn_lofar"),
             ("SVM Nyström (melhor de cada)", "svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0",
              "svm_nystroem_6000_lofar_elasticnet_l1r0.15"),
             ("Random Forest (5,12 s)", "rf_mel5s_n100_balanced_4c", "rf_lofar5s_n100_balanced_4c"),
@@ -349,7 +354,7 @@ def build(rep):
     outra = cfg["outra"]
     art = {m: R.ARTICLE_TABLE7[(m, rep)] for m, r in R.ARTICLE_TABLE7 if r == rep}
     art_mlpl = R.ARTICLE_TABLE7[("MLP", "LOFAR")]
-    oficiais = [l for l in E4 if "oficial" in l]
+    oficiais = [l for l in E4 if "artigo" in l]  # modelos do pipeline oficial com a arquitetura (≈) do artigo
     validos = [l for l in E4 if not COL[l]]
     sw_best = max(SWEEP, key=lambda l: SWEEP[l]["SP"][0])
     sw_worst = min(SWEEP, key=lambda l: SWEEP[l]["SP"][0])

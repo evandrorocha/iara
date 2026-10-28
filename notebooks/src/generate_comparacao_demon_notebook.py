@@ -81,7 +81,7 @@ LOCAL_REF = [  # referências MEL/LOFAR do pipeline iara oficial (results/traini
     ('SVM m=4000 | MEL', 'svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0'),
     ('MLP (≈ artigo) | MEL', 'mlp'),
     ('MLP (≈ artigo) | LOFAR', 'mlp_lofar'),
-    ('CNN repo (≠ artigo) | MEL', 'cnn'),
+    ('CNN (artigo) | MEL', 'cnn_mel_artigo'),
 ]
 MET = ('SP', 'ACC', 'F1')
 ROWS_4C = [(l, e) for l, e in LOCAL_REF] + [(f'DEMON | {l}', e + '_4c') for l, e in DEMON] + \
@@ -253,7 +253,7 @@ def build(filename=os.path.join(NOTEBOOKS_DIR, "9_comparacao_modelos_demon.ipynb
     rf, cnn = "DEMON | Random Forest 100 árv.", "DEMON | CNN 2D ad hoc"
     uns = "DEMON | SVM m=4000 early stopping [INSTÁVEL] (NBs 13–15)"
     lof6, lof4, mel4 = "SVM m=6000 | LOFAR", "SVM m=4000 PCA64 | LOFAR", "SVM m=4000 | MEL"
-    mlpl, mlpm, cnnm = "MLP (≈ artigo) | LOFAR", "MLP (≈ artigo) | MEL", "CNN repo (≠ artigo) | MEL"
+    mlpl, mlpm, cnnm = "MLP (≈ artigo) | LOFAR", "MLP (≈ artigo) | MEL", "CNN (artigo) | MEL"
     art_mlpl = R.ARTICLE_TABLE7[("MLP", "LOFAR")]["SP"]
     demon4 = [f"DEMON | {l}" for l, _ in ns["DEMON"]]
     best = max(demon4, key=lambda l: S4[l]["SP"][0])

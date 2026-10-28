@@ -443,7 +443,7 @@ O *Behavior Knowledge Space* (Huang e Suen, 1995) aprende, para **cada combinaç
 - Split por gravação (`ID`), como no artigo; o Notebook 29 mostrou que ele infla os resultados em 6–10 pontos de ACC. O ganho do voto precisa ser confirmado no split por navio.
 - Vários testes nesta análise; os resultados além do BiGRU são exploratórios.
 - No MLP, MEL/LOFAR (0,512 s) e HHT/DEMON (5 s) vêm de pipelines diferentes.
-- A CNN fica de fora: não tem as 4 entradas avaliadas no mesmo protocolo (a CNN LOFAR do artigo ainda está treinando; a CNN MEL do repositório não tem a arquitetura do artigo).
+- A CNN fica de fora: não tem as 4 entradas avaliadas no mesmo protocolo (as CNNs MEL e LOFAR do artigo terminaram de treinar depois desta análise; a CNN HHT e a DEMON são ad hoc; incluir a CNN fica como trabalho futuro).
 - Combinar famílias diferentes (ex.: MLP LOFAR + BiGRU MEL) não foi testado; exigiria escolher os membros dentro de cada fold para não inflar o ganho.
 """),
     ]
