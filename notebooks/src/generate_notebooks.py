@@ -206,7 +206,8 @@ SVM_MEL_PCA = "svm_nystroem_4000_log_melgram_pca64_elasticnet_l1r0.15_C2.0"
 SVM_LOFAR = "svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0"
 SVM_LOFAR_NOPCA = "svm_nystroem_4000_lofar_C2.0"
 SVM_LOFAR_6000 = "svm_nystroem_6000_lofar_elasticnet_l1r0.15"
-CNN_MEL = "cnn"
+CNN_MEL = "cnn_mel_artigo"  # CNN MEL do artigo (test_scripts/cnn_mel_artigo.py)
+CNN_MEL_REPO = "cnn"  # test_scripts/cnn.py: outra arquitetura (128/64, lr 1e-5, sem sobreposição)
 MLP_MEL = "mlp"
 MLP_LOFAR = "mlp_lofar"
 
@@ -338,15 +339,15 @@ plt.show()
 """),
     md(r"""
 ### 3. Testes de Significância (F-test 5×2cv de Alpaydin, como no artigo)
-O artigo compara modelos pelo F-test 5×2cv combinado. Como a Tabela 7 não traz resultados por fold, o SVM é comparado com as **re-execuções locais** dos baselines no mesmo protocolo e nos mesmos folds (`cnn` = CNN MEL do repositório — `test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo —, `mlp` = MLP MEL e `mlp_lofar` = MLP LOFAR, com a arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0), e as variantes com/sem PCA são comparadas entre si. $p < 0.05$ indicaria diferença significativa.
+O artigo compara modelos pelo F-test 5×2cv combinado. Como a Tabela 7 não traz resultados por fold, o SVM é comparado com as **re-execuções locais** dos baselines no mesmo protocolo e nos mesmos folds (`cnn_mel_artigo` = CNN MEL com a arquitetura do artigo, `test_scripts/cnn_mel_artigo.py`; `mlp` = MLP MEL e `mlp_lofar` = MLP LOFAR, com a arquitetura do artigo, mas paciência 16 em vez de 8 e, no LOFAR, dropout 0,2 em vez de 0), e as variantes com/sem PCA são comparadas entre si. $p < 0.05$ indicaria diferença significativa. A CNN MEL antiga do repositório (`cnn`, `test_scripts/cnn.py`: conv 128/64, ReLU, lr 1e-5, imagens sem sobreposição — não é a arquitetura do artigo) aparece na tabela só como referência.
 """),
     code(f'''
 print('Re-execuções locais dos baselines (mesmos folds do SVM):')
-display(R.table([('CNN MEL (repo, ≠ artigo)', "{CNN_MEL}"), ('MLP MEL (≈ artigo)', "{MLP_MEL}"),
+display(R.table([('CNN MEL (artigo)', "{CNN_MEL}"), ('CNN MEL (repo, ≠ artigo)', "{CNN_MEL_REPO}"), ('MLP MEL (≈ artigo)', "{MLP_MEL}"),
                  ('MLP LOFAR (≈ artigo)', "{MLP_LOFAR}")], metrics=('SP', 'ACC')))
 
 pares = [
-    ('SVM MEL vs. CNN MEL (repo)', SVM_MEL, "{CNN_MEL}"),
+    ('SVM MEL vs. CNN MEL (artigo)', SVM_MEL, "{CNN_MEL}"),
     ('SVM MEL vs. MLP MEL (≈ artigo)', SVM_MEL, "{MLP_MEL}"),
     ('SVM LOFAR vs. MLP LOFAR (≈ artigo)', SVM_LOFAR, "{MLP_LOFAR}"),
     ('SVM LOFAR m=4000: PCA64+ElasticNet vs. sem PCA', SVM_LOFAR, "{SVM_LOFAR_NOPCA}"),
@@ -364,19 +365,32 @@ pd.DataFrame(linhas).set_index('Comparação')
 '''),
     md(f"""
 ### 4. Discussão Científica e Conclusões:
-1. **Desempenho equivalente ao dos baselines:** O **SVM Nyström (MEL)** alcançou **{F(S_MEL['ACC'])}% de Acurácia Balanceada (ACC)** (e **{F(S_MEL['SP'])}% de Índice SP**), valores próximos aos da CNN do artigo (**{F(A7[('CNN', 'MEL')]['ACC'])}%** de ACC e **{F(A7[('CNN', 'MEL')]['SP'])}%** de SP); a diferença das médias está dentro do desvio. Contra a CNN MEL do repositório nos mesmos folds (arquitetura diferente da do artigo) (ACC {F(S_CNN['ACC'])}%, SP {F(S_CNN['SP'])}%), o F-test 5×2cv não indica diferença ({p_txt(FT['mel_vs_cnn'][1])} em SP; {p_txt(FT['mel_vs_cnn_acc'][1])} em ACC): os modelos são **estatisticamente equivalentes**. O desvio entre folds do SVM MEL é menor: $\\sigma_{{SVM}} = {S_MEL['ACC'][1]:.2f}\\%$ vs. $\\sigma_{{CNN}} = {A7[('CNN', 'MEL')]['ACC'][1]:.2f}\\%$ (artigo), isto é, cerca de **{RATIO_STD:.2f}× o desvio** (≈ {RATIO_STD**2:.2f}× a variância). A menor dispersão é compatível com a formulação convexa do SVM, mas isso é uma hipótese, não algo testado aqui.
+1. **Desempenho equivalente ao dos baselines:** O **SVM Nyström (MEL)** alcançou **{F(S_MEL['ACC'])}% de Acurácia Balanceada (ACC)** (e **{F(S_MEL['SP'])}% de Índice SP**), valores próximos aos da CNN do artigo (**{F(A7[('CNN', 'MEL')]['ACC'])}%** de ACC e **{F(A7[('CNN', 'MEL')]['SP'])}%** de SP); a diferença das médias está dentro do desvio. Contra a CNN MEL do artigo re-executada nos mesmos folds (ACC {F(S_CNN['ACC'])}%, SP {F(S_CNN['SP'])}%), o F-test 5×2cv não indica diferença ({p_txt(FT['mel_vs_cnn'][1])} em SP; {p_txt(FT['mel_vs_cnn_acc'][1])} em ACC): os modelos são **estatisticamente equivalentes**. O desvio entre folds do SVM MEL é menor: $\\sigma_{{SVM}} = {S_MEL['ACC'][1]:.2f}\\%$ vs. $\\sigma_{{CNN}} = {A7[('CNN', 'MEL')]['ACC'][1]:.2f}\\%$ (artigo), isto é, cerca de **{RATIO_STD:.2f}× o desvio** (≈ {RATIO_STD**2:.2f}× a variância). A menor dispersão é compatível com a formulação convexa do SVM, mas isso é uma hipótese, não algo testado aqui.
 2. **PCA sem efeito significativo:** Não há evidência de que o PCA seja essencial no LOFAR nem de que degrade o MEL. Em $m=4000$, o LOFAR com PCA64 + ElasticNet tem SP {F(S_LOFAR['SP'])}% contra {F(S_LOFAR_NOPCA['SP'])}% sem PCA ({p_txt(FT['lofar_pca_4000'][1])} em SP; {p_txt(FT['lofar_pca_4000_acc'][1])} em ACC), e o SVM LOFAR $m=6000$ **sem** PCA (`{SVM_LOFAR_6000}`) tem ACC balanceada **maior** ({F(S_LOFAR_6000['ACC'])}% vs. {F(S_LOFAR['ACC'])}%; {p_txt(FT['lofar_pca_vs_6000'][1])}). No MEL $m=4000$, o PCA64 dá SP {F(S_MEL_PCA['SP'])}% contra {F(S_MEL['SP'])}% sem PCA ({p_txt(FT['mel_pca_4000'][1])}), ou seja, ligeiramente maior e equivalente. A escolha "MEL sem PCA / LOFAR com PCA64" é, portanto, uma configuração adotada, não uma conclusão estatística.
 """),
 ]
 
 # ==================== NOTEBOOK 2: OPÇÃO DE REJEIÇÃO ====================
 REJ_MODELS = [("LOFAR (SVM - m=4000, C=2.0, PCA64)", SVM_LOFAR), ("MEL (SVM - m=4000, C=2.0)", SVM_MEL),
-              ("CNN MEL (repo, ≠ artigo)", CNN_MEL), ("MLP MEL (≈ artigo)", MLP_MEL)]
+              ("CNN MEL (artigo)", CNN_MEL), ("MLP MEL (≈ artigo)", MLP_MEL)]
 CURVAS = {exp: curva_rejeicao(exp) for _, exp in REJ_MODELS}
 CV = {exp: {l['t']: l for l in CURVAS[exp]} for exp in CURVAS}
 NSEG = sorted({int(n) for d in R.file_predictions(CNN_MEL).values() for n in d.n_windows.unique()})
 NWIN_SVM = float(np.median(np.concatenate([d.n_windows.values for d in R.file_predictions(SVM_LOFAR).values()])))
 NSEG_TXT = ", ".join(map(str, NSEG))
+assert len(NSEG) == 1, NSEG
+NS = NSEG[0]
+KMIN = {t: int(np.ceil(t * NS - 1e-9)) for t in LIMIARES if t > 0}
+_dup = [(a, b) for a, b in zip(sorted(KMIN), sorted(KMIN)[1:]) if KMIN[a] == KMIN[b]]
+if _dup:
+    a, b = _dup[0]
+    NOTA_SEG = (f"Por isso, limiares diferentes podem exigir o mesmo número mínimo de segmentos: $t \ge {a:.1f}$ e $t \ge {b:.1f}$ exigem "
+                f"$k \ge {KMIN[a]}$ segmentos concordantes em {NS} e dão a mesma cobertura (`{F(CV[CNN_MEL][a]['Cobertura'])}%`).")
+else:
+    NOTA_SEG = ("Com " + str(NS) + " segmentos, os limiares exigem números mínimos distintos de segmentos concordantes ("
+                + ", ".join(f"$t \ge {t:.1f} \Rightarrow k \ge {k}$" for t, k in KMIN.items())
+                + "), então todos os limiares produzem curvas distintas — ao contrário da CNN MEL antiga do repositório (`cnn`, 7 segmentos sem sobreposição), "
+                  "em que $t \ge 0.6$ e $t \ge 0.7$ coincidiam ($k \ge 5$ em 7). A resolução do índice continua mais grosseira que a dos modelos por janela.")
 T_NOMES = {0.0: "*(Sem Rejeição)*", 0.5: "*(Maioria Simples)*", 0.6: "*(Maioria Absoluta)*",
            0.7: "*(Consenso Forte)*", 0.8: "*(Consenso Seguro)*", 0.9: "*(Consenso Crítico)*"}
 
@@ -414,12 +428,12 @@ Neste notebook, é avaliada a incorporação de um **operador de decisão com op
 
 > **Nota Metodológica Importante (Rejeição Local vs. Tabela 9 de *Silva et al., 2025* e Discretização da CNN):**
 > 1. **Índice de confiança e métricas:** a confiança de um arquivo é a **taxa de concordância dos votos das janelas** (fração das janelas/segmentos do arquivo que votaram na classe vencedora do voto majoritário), o mesmo princípio da Tabela 9 do artigo; **não** são usadas probabilidades/softmax. Um arquivo é aceito se concordância $\\ge t$, para $t \\in \\{{0.5, 0.6, 0.7, 0.8, 0.9\\}}$. Sobre os arquivos aceitos de cada fold são calculadas a **Acurácia Balanceada (`Bal. Acc`, métrica principal, como no artigo)**, a **Acurácia Global/Micro (`UACC`)**, em coluna separada, e o **Índice SP**; reporta-se média ± desvio-padrão populacional nos 10 folds. Os números são recalculados neste notebook a partir de `results/trainings/tests/<experimento>/eval/fold_k/` (função `curva_rejeicao`). Em contraste, a **Tabela 9 de *Silva et al. (2025)*** buscou o ponto ótimo da razão de concordância (*Classification Ratio*) que maximiza o Índice SP no extrator MEL, reportando Acurácia Balanceada e `File Ratio` (cobertura): **RF** (`Classification Ratio = 88%` $\\rightarrow$ `SP = 72.29 ± 3.86%`, `Bal. Acc = 73.23 ± 3.62%`, `File Ratio = 38.12%`), **MLP** (`Classification Ratio = 85%` $\\rightarrow$ `SP = 74.18 ± 4.04%`, `Bal. Acc = 76.26 ± 2.99%`, `File Ratio = 39.36%`) e **CNN** (`Classification Ratio = 93%` $\\rightarrow$ `SP = 70.04 ± 2.86%`, `Bal. Acc = 72.07 ± 2.36%`, `File Ratio = 52.11%`) — valores citados da Tabela 9 do artigo.
-> 2. **Por que `CNN` possui valores idênticos em $t \\ge 0.6$ e $t \\ge 0.7$?** Diferentemente dos modelos baseados em janelas individuais (`InputType.Window`), a CNN opera sobre sub-imagens espectrais (`InputType.Image`), e nas predições em disco cada arquivo tem exatamente **{NSEG_TXT} segmentos de imagem**. Como $4/7 \\approx 0.5714 < 0.6$ e $5/7 \\approx 0.7143 \\ge 0.7$, não existe nenhum número inteiro de segmentos $k$ tal que $0.6 \\le k/7 < 0.7$. Portanto, tanto $t \\ge 0.6$ quanto $t \\ge 0.7$ exigem $k \\ge 5$ segmentos concordantes em 7, produzindo a mesma cobertura (`{F(CV[CNN_MEL][0.6]['Cobertura'])}%`), acurácia balanceada (`{F(CV[CNN_MEL][0.6]['ACC'])}%`) e SP (`{F(CV[CNN_MEL][0.6]['SP'])}%`).
+> 2. **Discretização do índice da CNN:** diferentemente dos modelos baseados em janelas individuais (`InputType.Window`), a CNN opera sobre sub-imagens espectrais (`InputType.Image`, 32 janelas com 50% de sobreposição), e nas predições em disco cada arquivo tem exatamente **{NSEG_TXT} segmentos de imagem**; a concordância só assume valores $k/{NS}$. {NOTA_SEG}
 > 3. **Cuidado na leitura:** em cada limiar, as métricas são calculadas sobre um subconjunto diferente de arquivos (os aceitos), e modelos diferentes aceitam subconjuntos diferentes; comparações entre modelos devem ser feitas a **cobertura semelhante**, não ao mesmo $t$.
 """),
     md(r"""
 ### Parâmetros de Configuração e Treinamento do SVM Nyström:
-As configurações de hiperparâmetros abaixo foram mantidas constantes durante a validação cruzada (experimentos `svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0` e `svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0`; baselines `cnn` e `mlp`, re-execuções locais do pipeline iara com MEL):
+As configurações de hiperparâmetros abaixo foram mantidas constantes durante a validação cruzada (experimentos `svm_nystroem_4000_lofar_pca64_elasticnet_l1r0.15_C2.0` e `svm_nystroem_4000_log_melgram_elasticnet_l1r0.15_C2.0`; baselines `cnn_mel_artigo` e `mlp`, re-execuções locais do pipeline iara com MEL):
 * **Aproximação de Kernel:** Kernel Gaussiano RBF aproximado pelo método de Nyström com $m = 4000$ componentes.
 * **Custo de Regularização ($C$):** $C = 2.0$.
 * **Regularização / Penalidade:** ElasticNet com razão $L_1 = 0.15$ e $L_2 = 0.85$.
@@ -483,7 +497,7 @@ plt.show()
     md(f"""
 ### 3. Discussão do Gráfico:
 1. **SVM LOFAR sob limiar severo:** Com $t \\ge 0.9$, o SVM LOFAR retém **{F(L09['Cobertura'])}%** dos áudios e alcança, nesses arquivos, **{F(L09['ACC'])}%** de Acurácia Balanceada (`UACC` = {F(L09['ACC_micro'])}%; SP = {F(L09['SP'])}%). A acurácia micro é bem maior que a balanceada porque os arquivos aceitos são dominados por LARGE e BACKGROUND (Seção 4). Entre $t \\ge 0.8$ e $t \\ge 0.9$ o ganho satura: a ACC balanceada passa de {CV[SVM_LOFAR][0.8]['ACC'][0]:.2f}% para {L09['ACC'][0]:.2f}% e o SP de {CV[SVM_LOFAR][0.8]['SP'][0]:.2f}% para {L09['SP'][0]:.2f}%, com desvios entre folds de {CV[SVM_LOFAR][0.9]['ACC'][1]:.2f} p.p. (ACC) e {CV[SVM_LOFAR][0.9]['SP'][1]:.2f} p.p. (SP) em $t \\ge 0.9$.
-2. **CNN: índice de concordância mais grosseiro, não "superconfiança":** Sob o mesmo limiar ($t \\ge 0.9$), a CNN MEL mantém cobertura maior (**{F(C09['Cobertura'])}%**) e ACC balanceada de **{F(C09['ACC'])}%** (SP = {F(C09['SP'])}%). A comparação no mesmo $t$ não é justa: a concordância da CNN é calculada sobre apenas 7 segmentos sobrepostos por arquivo, enquanto os modelos por janela usam ≈ {NWIN_SVM:.0f} janelas por arquivo (mediana), e as coberturas são muito diferentes. Comparando a cobertura semelhante à da CNN em $t \\ge 0.9$ ({COB_REF:.2f}%): {match_txt}. Como nenhuma probabilidade é usada, estes dados **não** permitem conclusões sobre calibração das saídas da CNN ou do SVM; a afirmação anterior de que a CNN sofre de "calibração inadequada" e de que o SVM é "mais bem calibrado" não é sustentada por esta análise e foi removida.
+2. **CNN: índice de concordância mais grosseiro, não "superconfiança":** Sob o mesmo limiar ($t \\ge 0.9$), a CNN MEL mantém cobertura maior (**{F(C09['Cobertura'])}%**) e ACC balanceada de **{F(C09['ACC'])}%** (SP = {F(C09['SP'])}%). A comparação no mesmo $t$ não é justa: a concordância da CNN é calculada sobre apenas {NS} segmentos sobrepostos por arquivo, enquanto os modelos por janela usam ≈ {NWIN_SVM:.0f} janelas por arquivo (mediana), e as coberturas são muito diferentes. Comparando a cobertura semelhante à da CNN em $t \\ge 0.9$ ({COB_REF:.2f}%): {match_txt}. Como nenhuma probabilidade é usada, estes dados **não** permitem conclusões sobre calibração das saídas da CNN ou do SVM; a afirmação anterior de que a CNN sofre de "calibração inadequada" e de que o SVM é "mais bem calibrado" não é sustentada por esta análise e foi removida.
 """),
     md(f"""
 ### 4. Distribuição de Classes no Filtro Crítico ($t \\ge 0.90$)
@@ -673,7 +687,7 @@ EXPS4 = [
     (3, "MEL (256 bins)", 1000, 1.0, "Com PCA (Norm)", "MEL (PCA)", "svm_nystroem_1000_log_melgram_norm_pca64", "Efeito da compressão PCA sobre a representação MEL."),
     (4, "MEL (256 bins)", 2000, 1.0, "Sem PCA", "MEL", "svm_nystroem_2000_log_melgram", "Teste intermediário de média escala."),
     (5, "MEL (256 bins)", 3000, 1.0, "Sem PCA", "MEL", "svm_nystroem_3000_log_melgram", "Teste intermediário de alta escala."),
-    (6, "MEL (256 bins)", 4000, 2.0, "Sem PCA (ElasticNet)", "MEL", SVM_MEL, "**Golden MEL**. Equivalente à CNN MEL do repositório (F-test 5×2cv), com menor desvio entre folds."),
+    (6, "MEL (256 bins)", 4000, 2.0, "Sem PCA (ElasticNet)", "MEL", SVM_MEL, "**Golden MEL**. Equivalente à CNN MEL do artigo re-executada (F-test 5×2cv), com menor desvio entre folds."),
     (7, "MEL (256 bins)", 4000, 2.0, "PCA (64 comps, ElasticNet)", "MEL (PCA)", SVM_MEL_PCA, "MEL m=4000 com PCA (equivalente ao Exp #6; menor recall em SMALL)."),
     (8, "LOFAR (Frequência)", 1000, 1.0, "Sem PCA", "LOFAR (Sem PCA, C=1.0)", "svm_nystroem_1000_lofar", "Primeira integração espectral LOFAR."),
     (9, "LOFAR (Frequência)", 1000, 2.0, "Sem PCA", "LOFAR (Sem PCA, C=2.0)", "svm_nystroem_1000_lofar_C2.0", "LOFAR m=1000 sem PCA, C=2.0."),
@@ -818,7 +832,7 @@ pd.DataFrame(linhas).set_index('Comparação')
     md(f"""
 ### 4. Discussão Científica e Análise das Fases de Sintonia:
 1. **PCA no MEL vs. LOFAR — diferenças sem significância estatística:** No **LOFAR**, o PCA64 eleva a Acurácia Balanceada de **{H[9]['ACC'][0]:.2f}%** (`UACC = {H[9]['ACC_micro'][0]:.2f}%`, `SP = {H[9]['SP'][0]:.2f}%`) para **{H[10]['ACC'][0]:.2f}%** (`UACC = {H[10]['ACC_micro'][0]:.2f}%`, `SP = {H[10]['SP'][0]:.2f}%`) em $m=1000$ ($C=2.0$; {p_txt(FT4['lofar1000'][1])}) e de **{H[13]['ACC'][0]:.2f}%** (`SP = {H[13]['SP'][0]:.2f}%`) para **{H[14]['ACC'][0]:.2f}%** (`SP = {H[14]['SP'][0]:.2f}%`) em $m=4000$ ({p_txt(FT4['lofar4000'][1])} em ACC; {p_txt(FT4['lofar4000_sp'][1])} em SP). No **MEL** em $m=1000$, o PCA (Exp #3) reduz a Acurácia Balanceada de **{H[2]['ACC'][0]:.2f}%** para **{H[3]['ACC'][0]:.2f}%** ({p_txt(FT4['mel1000'][1])}); em $m=4000$ a ACC balanceada fica praticamente igual ({H[6]['ACC'][0]:.2f}% sem PCA vs. {H[7]['ACC'][0]:.2f}% com PCA64; {p_txt(FT4['mel4000'][1])}) e o recall de `SMALL` passa de **{H[6]['R_SMALL'][0]:.2f}%** para **{H[7]['R_SMALL'][0]:.2f}%** ({p_txt(FT4['mel4000_small'][1])}). Nenhuma dessas diferenças é significativa pelo F-test 5×2cv; as tendências (PCA ajuda no LOFAR, não ajuda no MEL) são compatíveis com o banco de filtros Mel já comprimir o espectro, mas não estão demonstradas.
-2. **Escalonamento de $m$:** No MEL sem PCA, a Acurácia Balanceada passa de {H[1]['ACC'][0]:.2f}% ($m=300$) para {H[5]['ACC'][0]:.2f}% ($m=3000$) e {H[6]['ACC'][0]:.2f}% ($m=4000$); de $m=2000$ em diante as médias ficam dentro do desvio (Exp #6 vs. Exp #5: {p_txt(FT4['mel6_vs_5'][1])}). O desvio fold-wise do Golden MEL é o menor da série: $\\pm {H[6]['ACC'][1]:.2f}\\%$ em `Bal. Acc` ($\\pm {H[6]['SP'][1]:.2f}\\%$ em `SP` e $\\pm {H[6]['ACC_micro'][1]:.2f}\\%$ em `UACC`), cerca de {STD_RATIO4:.2f}× o desvio da CNN MEL do repositório ($\\pm {S_CNN['ACC'][1]:.2f}\\%$), mas essa redução coincide com a troca de $C=1.0$/L2 por $C=2.0$/ElasticNet, de modo que não pode ser atribuída apenas ao aumento de $m$.
+2. **Escalonamento de $m$:** No MEL sem PCA, a Acurácia Balanceada passa de {H[1]['ACC'][0]:.2f}% ($m=300$) para {H[5]['ACC'][0]:.2f}% ($m=3000$) e {H[6]['ACC'][0]:.2f}% ($m=4000$); de $m=2000$ em diante as médias ficam dentro do desvio (Exp #6 vs. Exp #5: {p_txt(FT4['mel6_vs_5'][1])}). O desvio fold-wise do Golden MEL é o menor da série: $\\pm {H[6]['ACC'][1]:.2f}\\%$ em `Bal. Acc` ($\\pm {H[6]['SP'][1]:.2f}\\%$ em `SP` e $\\pm {H[6]['ACC_micro'][1]:.2f}\\%$ em `UACC`), cerca de {STD_RATIO4:.2f}× o desvio da CNN MEL do artigo re-executada ($\\pm {S_CNN['ACC'][1]:.2f}\\%$), mas essa redução coincide com a troca de $C=1.0$/L2 por $C=2.0$/ElasticNet, de modo que não pode ser atribuída apenas ao aumento de $m$.
 """),
 ]
 

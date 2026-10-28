@@ -1,0 +1,521 @@
+\documentclass[aspectratio=169]{beamer}
+
+\usetheme{default}
+\usepackage[utf8]{inputenc}
+\usepackage[brazil]{babel}
+\usepackage{tikz}
+\usepackage{tabularx}
+\usetikzlibrary{positioning,shapes.geometric,arrows.meta}
+\usepackage{amsmath}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{amssymb}
+\usepackage{colortbl}
+
+% logos e figuras compartilhadas ficam em presentation/imgs
+\graphicspath{{../}}
+
+\setbeamertemplate{footline}[frame number]
+\setbeamertemplate{frametitle}[default][center]
+
+\mode<presentation>{
+\usetheme{Dresden}
+\usecolortheme{seagull}
+}
+
+\setbeamertemplate{headline}{}
+
+\definecolor{peeblue}{RGB}{1,123,165}
+\definecolor{darkblue}{RGB}{0,65,115}
+\definecolor{lightgray}{RGB}{240,240,240}
+\definecolor{goldencolor}{RGB}{190,140,0}
+\definecolor{greenwin}{RGB}{0,130,50}
+
+\setbeamercolor*{palette primary}{fg=black,bg=peeblue!80}
+\setbeamercolor*{palette secondary}{fg=black,bg=peeblue!80!gray!80}
+\setbeamercolor*{palette tertiary}{fg=black,bg=peeblue!100}
+\setbeamercolor*{palette quaternary}{fg=black,bg=peeblue!110}
+
+\usebackgroundtemplate
+{%
+    \begin{picture}(210,40)(-5,2)
+    \includegraphics[width=0.07\paperwidth,keepaspectratio]{imgs/pee-logo-short.png}
+    \end{picture}%
+}
+
+\title{Reconhecimento Acústico de Alvos Submarinos no Dataset IARA}
+\subtitle{Reunião de 26/10/2026: Próximos Passos}
+\author{Evandro Rocha}
+\date{26 de outubro de 2026}
+
+\institute
+{
+  Universidade Federal do Rio de Janeiro\\
+  UFRJ / COPPE / PEE
+}
+
+\newcommand{\cahi}[1]{\cellcolor{green!30}\textbf{#1}}
+\newcommand{\cart}[1]{\cellcolor{blue!20}\textbf{#1}}
+\newcommand{\camd}[1]{\cellcolor{yellow!35}#1}
+\newcommand{\calo}[1]{\cellcolor{red!20}#1}
+
+\begin{document}
+
+%===========================================
+% CAPA
+%===========================================
+{
+\usebackgroundtemplate{
+    \begin{picture}(210,55)(-5,0)
+    \includegraphics[height=0.14\paperwidth,keepaspectratio]{imgs/pee-logo.png}
+    \end{picture}%
+    \begin{picture}(210,55)(-28,2)
+    \includegraphics[height=0.14\paperwidth,keepaspectratio]{imgs/coppe-logo.pdf}
+    \end{picture}
+}
+\begin{frame}
+  \bigskip\bigskip\bigskip\bigskip
+  \titlepage
+\end{frame}
+}
+
+%===========================================
+% AGENDA
+%===========================================
+\begin{frame}{Agenda da Apresentação}
+  \footnotesize
+  \setbeamercolor{block title}{bg=darkblue,fg=white}
+  \setbeamercolor{block body}{bg=peeblue!8,fg=black}
+  \setbeamertemplate{section in toc}{%
+    \vspace{0.14cm}%
+    \leavevmode%
+    \tikz[baseline=-0.65ex]\node[circle,fill=peeblue,text=white,inner sep=0pt,font=\tiny\bfseries,minimum size=1.35em]{\inserttocsectionnumber};%
+    \hspace{0.35em}%
+    \inserttocsection\par%
+  }
+  \begin{columns}[t]
+      \begin{column}{0.48\textwidth}
+          \begin{block}{\small\textbf{I. Onde Estamos}}
+              \tableofcontents[sections={1}]
+          \end{block}
+      \end{column}
+      \begin{column}{0.48\textwidth}
+          \begin{block}{\small\textbf{II. Para Onde Vamos}}
+              \tableofcontents[sections={2}]
+          \end{block}
+      \end{column}
+  \end{columns}
+\end{frame}
+
+%===========================================
+% SEÇÃO 1: PANORAMA
+%===========================================
+\section{Panorama: Modelos e Representações Implementados}
+
+\begin{frame}
+    \centering
+    \huge Panorama de Resultados
+\end{frame}
+
+\begin{frame}{Representações de Espectro Implementadas}
+    \footnotesize
+    \begin{columns}[t]
+        \column{0.49\textwidth}
+        \begin{block}{\small MEL}
+            \scriptsize
+            Log-espectrograma em escala Mel (256 bandas): comprime as altas frequências e preserva a envoltória espectral de banda larga.
+        \end{block}
+        \begin{block}{\small LOFAR}
+            \scriptsize
+            Espectrograma com normalização TPSW (remove o fundo de banda larga e realça linhas tonais): 1.024 faixas de 7,8 Hz, até 8 kHz.
+        \end{block}
+
+        \column{0.49\textwidth}
+        \begin{block}{\small HHT}
+            \scriptsize
+            Transformada de Hilbert--Huang: decomposição em modos intrínsecos e espectro de Hilbert (sinais não estacionários).
+        \end{block}
+        \begin{block}{\small DEMON}
+            \scriptsize
+            Demodulação da envoltória: frequências de modulação ligadas à rotação do eixo e ao número de pás do hélice.
+        \end{block}
+    \end{columns}
+    \vspace{0.1cm}
+    {\scriptsize MEL e LOFAR são as representações do artigo (Silva et al., 2025); HHT e DEMON foram acrescentadas neste trabalho.\par}
+\end{frame}
+
+\begin{frame}{Modelos Implementados: Índice SP (\%)}
+    \small
+    \begin{table}[h]
+    \centering
+    \resizebox{0.8\textwidth}{!}{%
+    \begin{tabular}{lcccc}
+    \toprule
+    \textbf{Família} & \textbf{MEL} & \textbf{LOFAR} & \textbf{HHT} & \textbf{DEMON} \\
+    \midrule
+    Random Forest     & $61,5 \pm 1,9$ & $63,1 \pm 1,8$ & $57,6 \pm 2,1$ & $44,4 \pm 2,2$ \\
+    SVM Nyström       & $63,8 \pm 1,1$ & $63,8 \pm 1,9$ & $51,2 \pm 6,1$ & $44,9 \pm 4,6$ \\
+    MLP [32, 16]      & $64,7 \pm 2,0$ & \cahi{$66,2 \pm 1,8$} & $56,7 \pm 1,4$ & $53,1 \pm 2,4$ \\
+    BiGRU + atenção   & $63,6 \pm 1,5$ & $62,2 \pm 1,1$ & $58,2 \pm 2,1$ & $55,5 \pm 1,4$ \\
+    CNN 2D            & $65,5 \pm 1,7^{\dagger}$ & \cahi{$66,5 \pm 1,3$} & $60,7 \pm 2,0$ & $53,2 \pm 2,3$ \\
+    \midrule
+    SVM em cascata (híbrido)$^{\ddagger}$ & & \cahi{$67,2 \pm 1,8$} & & \\
+    \midrule
+    \textit{Artigo: melhor modelo} & & \cart{CNN $66,05 \pm 1,90$} & & \\
+    \bottomrule
+    \end{tabular}%
+    }
+    \end{table}
+    \vspace{-0.1cm}
+    {\tiny 10 folds do $5\times2$cv, 4 classes, voto por gravação. As CNNs LOFAR e MEL são as do artigo (reproduzidas); $^{\dagger}$artigo: $63,52 \pm 2,26$ (a CNN MEL antiga do repositório, de outra arquitetura, dava $63,8 \pm 2,2$; $p = 0,02$). $^{\ddagger}$SVM LOFAR seguido de um especialista SMALL $\times$ LARGE (MEL + LOFAR-PCA8), por janela: recall SMALL $38,2 \to 63,7\%$ e LARGE $76,3 \to 63,5\%$ em relação ao SVM LOFAR.\par}
+
+    \vspace{0.05cm}
+    \begin{alertblock}{Patamar}
+        \footnotesize
+        Com MEL ou LOFAR, todas as famílias ficam entre \textbf{61,5\% e 66,5\%} de SP; a cascata chega a \textbf{67,2\%}. Não há diferença significativa entre os melhores (cascata vs. MLP LOFAR: $p = 0,56$; vs. CNN LOFAR: $p = 0,78$; F-test $5\times2$cv), e todos estão dentro de um desvio do artigo.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Recall por Classe: SMALL e MEDIUM São as Mais Difíceis}
+    \footnotesize
+    \begin{columns}[t]
+        \column{0.53\textwidth}
+        \begin{block}{\small Recall médio (\%) por representação}
+            \scriptsize
+            \centering
+            \setlength{\tabcolsep}{4pt}
+            \begin{tabular}{lcccc}
+            \toprule
+             & SMALL & MEDIUM & LARGE & BACKGR. \\
+            \midrule
+            MEL   & 49,2 & 61,7 & 68,3 & 79,0 \\
+            LOFAR & 47,2 & 58,5 & 73,5 & 81,9 \\
+            HHT   & 38,8 & 55,7 & 68,2 & 72,1 \\
+            DEMON & 34,2 & 44,2 & 68,0 & 66,1 \\
+            \midrule
+            \textbf{20 modelos} & \textbf{42,4} & \textbf{55,0} & \textbf{69,5} & \textbf{74,8} \\
+            faixa & 12--58 & 35--64 & 61--79 & 28--88 \\
+            \bottomrule
+            \end{tabular}
+
+            \vspace{0.05cm}
+            {\tiny Média das 5 famílias em cada representação.\par}
+        \end{block}
+
+        \column{0.45\textwidth}
+        \begin{block}{\small Para onde vão os erros (MEL e LOFAR)}
+            \scriptsize
+            \centering
+            \begin{tabular}{lcccc}
+            \toprule
+            Real $\backslash$ Pred. & S & M & L & B \\
+            \midrule
+            SMALL  & \textbf{48,2} & 23,1 & 22,2 & 6,5 \\
+            MEDIUM & 24,5 & \textbf{60,1} & 13,4 & 2,0 \\
+            LARGE  & 14,6 & 12,1 & \textbf{70,9} & 2,4 \\
+            BACKGR. & 10,4 & 4,2 & 5,0 & \textbf{80,4} \\
+            \bottomrule
+            \end{tabular}
+
+            \vspace{0.05cm}
+            {\tiny \% por linha; 10 modelos (5 famílias $\times$ MEL/LOFAR).\par}
+        \end{block}
+    \end{columns}
+
+    \vspace{0.1cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        \textbf{LARGE} e \textbf{BACKGROUND} são as classes mais fáceis; \textbf{SMALL} é a mais difícil (menos da metade acertada) e se confunde quase igualmente com MEDIUM e LARGE. Os erros se concentram entre as \textbf{classes de navios}: só 2--7\% dos navios são classificados como fundo. É o principal alvo da Tarefa 1.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{Os Modelos Erram Juntos}
+    \footnotesize
+    Q de Yule entre os erros de dois modelos, por gravação ($+1$ = erram sempre juntos; $0$ = erros independentes):
+
+    \vspace{0.1cm}
+    \begin{columns}[t]
+        \column{0.49\textwidth}
+        \begin{block}{\small Mesma representação, famílias diferentes}
+            \scriptsize
+            \centering
+            Mediana \textbf{Q = 0,83} (0,55 a 0,97)
+
+            \vspace{0.1cm}
+            \begin{tabular}{lcccc}
+            \toprule
+             & MEL & LOFAR & HHT & DEMON \\
+            \midrule
+            Q & 0,87 & 0,87 & 0,83 & 0,76 \\
+            \bottomrule
+            \end{tabular}
+        \end{block}
+
+        \column{0.49\textwidth}
+        \begin{block}{\small Mesma família, representações diferentes}
+            \scriptsize
+            \centering
+            Mediana \textbf{Q = 0,63} (0,47 a 0,90)
+
+            \vspace{0.1cm}
+            \begin{tabular}{lc}
+            \toprule
+            Par & Q \\
+            \midrule
+            MEL $\times$ LOFAR & 0,83 \\
+            MEL $\times$ DEMON & 0,53 \\
+            \bottomrule
+            \end{tabular}
+        \end{block}
+    \end{columns}
+
+    \vspace{0.1cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        Trocar o classificador muda pouco: os erros dependem mais da \textbf{gravação} e da \textbf{representação} do que do modelo. Há gravações que todos erram (o caso extremo são SMALL com energia concentrada abaixo de 200 Hz, como navios grandes). Isso motiva olhar diretamente para o \textbf{conteúdo espectral} das classes.
+    \end{alertblock}
+\end{frame}
+
+%===========================================
+% SEÇÃO 2: PRÓXIMOS PASSOS
+%===========================================
+\section{Próximos Passos}
+
+\begin{frame}
+    \centering
+    \huge Próximos Passos
+\end{frame}
+
+\begin{frame}{Tarefa 1: Frequências Comuns no LOFAR por Classe}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Comparar os espectros LOFAR de SMALL, MEDIUM e LARGE e encontrar \textbf{frequências comuns} a cada classe --- e verificar se as gravações que os modelos erram têm o padrão de frequências de outra classe.
+    \end{block}
+
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{\small (a) Espectro médio}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item Espectro LOFAR médio de cada classe.
+                \item Diferença entre classes, faixa a faixa, com teste estatístico e correção FDR.
+            \end{itemize}
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small (b) Linhas tonais}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item Picos que persistem no tempo em cada gravação.
+                \item Frequências e harmônicos mais comuns em cada classe.
+            \end{itemize}
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small (c) Acertos $\times$ erros}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item Repetir (a) e (b) separando gravações acertadas e erradas.
+                \item Ex.: os SMALL errados se parecem com o espectro de LARGE?
+            \end{itemize}
+        \end{block}
+    \end{columns}
+
+    \vspace{0.05cm}
+    {\scriptsize\textbf{Extensão:} repetir (a)--(c) com MEL, HHT e DEMON (no DEMON, frequências de modulação: rotação do eixo e pás).\par}
+    {\scriptsize\textbf{Custo:} LOFAR já processado para as 1.706 gravações; roda em CPU.\par}
+\end{frame}
+
+\begin{frame}{Tarefa 2: Multi-Head Adaptativo e HHT Modificada}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Obter códigos de outros projetos e avaliar se podem ser incorporados ao pipeline do IARA.
+    \end{block}
+
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.49\textwidth}
+        \begin{block}{\small (a) Multi-head adaptativo (Mateus)}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item Enviar e-mail ao Mateus solicitando o código.
+                \item Analisar o código.
+                \item Verificar se pode ser usado no IARA.
+            \end{itemize}
+        \end{block}
+
+        \column{0.49\textwidth}
+        \begin{block}{\small (b) HHT modificada (Natanael)}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item Solicitar o código ao Natanael.
+                \item Reimplementar em Python.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+\end{frame}
+
+\begin{frame}{Tarefa 3: Combinação de Representações}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Criar uma \textbf{nova representação} que combine MEL, LOFAR, HHT e DEMON, para servir de entrada no treino de novos modelos.
+    \end{block}
+
+    \vspace{0.05cm}
+    {\scriptsize\textbf{Já feito:} MEL + DEMON por concatenação simples (um vetor colado no outro). A questão é se existe uma forma melhor de combinar.\par}
+
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{\small Imagem multicanal}
+            \scriptsize
+            Levar as representações a um eixo de tempo e frequência comum e empilhá-las como canais de uma mesma imagem (como o RGB).
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small Projeção conjunta}
+            \scriptsize
+            Extrair componentes que resumem as representações em conjunto (ex.: PCA conjunta, análise de correlação canônica).
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small Seleção de bandas}
+            \scriptsize
+            Montar um vetor com as faixas mais informativas de cada representação, guiado pelas frequências da Tarefa 1.
+        \end{block}
+    \end{columns}
+
+    \vspace{0.1cm}
+    {\scriptsize\textbf{Desafio:} as representações têm resoluções diferentes --- MEL e LOFAR a cada 0,512 s; HHT e DEMON a cada $\sim$5 s --- e eixos distintos (o DEMON mede frequência de modulação, não frequência acústica).\par}
+\end{frame}
+
+\begin{frame}{Tarefa 4: Compactação das Representações}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Verificar se representações compactadas (menos dimensões) ajudam os modelos a classificar.
+    \end{block}
+
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{\small LOFAR + PCA}
+            \scriptsize
+            Projeção linear nos componentes de maior variância.
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small LOFAR + KPCA}
+            \scriptsize
+            PCA com \textit{kernel}: captura relações não lineares entre as frequências.
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small HHT + Autoencoder}
+            \scriptsize
+            Rede que aprende a comprimir e reconstruir a representação; o código comprimido vira a entrada do classificador.
+        \end{block}
+    \end{columns}
+
+    \vspace{0.1cm}
+    {\scriptsize\textbf{Já feito:} PCA de 64 componentes no SVM LOFAR, sem efeito significativo, e LOFAR-PCA8 no especialista híbrido SMALL $\times$ LARGE.\par}
+    {\scriptsize\textbf{Avaliação:} compactação ajustada só no treino de cada fold; comparar com a representação original no mesmo modelo (F-test $5\times2$cv).\par}
+\end{frame}
+
+\begin{frame}{Tarefa 5: Modelos Mais Recentes}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Verificar se arquiteturas mais recentes, que modelam a sequência temporal do sinal, melhoram a classificação.
+    \end{block}
+
+    \vspace{0.05cm}
+    \begin{columns}[t]
+        \column{0.32\textwidth}
+        \begin{block}{\small Recorrentes}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{1pt}
+                \item LSTM e GRU
+                \item Bi-LSTM e Bi-GRU (leem a sequência nos dois sentidos)
+            \end{itemize}
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small Transformers}
+            \scriptsize
+            Atenção sobre toda a sequência de janelas, sem recorrência.
+        \end{block}
+
+        \column{0.32\textwidth}
+        \begin{block}{\small Seq-KAN}
+            \scriptsize
+            Redes de Kolmogorov--Arnold aplicadas a sequências.
+        \end{block}
+    \end{columns}
+
+    \vspace{0.1cm}
+    {\scriptsize\textbf{Já feito:} Bi-GRU com atenção nas 4 representações (SP de 55,5\% a 63,6\%) e GRU em experimentos com MEL + LOFAR-PCA. Ainda não implementados: LSTM, Bi-LSTM, Transformers e Seq-KAN.\par}
+\end{frame}
+
+\begin{frame}{Tarefa 6: LOFAR $\times$ DEMON ao Longo do Tempo}
+    \footnotesize
+    \begin{block}{\small Objetivo}
+        \scriptsize
+        Acompanhar, janela a janela, a classificação do LOFAR junto com a do DEMON e ver se as duas vão concordando ao longo da gravação.
+    \end{block}
+
+    \begin{columns}[t]
+        \column{0.49\textwidth}
+        \begin{block}{\small Como}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{0pt}
+                \item Alinhar no tempo (LOFAR a cada 0,512 s; DEMON a cada $\sim$5 s).
+                \item Registrar a classe de cada um por instante. Ex.: janela 1 --- LOFAR = LARGE, DEMON = LARGE.
+            \end{itemize}
+        \end{block}
+
+        \column{0.49\textwidth}
+        \begin{block}{\small O que observar}
+            \scriptsize
+            \begin{itemize}
+                \setlength{\itemsep}{0pt}
+                \item Trechos em que concordam e em que divergem.
+                \item Efeito da aproximação do navio (CPA).
+                \item Se, quando concordam, a classificação acerta mais.
+            \end{itemize}
+        \end{block}
+    \end{columns}
+
+    \begin{alertblock}{\small Analogia: apuração das eleições}
+        \scriptsize
+        As regiões entram na contagem em tempos distintos (normalmente o Sudeste antes do Nordeste), e não se espera o Nordeste para começar a apurar. Da mesma forma: classificar continuamente com o modelo de janelas curtas (LOFAR) e, quando chegar a decisão do modelo de janelas longas (DEMON), \textbf{combinar na votação}.
+    \end{alertblock}
+\end{frame}
+
+%===========================================
+% SLIDE FINAL
+%===========================================
+\begin{frame}
+    \centering
+    \Huge Obrigado!
+
+    \vspace{0.8cm}
+    \normalsize
+    Evandro Rocha\\
+    UFRJ / COPPE / PEE
+\end{frame}
+
+\end{document}
