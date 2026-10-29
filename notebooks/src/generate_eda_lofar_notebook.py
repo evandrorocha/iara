@@ -18,6 +18,10 @@ predições por gravação via iara_results.py, src/iara/dataset_info/iara.csv.
 Cache: data/iara_processed/cache_lofar_espectro_medio.pkl (espectro médio de cada gravação; criado se não existir).
 
 Rodar na raiz do repositório:  python notebooks/src/generate_eda_lofar_notebook.py [LARGE|MEDIUM|SMALL]
+LARGE usa build() (passos 0, (a)–(e)). MEDIUM e SMALL usam build_destino(): os erros dessas classes vão para mais de
+uma classe, então as erradas são separadas por destino, e a banda 31–86 Hz das LARGE é testada fora da amostra.
+LARGE usa build() (passos 0, (a)–(e)); MEDIUM e SMALL usam build_destino(): os erros dessas classes vão para mais
+de uma classe, então as erradas são separadas por destino, e a banda 31–86 Hz das LARGE é testada fora da amostra.
 """
 import json
 import os
@@ -626,6 +630,257 @@ ax.set_xlabel('frequência da raia (Hz)'); ax.set_ylabel('raias por gravação')
 ax.set_title('Raias estreitas persistentes abaixo de 31 Hz'); plt.tight_layout(); plt.show()
 '''
 
+# ---------------------------------------------------------------------------------------------------------------------
+# Versão "por destino" (MEDIUM, SMALL): os erros dessas classes vão para mais de uma classe, com assinaturas opostas,
+# então as erradas são separadas pela classe para onde vão.
+# ---------------------------------------------------------------------------------------------------------------------
+DEST_CODE = r'''
+# destino de cada gravação errada: a classe mais prevista nos folds em que ela foi teste
+_d = pd.concat(R.file_predictions(MODELO).values()); _d = _d[_d.Target == C].copy(); _d['File'] = _d.File.astype(int)
+_dest = _d[_d.Prediction != C].groupby('File').Prediction.agg(lambda x: x.value_counts().index[0]).map(CLS)
+T['destino'] = _dest.reindex(T.index)
+T['subgrupo'] = np.where(T.grupo == 'errada', 'errada→' + T.destino.fillna('?'), T.grupo)
+NAV_DEST = T[T.grupo == 'errada'].groupby('destino')['Ship ID'].nunique().sort_values(ascending=False)
+DESTS = [d for d in NAV_DEST.index if NAV_DEST[d] >= 10]          # destinos com pelo menos 10 navios
+SUBS = ['acertada'] + [f'errada→{d}' for d in DESTS]
+RESUMO_SUB = T.groupby('subgrupo').agg(gravações=('grupo', 'size'), navios=('Ship ID', 'nunique'),
+                                       comprimento_mediano=('Length', 'median'))
+print('Subgrupos (errada→X = gravação sempre errada, prevista sobretudo como X):'); display(RESUMO_SUB)
+print('Gravações por subconjunto:'); display(pd.crosstab(T.subgrupo, T.Dataset, margins=True, margins_name='total'))
+
+# a classe é definida pelo comprimento: um navio não aparece em duas classes (os navios das outras classes são outros)
+_cl = LAB.map(CLS).to_frame('classe').join(meta[['Ship ID']]).dropna()
+_cl = _cl[_cl['Ship ID'].str.strip().isin(['', '-']) == False]
+N_NAVIOS_COMUNS = int((_cl.groupby('Ship ID').classe.nunique() > 1).sum())
+print(f'Navios presentes em mais de uma classe: {N_NAVIOS_COMUNS}')
+'''
+
+MEDIO_DEST_CODE = r'''
+REF = {CLS[c]: S.loc[LAB.index[LAB == c]] for c in range(4) if c != C}
+GS = {s: S.loc[T.index[T.subgrupo == s]] for s in SUBS}
+cores_s = dict(zip(SUBS, ['tab:green', 'tab:red', 'tab:orange', 'tab:brown']))
+cores_ref = {'SMALL': 'tab:blue', 'MEDIUM': 'tab:purple', 'LARGE': 'k', 'BACKGROUND': 'tab:gray'}
+fig, ax = plt.subplots(2, 1, figsize=(13, 8))
+for a, fmax in zip(ax, (8000, 500)):
+    k = F <= fmax
+    for s, X in GS.items():
+        m, se = X.mean().values, X.std().values / np.sqrt(len(X))
+        a.plot(F[k], m[k], color=cores_s[s], lw=1.6, label=f'{CLASSE} {s} (n={len(X)})')
+        a.fill_between(F[k], (m - 1.96 * se)[k], (m + 1.96 * se)[k], color=cores_s[s], alpha=0.2)
+    for c, X in REF.items():
+        a.plot(F[k], X.mean().values[k], color=cores_ref[c], lw=1, ls='--', label=f'{c} (todas, n={len(X)})')
+    a.set_xlabel('frequência (Hz)'); a.set_ylabel('LOFAR médio (dB acima do fundo)'); a.set_xlim(0, fmax)
+ax[0].set_title(f'Espectro LOFAR médio — {CLASSE} acertadas e erradas por destino (faixa = IC 95% da média)')
+ax[1].set_title('Zoom: 0–500 Hz'); ax[0].legend(fontsize=8, ncol=2)
+plt.tight_layout(); plt.show()
+'''
+
+TESTE_DEST_CODE = r'''
+ia = T.index[T.subgrupo == 'acertada']
+CONTRASTES = {'errada (todas)': T.index[T.grupo == 'errada'], **{f'errada→{d}': T.index[T.subgrupo == f'errada→{d}'] for d in DESTS}}
+TFD, _rows = {}, []
+FAIXAS_B = [0, 31, 86, 150, 250, 500, 1000, 2000, 4000, 8001]
+for nome, ie in CONTRASTES.items():
+    tf, na, ne = teste_faixas(ia, ie); tf['sig'] = tf['q (FDR)'] < 0.05; TFD[nome] = tf
+    b = tf.groupby(pd.cut(tf['f (Hz)'], FAIXAS_B, right=False), observed=False)
+    r = {'contraste': f'acertada × {nome}', 'navios acertada': na, 'navios errada': ne,
+         'faixas com q < 0,05': int(tf.sig.sum()), 'abaixo de 1 kHz': int(tf[tf['f (Hz)'] < 1000].sig.sum()),
+         'acima de 1 kHz': int(tf[tf['f (Hz)'] >= 1000].sig.sum())}
+    r.update({f'Δ {iv.left}–{min(iv.right, 8000)} Hz': v for iv, v in b['Δ (errada − acertada)'].mean().items()})
+    r.update({f'AUC {iv.left}–{min(iv.right, 8000)} Hz': v for iv, v in b['AUC'].mean().items()})
+    _rows.append(r)
+CONTR = pd.DataFrame(_rows).set_index('contraste')
+print('Δ e AUC médios por banda (errada − acertada; médias por navio):'); display(CONTR.round(2).T)
+
+fig, ax = plt.subplots(len(TFD), 1, figsize=(13, 2.6 * len(TFD)), sharex=True, sharey=True)
+for a, (nome, tf) in zip(np.atleast_1d(ax), TFD.items()):
+    k = tf['f (Hz)'] <= 1000
+    a.plot(tf['f (Hz)'][k], tf['Δ (errada − acertada)'][k], color='k', lw=1)
+    s_ = k & tf.sig
+    a.scatter(tf['f (Hz)'][s_], tf['Δ (errada − acertada)'][s_], color='tab:red', s=10, label='q < 0,05')
+    a.axhline(0, color='gray', lw=0.8); a.axvspan(31, 86, color='0.92', zorder=0)
+    a.set_ylabel('Δ (dB)'); a.set_title(f'{CLASSE}: {nome} − acertada ({int(tf.sig.sum())} faixas com q < 0,05)', fontsize=10)
+    if s_.any():
+        a.legend(fontsize=8)
+np.atleast_1d(ax)[-1].set_xlabel('frequência (Hz) — faixa cinza: banda 31–86 Hz das LARGE')
+plt.tight_layout(); plt.show()
+'''
+
+APRIORI_CODE = r'''
+# Hipótese fixada ANTES de olhar esta classe: a banda 31–86 Hz que separa as LARGE acertadas das erradas (NB35 LARGE),
+# e a faixa 100–150 Hz, onde as LARGE erradas tinham mais conteúdo. Os navios desta classe não entraram naquela análise.
+BL, BC = (F >= 31) & (F < 86), (F >= 100) & (F < 150)
+_kp = (F >= 20) & (F <= 250)
+_pico = pd.Series(F[np.where(_kp)[0][S.values[:, _kp].argmax(1)]], index=S.index)
+X = pd.DataFrame({'banda 31–86 Hz (dB)': S.loc[T.index, BL].mean(1), '100–150 Hz (dB)': S.loc[T.index, BC].mean(1),
+                  'pico grave em 31–86 Hz': _pico.loc[T.index].between(31, 86, inclusive='left')}).join(T[['subgrupo', 'Ship ID']])
+NAV = X.groupby(['subgrupo', 'Ship ID']).mean(numeric_only=True).reset_index()
+_a = NAV[NAV.subgrupo == 'acertada']
+_rows = []
+for s in SUBS:
+    x = NAV[NAV.subgrupo == s]
+    r = {'subgrupo': f'{CLASSE} {s}', 'navios': len(x)}
+    for c in ('banda 31–86 Hz (dB)', '100–150 Hz (dB)'):
+        r[f'{c}: mediana'] = x[c].median()
+        if s != 'acertada':
+            U, p = mannwhitneyu(x[c], _a[c]); r[f'{c}: AUC vs acertada'] = U / (len(x) * len(_a)); r[f'{c}: p'] = p
+    r['% gravações com pico em 31–86 Hz'] = 100 * X[X.subgrupo == s]['pico grave em 31–86 Hz'].mean()
+    _rows.append(r)
+for c in REF:
+    ids = LAB.index[LAB == CID[c]]
+    _rows.append({'subgrupo': f'{c} (todas)', 'navios': meta.loc[ids, 'Ship ID'].nunique() if c != 'BACKGROUND' else np.nan,
+                  'banda 31–86 Hz (dB): mediana': S.loc[ids, BL].mean(1).median(), '100–150 Hz (dB): mediana': S.loc[ids, BC].mean(1).median(),
+                  '% gravações com pico em 31–86 Hz': 100 * _pico.loc[ids].between(31, 86, inclusive='left').mean()})
+APRIORI = pd.DataFrame(_rows).set_index('subgrupo')
+display(APRIORI.round(3))
+'''
+
+SEM_DEST_CODE = r'''
+# distância RMS (dB) entre o espectro médio de cada subgrupo e o de cada classe, 0–500 Hz
+k = F <= 500
+REF_ALL = {CLS[c]: S.loc[LAB.index[LAB == c]].mean().values for c in range(4)}
+SEMD = pd.DataFrame({f'{CLASSE} {s}': {c: np.sqrt(((GS[s].mean().values[k] - m[k]) ** 2).mean()) for c, m in REF_ALL.items()}
+                     for s in SUBS}).T
+display(SEMD.round(2))
+'''
+
+BANDA_PREV_CODE = r'''
+# A banda como pista do modelo: em que fração dos folds a gravação é prevista como LARGE, sem e com o pico grave
+# (maior LOFAR médio entre 20 e 250 Hz) em 31–86 Hz? Só gravações de navio (sem BACKGROUND).
+_kp = (F >= 20) & (F <= 250)
+_pk = pd.Series(F[np.where(_kp)[0][S.values[:, _kp].argmax(1)]], index=S.index)
+_dd = pd.concat(R.file_predictions(MODELO).values()); _dd['File'] = _dd.File.astype(int)
+_t = _dd.assign(L=_dd.Prediction == CID['LARGE']).groupby('File').agg(L=('L', 'mean'), Target=('Target', 'first'))
+_t = _t[_t.Target != CID['BACKGROUND']]
+_t['banda'] = _pk.reindex(_t.index).between(31, 86, inclusive='left')
+_t['classe'] = _t.Target.map(CLS)
+BANDA_PREV = (100 * _t.groupby(['classe', 'banda']).L.mean().unstack()).rename(
+    columns={False: '% prevista LARGE, sem a banda', True: '% prevista LARGE, com a banda'})
+BANDA_PREV.columns.name = None
+BANDA_PREV['% das gravações com a banda'] = 100 * _t.groupby('classe').banda.mean()
+BANDA_PREV = BANDA_PREV.loc[['SMALL', 'MEDIUM', 'LARGE']]
+FRAC_LARGE_BANDA = 100 * (_t[_t.banda].classe == 'LARGE').mean()
+display(BANDA_PREV.round(1))
+print(f'Das gravações de navio com a banda, {FRAC_LARGE_BANDA:.0f}% são LARGE.')
+'''
+
+
+ACERT_CODE = r'''
+# As acertadas têm um padrão próprio de frequência, ou o acerto vem de navios repetidos entre treino e teste?
+# (1) acertadas × cada outra classe de navio, faixa a faixa por navio (Mann-Whitney + FDR)
+_A = por_navio(T.index[T.subgrupo == 'acertada'])
+def nav_classe(c):
+    ids = LAB.index[LAB.map(CLS) == c]
+    return S.loc[ids].groupby(meta.loc[ids, 'Ship ID'].values).mean()
+_rows = []
+for c in [x for x in ('SMALL', 'MEDIUM', 'LARGE') if x != CLASSE]:
+    B = nav_classe(c)
+    U, p = mannwhitneyu(_A.values, B.values, axis=0); q = false_discovery_control(p)
+    d = _A.values.mean(0) - B.values.mean(0); auc = U / (len(_A) * len(B))
+    r = {'comparação': f'{CLASSE} acertada × {c}', 'navios': f'{len(_A)} × {len(B)}', 'faixas com q < 0,05': int((q < 0.05).sum())}
+    for lo, hi in ((31, 86), (86, 150), (150, 250)):
+        k = (F >= lo) & (F < hi)
+        r[f'Δ {lo}–{hi} Hz (dB)'] = d[k].mean(); r[f'AUC {lo}–{hi} Hz'] = auc[k].mean()
+    _rows.append(r)
+ACV = pd.DataFrame(_rows).set_index('comparação')
+print('Acertadas contra as outras classes (médias por navio; Δ = acertada − outra classe):'); display(ACV.round(3))
+
+# (2) onde cai o pico grave: acertadas × classes inteiras
+_cut = lambda x: pd.cut(x, [20, 31, 86, 140, 251], right=False, labels=['20–31 Hz', '31–86 Hz', '86–140 Hz', '140–250 Hz'])
+PICO_AC = pd.DataFrame({f'{CLASSE} acertada': _cut(_pico.loc[T.index[T.subgrupo == 'acertada']]).value_counts(normalize=True, sort=False),
+                        **{c: _cut(_pico.loc[LAB.index[LAB.map(CLS) == c]]).value_counts(normalize=True, sort=False)
+                           for c in ('SMALL', 'MEDIUM', 'LARGE')}}) * 100
+print('Onde cai o pico grave (% das gravações):'); display(PICO_AC.round(1))
+
+# (3) taxa de acerto conforme o número de gravações do navio (nesta classe e nas LARGE, para comparação)
+def por_tamanho(Tx):
+    n = Tx['Ship ID'].map(Tx.groupby('Ship ID').size())
+    fx = pd.cut(n, [0, 1, 3, 10, 10000], labels=['1', '2–3', '4–10', 'mais de 10'])
+    t = (pd.crosstab(fx, Tx.grupo, normalize='index') * 100)[['acertada', 'oscila', 'errada']]
+    return t.join(Tx.groupby(fx, observed=True).agg(gravações=('grupo', 'size'), navios=('Ship ID', 'nunique')))
+_tl = taxa_acerto(MODELO, CID['LARGE'])
+_TL = pd.DataFrame({'grupo': grupo(_tl)}, index=_tl.index).join(meta[['Ship ID']])   # grupo() devolve array: manter o índice
+TAM = pd.concat({CLASSE: por_tamanho(T), 'LARGE': por_tamanho(_TL)}, axis=0)
+print('Grupo (% das gravações) conforme o número de gravações do navio:'); display(TAM.round(1))
+_n = T['Ship ID'].map(T.groupby('Ship ID').size())
+N_AC, N_AC_GRANDES = int((T.grupo == 'acertada').sum()), int(((T.grupo == 'acertada') & (_n > 10)).sum())
+N_NAV_GRANDES = int(T.loc[_n > 10, 'Ship ID'].nunique())
+TOP_AC = T[T.grupo == 'acertada']['Ship ID'].value_counts().head(5).rename('acertadas').to_frame()
+TOP_AC = TOP_AC.join(meta.drop_duplicates('Ship ID').set_index('Ship ID')[['Name', 'DETAILED TYPE', 'Length']])
+TOP_AC['gravações do navio'] = T.groupby('Ship ID').size().reindex(TOP_AC.index)
+print('Navios com mais gravações acertadas:'); display(TOP_AC)
+
+# (4) o navio mais frequente: quantas gravações dele estão no teste e quantas no treino, em cada fold?
+_top = TOP_AC.index[0]
+_ids = set(T.index[T['Ship ID'] == _top])
+_fp = R.file_predictions(MODELO)
+FOLDS_TOP = pd.DataFrame({f: {'no teste': len(_ids & set(v.File.astype(int))), 'fora do teste (treino)': len(_ids) - len(_ids & set(v.File.astype(int)))}
+                          for f, v in _fp.items()}).T
+FOLDS_TOP.index.name = 'fold'
+print(f'Navio {_top}: {len(_ids)} gravações, divididas entre teste e treino em cada fold do split do artigo:'); display(FOLDS_TOP.T)
+'''
+
+META_DEST_CODE = r'''
+# Comprimento, condições e subconjunto por subgrupo (por gravação; Mann-Whitney contra as acertadas)
+M = T[['subgrupo', 'Length', 'Dataset']].join(meta[['Wind', 'Sea state']])
+for c in ('Wind', 'Sea state'):
+    M[c] = pd.to_numeric(M[c], errors='coerce')
+_rows = []
+for s in SUBS:
+    x = M[M.subgrupo == s]; r = {'subgrupo': s, 'gravações': len(x)}
+    for c in ('Length', 'Wind', 'Sea state'):
+        r[f'{c}: mediana'] = x[c].median()
+        if s != 'acertada':
+            a, b = M[M.subgrupo == 'acertada'][c].dropna(), x[c].dropna()
+            r[f'{c}: p'] = mannwhitneyu(b, a).pvalue
+    _rows.append(r)
+METAD = pd.DataFrame(_rows).set_index('subgrupo')
+display(METAD.round(3))
+print('% das gravações de cada subgrupo por subconjunto:')
+display((pd.crosstab(M.subgrupo, M.Dataset, normalize='index') * 100).loc[SUBS].round(1))
+'''
+
+MISTO_DEST_CODE = r'''
+from scipy.stats import binomtest
+# Navios com gravações acertadas e erradas: a banda acompanha a gravação também aqui?
+_x = X[X.subgrupo.isin(SUBS)]
+_m = _x.groupby('Ship ID').subgrupo.agg(lambda s: set(s))
+MIXD = {}
+for s in SUBS[1:]:
+    navs = _m[_m.apply(lambda v: 'acertada' in v and s in v)].index
+    if len(navs) == 0:
+        MIXD[s] = None; continue
+    p_ = _x[_x['Ship ID'].isin(navs)].groupby(['Ship ID', 'subgrupo'])['banda 31–86 Hz (dB)'].mean().unstack()[['acertada', s]]
+    mais, menos = int((p_[s] > p_['acertada']).sum()), int((p_[s] < p_['acertada']).sum())
+    MIXD[s] = {'navios': len(navs), 'média acertada (dB)': p_['acertada'].mean(), 'média errada (dB)': p_[s].mean(),
+               'errada > acertada': mais, 'errada < acertada': menos,
+               'p (teste do sinal)': binomtest(mais, mais + menos).pvalue if mais + menos else np.nan}
+MIXD_T = pd.DataFrame({k: v for k, v in MIXD.items() if v}).T
+print('Banda 31–86 Hz nos navios com gravações acertadas e erradas (média por navio):'); display(MIXD_T.round(3))
+'''
+
+L1HZ_DEST_CODE = r'''
+from scipy.ndimage import median_filter
+from scipy.signal import find_peaks
+R1 = pd.read_pickle(os.path.join(R.ROOT, 'data', 'iara_processed', 'cache_lofar1hz_resumo.pkl'))
+F1 = np.asarray(R1['freqs']); S1 = R1['lofar_medio'].astype(float)
+def decompoe(i, lo=31, hi=86, jan=15, prom=3.0):
+    y = S1.loc[i].values; base = median_filter(y, size=jan, mode='nearest'); r = y - base
+    k = (F1 >= lo) & (F1 <= hi); pk, _ = find_peaks(r, prominence=prom); pk = pk[k[pk]]
+    return {'componente larga (dB)': base[k].mean(), 'energia das raias (dB)': np.clip(r[k], 0, None).mean(), 'raias (n)': len(pk)}
+DD = pd.DataFrame({i: decompoe(i) for i in T.index[T.subgrupo.isin(SUBS)]}).T.astype(float).join(T[['subgrupo', 'Ship ID']])
+NV = DD.groupby(['subgrupo', 'Ship ID']).mean().reset_index(); _a = NV[NV.subgrupo == 'acertada']
+_rows = []
+for s in SUBS[1:]:
+    x = NV[NV.subgrupo == s]
+    for c in ('componente larga (dB)', 'energia das raias (dB)', 'raias (n)'):
+        U, p = mannwhitneyu(x[c], _a[c])
+        _rows.append({'contraste': f'{s} × acertada', 'medida': c, 'mediana acertada': _a[c].median(), 'mediana errada': x[c].median(),
+                      'AUC (errada > acertada)': U / (len(x) * len(_a)), 'p': p})
+L1D = pd.DataFrame(_rows).set_index(['contraste', 'medida'])
+print('lofar1hz, 31–86 Hz, por navio:'); display(L1D.round(3))
+'''
+
 VALID_CODE = r'''
 from sklearn.model_selection import StratifiedGroupKFold
 from scipy.stats import fisher_exact
@@ -729,7 +984,7 @@ def build(classe="LARGE"):
     ns = {}
     for src in (setup, ROTULOS_CODE, MEDIO_CODE, TESTE_CODE, SEMELHANCA_CODE, ESTRATO_CODE, ROBUSTO_CODE,
                 PERS_CODE, OCUP_CODE, PICO_CODE, HARM_CODE, EXEMPLOS_CODE, TIPO_CODE, MESMO_NAVIO_CODE, COND_CODE,
-                LOGIT_CODE, VALID_CODE, L1HZ_CODE, DECOMP_CODE, BAIXAS_CODE):
+                LOGIT_CODE, VALID_CODE, L1HZ_CODE, DECOMP_CODE, BAIXAS_CODE, BANDA_PREV_CODE):
         ns["display"] = lambda *a, **k: None
         run(ns, src.replace("plt.show()", "plt.close('all')"))
     T, CONT, DESTINO, POR_DS = ns["T"], ns["CONT"], ns["DESTINO"], ns["POR_DS"]
@@ -817,6 +1072,8 @@ def build(classe="LARGE"):
         return f"mediana {br(r['mediana'], nd)}{u} (percentis 5–95: {br(r['percentil 5'], nd)}{u} a {br(r['percentil 95'], nd)}{u})"
     val_ok = N_ACHOU == N_DIV and FRAC_P["p na banda < 0,05"] >= 95 and FRAC_P["p Fisher < 0,05"] >= 95
     rv = RV["mediana"]
+
+    BP, FLB = ns["BANDA_PREV"], ns["FRAC_LARGE_BANDA"]
 
     # lofar1hz
     TF1, L1_MIN, L1_PICO, DCMP, DCTRL = ns["TF1"], ns["L1_MIN"], ns["L1_PICO"], ns["DEC_CMP"], ns["DEC_CTRL"]
@@ -930,6 +1187,14 @@ Para cada gravação, o **pico grave** é a faixa de maior LOFAR médio entre 20
 - **As erradas têm o pico onde as outras classes têm:** nas {outras_txt}. A distribuição das {classe} erradas é parecida com essas, e não com a das {classe} acertadas. O acúmulo na primeira faixa considerada (23,4 Hz) deve ser lido com cautela: ela está perto da borda inferior do espectro, onde o TPSW só tem vizinhos de um lado; mesmo sem ela, as erradas se concentram fora de 31–86 Hz (86–140 Hz).
 - **Não é uma linha estreita:** a largura mediana do pico nas acertadas é {br(larg_ac, 0)} Hz (~{br(larg_ac / 7.8125, 0)} faixas), e a altura mediana é {br(RP.loc['acertada', 'altura (dB)'], 1)} dB ({br(RP.loc['errada', 'altura (dB)'], 1)} dB nas erradas). É uma **banda de baixa frequência**, estreita o bastante em relação à janela do TPSW (±164 Hz) para sobressair do fundo estimado, e não uma raia tonal de uma faixa. Com faixas de 7,8 Hz, raias estreitas muito próximas também apareceriam como uma banda; o LOFAR do pipeline não as separa.
 - **Frequência do pico × tamanho:** dentro das {classe}, o pico fica mais grave quanto maior o navio (ρ de Spearman = {br(RHO_LEN[0], 2)}, {pv(RHO_LEN[1])}, um ponto por navio). A relação é fraca, mas tem o sentido esperado: navios maiores, componentes mais graves.
+"""),
+        md("""
+### 7.1 A banda como pista do modelo
+
+Para todas as gravações de navio: em que fração dos folds a CNN LOFAR prevê LARGE, conforme a gravação tenha ou não o pico grave em 31–86 Hz?
+"""), code(BANDA_PREV_CODE),
+        md(f"""
+**Leitura.** {banda_txt(BP, FLB)}
 """),
         md("""
 ## 8. Harmônicos
@@ -1061,7 +1326,7 @@ Nos espectrogramas com 1 Hz aparecem raias finas e estáveis abaixo de 30 Hz, qu
 1. **Frequência comum às {classe} acertadas:** uma banda de baixa frequência em ~{br(reg_lo, 0)}–{br(reg_hi, 0)} Hz (pico médio em {br(F[ipk], 0)} Hz); {br(dg.loc['31–86 Hz', 'acertada'], 0)}% delas têm o pico grave em 31–86 Hz. As {classe} erradas têm o pico grave em outras frequências, com distribuição parecida com a de {' e '.join(outras)}, e no espectro médio se parecem com {ref_prox_err}.
 2. **Subconjunto de gravação:** {'a diferença aparece dentro de cada subconjunto testado' if est_ok else 'a diferença não aparece em todos os subconjuntos'}. **Modelo:** {'o perfil se repete no consenso CNN + MLP + SVM' if rob_ok else 'o perfil muda no consenso dos três modelos'}.
 3. **É uma banda, não uma raia:** largura mediana de {br(larg_ac, 0)} Hz e {'nenhuma estrutura harmônica acima do acaso' if not harm_ok else 'algum sinal de harmônicos'}. Com 7,8 Hz não dava para separar banda larga de raias próximas; o item 8 responde com faixas de 1 Hz.
-4. **Os modelos parecem usar a frequência do pico grave como pista de tamanho:** o pico fica mais grave nos navios maiores (ρ = {br(RHO_LEN[0], 2)}), e as {classe} com o pico fora de 31–86 Hz são as que os modelos confundem com outras classes.
+4. **A banda é uma pista importante para o modelo dizer LARGE, mas fraca de tamanho real:** com a banda, a chance de ser chamada de LARGE sobe em todas as classes (SMALL de {br(BP.loc['SMALL', BP.columns[0]], 0)}% para {br(BP.loc['SMALL', BP.columns[1]], 0)}%, LARGE de {br(BP.loc['LARGE', BP.columns[0]], 0)}% para {br(BP.loc['LARGE', BP.columns[1]], 0)}%), mas ela aparece também em {br(BP.loc['SMALL', BP.columns[2]], 0)}% das SMALL e {br(BP.loc['MEDIUM', BP.columns[2]], 0)}% das MEDIUM (Seção 7.1). Dentro das {classe}, o pico fica um pouco mais grave nos navios maiores (ρ = {br(RHO_LEN[0], 2)}), mas a relação é fraca.
 5. **A banda depende da gravação, não só do navio:** {('nos ' + str(N_MIX) + ' navios com gravações nos dois grupos, ela aparece em ' + br(100 * pb['média acertada'], 0) + '% das gravações acertadas e em ' + br(100 * pb['média errada'], 0) + '% das erradas (' + pv(pb['p (teste do sinal)']) + ')') if mix_ok else 'no mesmo navio, a diferença não foi significativa (poucos navios)'}. Vento e mar agitado reduzem um pouco a banda, mas não explicam sozinhos a sua falta. A explicação mais provável fica no que o IARA não registra: regime de operação (velocidade, carga), distância e propagação. Isso ainda é uma **hipótese**.
 6. **Fatores complementares:** a banda sozinha prevê o erro com AUC = {br(la['banda + altura do pico'], 2)}, os metadados com {br(la[k_meta], 2)} e os dois juntos com {br(la['metadados + banda + altura'], 2)}.
 7. **Validação:** {('escolhida às cegas numa metade dos navios, a banda é a mesma (' + lim_txt.split(';')[0] + ') e o efeito se confirma na outra metade em ' + br(FRAC_P['p na banda < 0,05'], 0) + '% das ' + str(N_DIV) + ' divisões (AUC mediana ' + br(rv['AUC na banda'], 2) + '; logística banda + altura ' + br(rv['AUC logística: banda + altura'], 2) + ' em navios não vistos).') if val_ok else 'a replicação em metades de navios é parcial (ver Seção 11).'}
@@ -1079,9 +1344,294 @@ Nos espectrogramas com 1 Hz aparecem raias finas e estáveis abaixo de 30 Hz, qu
     print(f"Notebook gerado em '{filename}'")
 
 
+def banda_txt(BP, frac_l):
+    """Leitura da tabela BANDA_PREV: a banda é pista importante para o modelo, mas fraca de tamanho real."""
+    c = BP.columns
+    sem, com, pres = c[0], c[1], c[2]
+    sobe = "; ".join(f"{k} de {br(BP.loc[k, sem], 0)}% para {br(BP.loc[k, com], 0)}%" for k in BP.index)
+    return (f"**A banda é uma pista importante para o modelo dizer LARGE, mas uma pista fraca de tamanho real.** "
+            f"Em qualquer classe, ter a banda aumenta a chance de a gravação ser chamada de LARGE ({sobe}). "
+            f"Não é uma regra: mesmo com a banda, {br(100 - BP.loc['SMALL', com], 0)}% das SMALL e "
+            f"{br(100 - BP.loc['MEDIUM', com], 0)}% das MEDIUM não são chamadas de LARGE, e as LARGE sem a banda ainda são "
+            f"chamadas de LARGE em {br(BP.loc['LARGE', sem], 0)}% dos casos; o modelo usa outras pistas também. "
+            f"O problema é que a banda separa mal as classes reais: aparece em {br(BP.loc['LARGE', pres], 0)}% das LARGE, mas "
+            f"também em {br(BP.loc['SMALL', pres], 0)}% das SMALL e {br(BP.loc['MEDIUM', pres], 0)}% das MEDIUM, e das gravações "
+            f"com a banda só {br(frac_l, 0)}% são LARGE. Usá-la não é irracional (ela aumenta a probabilidade de LARGE), mas é "
+            f"fraca, e parte dos erros vem daí: as SMALL e MEDIUM chamadas de LARGE se concentram nas que têm a banda, e as "
+            f"LARGE chamadas de outra classe, nas que não a têm.")
+
+
 def sg_(x, nd=2):
     return ("+" if x >= 0.005 else "") + br(x, nd)
 
 
+def build_destino(classe):
+    """Versão para classes cujos erros se dividem entre destinos (MEDIUM, SMALL)."""
+    filename = os.path.join(NOTEBOOKS_DIR, f"35_eda_lofar_{classe.lower()}.ipynb")
+    setup = SETUP_CODE.replace("__CLASSE__", classe)
+    func = TESTE_CODE.split("TF, NA, NE")[0].strip("\n")      # só por_navio e teste_faixas
+    blocos = (setup, ROTULOS_CODE, func, DEST_CODE, MEDIO_DEST_CODE, TESTE_DEST_CODE, APRIORI_CODE, BANDA_PREV_CODE, MISTO_DEST_CODE,
+              SEM_DEST_CODE, ACERT_CODE, META_DEST_CODE, L1HZ_DEST_CODE)
+    ns = {}
+    for src in blocos:
+        ns["display"] = lambda *a, **k: None
+        run(ns, src.replace("plt.show()", "plt.close('all')"))
+    T, CONT, DESTINO, POR_DS = ns["T"], ns["CONT"], ns["DESTINO"], ns["POR_DS"]
+    SUBS, DESTS, RS, CONTR, TFD = ns["SUBS"], ns["DESTS"], ns["RESUMO_SUB"], ns["CONTR"], ns["TFD"]
+    AP, MIXD, SEMD, METAD, L1D = ns["APRIORI"], ns["MIXD"], ns["SEMD"], ns["METAD"], ns["L1D"]
+    BP, FLB = ns["BANDA_PREV"], ns["FRAC_LARGE_BANDA"]
+    cnt = CONT["CNN LOFAR"]
+    des = ", ".join(f"{c} {br(v, 1)}%" for c, v in DESTINO.items())
+    ds_err = POR_DS.drop(index="total")["% errada"]
+    errs = [s for s in SUBS if s != "acertada"]
+    sub_txt = "; ".join(f"**{s}**: {int(RS.loc[s, 'gravações'])} gravações de {int(RS.loc[s, 'navios'])} navios" for s in errs)
+    outros_dest = [d for d in RS.index if d.startswith("errada→") and d not in errs]
+    pool = CONTR.loc["acertada × errada (todas)"]
+
+    BANDAS_T = [b[2:] for b in CONTR.columns if b.startswith("Δ ")]
+
+    def marcantes(r):
+        # bandas com AUC média longe de 0,5 (<= 0,35 ou >= 0,65)
+        return [(b, r[f"Δ {b}"], r[f"AUC {b}"]) for b in BANDAS_T if abs(r[f"AUC {b}"] - 0.5) >= 0.15]
+
+    def contr_txt(s):
+        r = CONTR.loc[f"acertada × {s}"]
+        out = (f"**{s}** ({int(r['navios errada'])} navios): {int(r['faixas com q < 0,05'])} faixas com q < 0,05 "
+               f"({int(r['abaixo de 1 kHz'])} abaixo e {int(r['acima de 1 kHz'])} acima de 1 kHz)")
+        m = marcantes(r)
+        if m:
+            out += "; bandas que mais diferem: " + ", ".join(
+                f"{b} {sg_(d, 2 if abs(d) < 0.5 else 1)} dB (AUC {br(a, 2)})" for b, d, a in m)
+        return out
+
+    def ap_txt(s):
+        r = AP.loc[f"{classe} {s}"]
+        return (f"**{s}**: banda 31–86 Hz com mediana {br(r['banda 31–86 Hz (dB): mediana'], 1)} dB "
+                f"(AUC {br(r['banda 31–86 Hz (dB): AUC vs acertada'], 2)}, {pv(r['banda 31–86 Hz (dB): p'])}), "
+                f"100–150 Hz com {br(r['100–150 Hz (dB): mediana'], 1)} dB (AUC {br(r['100–150 Hz (dB): AUC vs acertada'], 2)}, "
+                f"{pv(r['100–150 Hz (dB): p'])}); {br(r['% gravações com pico em 31–86 Hz'], 0)}% das gravações com o pico grave em 31–86 Hz")
+    ra = AP.loc[f"{classe} acertada"]; rL = AP.loc["LARGE (todas)"] if "LARGE (todas)" in AP.index else None
+    ref_txt = ", ".join(f"{c.replace(' (todas)', '')} {br(AP.loc[c, '% gravações com pico em 31–86 Hz'], 0)}%"
+                        for c in AP.index if c.endswith("(todas)") and not c.startswith("BACKGROUND"))
+    sig_ap = {s: AP.loc[f"{classe} {s}", "banda 31–86 Hz (dB): p"] < 0.05 for s in errs}
+    para_large = [s for s in errs if s == "errada→LARGE"]
+    large_ok = bool(para_large) and sig_ap["errada→LARGE"] and AP.loc[f"{classe} errada→LARGE", "banda 31–86 Hz (dB): AUC vs acertada"] > 0.5
+
+    mix_txt = []
+    for s in errs:
+        m = MIXD.get(s)
+        if m is None:
+            mix_txt.append(f"**{s}**: nenhum navio tem gravações acertadas e {s}.")
+        else:
+            mix_txt.append(f"**{s}**: {int(m['navios'])} navios; banda de {br(m['média acertada (dB)'], 1)} dB nas gravações acertadas e "
+                           f"{br(m['média errada (dB)'], 1)} dB nas erradas; {int(m['errada > acertada'])} navios com mais banda na errada, "
+                           f"{int(m['errada < acertada'])} com menos ({pv(m['p (teste do sinal)'])})")
+    def leitura_dest(s):
+        r = CONTR.loc[f"acertada × {s}"]; ap = AP.loc[f"{classe} {s}"]
+        partes = []
+        if s == "errada→LARGE" and r["AUC 31–86 Hz"] >= 0.65:
+            partes.append("têm a **assinatura das LARGE**: mais conteúdo em 31–86 Hz e menos em 86–150 Hz")
+        elif r["faixas com q < 0,05"] == 0:
+            partes.append("nenhuma faixa difere das acertadas no teste faixa a faixa")
+        elif r["acima de 1 kHz"] > 0.8 * r["faixas com q < 0,05"]:
+            hf = [f"AUC {b}" for b in ("1000–2000 Hz", "2000–4000 Hz", "4000–8000 Hz")]
+            dhf = r["Δ 1000–2000 Hz"] + r["Δ 2000–4000 Hz"] + r["Δ 4000–8000 Hz"]
+            partes.append(f"as faixas significativas estão quase todas acima de 1 kHz, com Δ de centésimos a décimos de dB "
+                          f"(AUC média em 1–8 kHz: {br(r[hf].mean(), 2)}): {'um pouco menos' if dhf < 0 else 'um pouco mais'} "
+                          f"de estrutura tonal em alta frequência")
+        else:
+            partes.append(f"{int(r['faixas com q < 0,05'])} faixas diferem das acertadas")
+        if s != "errada→LARGE" and ap["banda 31–86 Hz (dB): p"] < 0.05:
+            partes.append(f"a banda 31–86 Hz é {'mais forte' if ap['banda 31–86 Hz (dB): AUC vs acertada'] > 0.5 else 'mais fraca'} "
+                          f"(mediana {br(ap['banda 31–86 Hz (dB): mediana'], 1)} × {br(ra['banda 31–86 Hz (dB): mediana'], 1)} dB, "
+                          f"AUC {br(ap['banda 31–86 Hz (dB): AUC vs acertada'], 2)}, {pv(ap['banda 31–86 Hz (dB): p'])})")
+        viz_s = SEMD.loc[f"{classe} {s}"].idxmin()
+        partes.append(f"o espectro médio fica mais perto de {viz_s} ({br(SEMD.loc[f'{classe} {s}', viz_s], 2)} dB RMS)")
+        if s in vento:
+            partes.append("há um indício de vento mais forte")
+        return "; ".join(partes)
+
+    _ml = MIXD.get("errada→LARGE")
+    if _ml and _ml["p (teste do sinal)"] < 0.05:
+        mix_leitura = (f"Como nas LARGE, **a banda acompanha a gravação, não o navio**: no mesmo navio {classe}, as gravações "
+                       "chamadas de LARGE são as que têm mais banda.")
+    elif _ml and _ml["errada > acertada"] > _ml["errada < acertada"]:
+        _n = int(_ml["errada > acertada"] + _ml["errada < acertada"])
+        mix_leitura = (f"O sentido é o mesmo das LARGE ({int(_ml['errada > acertada'])} de {_n} navios com mais banda na gravação "
+                       f"chamada de LARGE), mas com poucos navios mistos o teste não chega a p < 0,05 ({pv(_ml['p (teste do sinal)'])}).")
+    else:
+        mix_leitura = "Com poucos navios mistos, este teste tem pouco poder."
+    pct = {c: AP.loc[f"{c} (todas)", "% gravações com pico em 31–86 Hz"] for c in ("SMALL", "MEDIUM", "LARGE") if f"{c} (todas)" in AP.index}
+    pct[classe] = 100 * ns["X"]["pico grave em 31–86 Hz"].mean()
+    pct_txt = ", ".join(f"{c} {br(pct[c], 0)}%" for c in ("SMALL", "MEDIUM", "LARGE"))
+    sem_txt = "; ".join(f"{classe} {s}: mais perto de {SEMD.loc[f'{classe} {s}'].idxmin()} ({br(SEMD.loc[f'{classe} {s}'].min(), 2)} dB)"
+                        for s in SUBS)
+    meta_txt = []
+    for s in errs:
+        r = METAD.loc[s]
+        meta_txt.append(f"**{s}**: comprimento {br(r['Length: mediana'], 0)} m ({pv(r['Length: p'])}), vento {br(r['Wind: mediana'], 1)} m/s "
+                        f"({pv(r['Wind: p'])}), estado do mar {br(r['Sea state: mediana'], 0)} ({pv(r['Sea state: p'])})")
+    rm = METAD.loc["acertada"]
+    l1_txt = []
+    for s in errs:
+        c_ = L1D.loc[(f"{s} × acertada", "componente larga (dB)")]; e_ = L1D.loc[(f"{s} × acertada", "energia das raias (dB)")]
+        n_ = L1D.loc[(f"{s} × acertada", "raias (n)")]
+        l1_txt.append(f"**{s}**: componente larga {br(c_['mediana errada'], 1)} × {br(c_['mediana acertada'], 1)} dB "
+                      f"(AUC {br(c_['AUC (errada > acertada)'], 2)}, {pv(c_['p'])}); energia das raias AUC {br(e_['AUC (errada > acertada)'], 2)} "
+                      f"({pv(e_['p'])}); nº de raias AUC {br(n_['AUC (errada > acertada)'], 2)} ({pv(n_['p'])})")
+    sem_sinal = [s for s in errs if CONTR.loc[f"acertada × {s}", "faixas com q < 0,05"] == 0]
+    ACV, PAC, TAM, TOPA, FT = ns["ACV"], ns["PICO_AC"], ns["TAM"], ns["TOP_AC"], ns["FOLDS_TOP"]
+    n_ac, n_acg, n_navg = ns["N_AC"], ns["N_AC_GRANDES"], ns["N_NAV_GRANDES"]
+    iguais = [i.split(' × ')[1] for i, r in ACV.iterrows() if r['faixas com q < 0,05'] == 0]
+    difs = [i.split(' × ')[1] for i, r in ACV.iterrows() if r['faixas com q < 0,05'] > 0]
+    acv_txt = "; ".join(f"contra {i.split(' × ')[1]} ({r['navios']} navios): {int(r['faixas com q < 0,05'])} faixas com q < 0,05, "
+                        f"Δ de {sg_(r['Δ 31–86 Hz (dB)'], 1)} dB em 31–86 Hz e {sg_(r['Δ 86–150 Hz (dB)'], 1)} dB em 86–150 Hz"
+                        for i, r in ACV.iterrows())
+    tc, tl = TAM.loc[classe], TAM.loc["LARGE"]
+    top1 = TOPA.iloc[0]; top_id = TOPA.index[0]
+    def tg(t, linha, col="acertada"):
+        return t.loc[linha, col] if linha in t.index else float("nan")
+    memoriza = bool(tg(tc, "1") < tg(tl, "1") - 15 and tg(tc, "mais de 10") > tg(tc, "1") + 15)
+    tam_txt = "; ".join(f"navios com {lin} {'gravação' if lin == '1' else 'gravações'}: {br(tg(tc, lin), 0)}% acertadas e {br(tg(tc, lin, 'errada'), 0)}% erradas "
+                        f"({int(tg(tc, lin, 'gravações'))} gravações)" for lin in tc.index)
+    viz = SEMD.loc[f"{classe} acertada"].drop(classe).idxmin()
+    vento = [s for s in sem_sinal if METAD.loc[s, "Wind: p"] < 0.1]
+    vento_txt = ((" Nas erradas sem assinatura espectral (" + ", ".join(vento) + "), o vento é um pouco mais forte: candidato a "
+                  "explicação (ruído de fundo mais alto), mas com poucos navios e p perto de 0,05 é só indício.") if vento else "")
+
+    cells = [md(f"""
+# Estudo Comparativo de Classificação Acústica Submarina — Dataset IARA
+### Notebook 35: Análise Exploratória das Frequências LOFAR — {classe} Acertadas × Erradas
+
+**Autor:** Evandro Rocha (UFRJ / COPPE / PEE)
+**Data:** Outubro de 2026
+
+---
+
+**Tarefa 1 (reunião de 26/10/2026)**, segunda classe. Em `35_eda_lofar_large.ipynb`, as LARGE acertadas têm uma **banda larga em ~31–86 Hz**, e as LARGE sem essa banda são confundidas com SMALL e MEDIUM. Aqui repetimos a análise para {classe}.
+
+**Diferença em relação ao notebook das LARGE.** Os erros das {classe} se dividem entre classes diferentes ({des}). Se juntarmos todas as erradas, assinaturas opostas podem se cancelar. Por isso as erradas são separadas pelo **destino**: a classe em que a gravação é prevista na maioria dos folds.
+
+**Hipótese fixada antes de olhar esta classe:** as {classe} previstas como LARGE têm a banda de 31–86 Hz das LARGE, e menos conteúdo em 100–150 Hz. Os navios das {classe} são outros, não entraram na análise das LARGE (a classe é definida pelo comprimento), então este é um teste **fora da amostra**.
+
+**Dados e cuidados:** os mesmos do notebook das LARGE: LOFAR do pipeline sem normalização (`lofar_bc15…`), espectro médio por gravação, testes por navio com FDR; e a extração **lofar1hz** (faixas de 0,98 Hz) para separar banda larga de raias. Valores abaixo de ~150 Hz devem ser lidos com cautela (borda do TPSW); a comparação entre grupos continua válida.
+"""), code(setup),
+        md("""
+## 0. Rótulos de acerto e erro, e destino dos erros
+
+Mesmo critério das LARGE: **acertada** = acerta em todos os folds de teste da CNN LOFAR do artigo; **errada** = erra em todos; **oscila** = o resto (fora do contraste).
+"""), code(ROTULOS_CODE), code(func), code(DEST_CODE),
+        md(f"""
+**Leitura.**
+- {len(T)} gravações {classe} de {T['Ship ID'].nunique()} navios: {cnt.get('acertada', 0)} acertadas, {cnt.get('oscila', 0)} oscilam e {cnt.get('errada', 0)} erradas. As {classe} oscilam muito mais que as LARGE: a classe é mais difícil.
+- Destino dos erros: {des}. Subgrupos analisados (destinos com pelo menos 10 navios): {sub_txt}.{(' Ficam de fora, por terem poucos navios: ' + ', '.join(outros_dest) + '.') if outros_dest else ''}
+- A fração de erradas por subconjunto vai de {br(ds_err.min(), 1)}% ({ds_err.idxmin()}) a {br(ds_err.max(), 1)}% ({ds_err.idxmax()}).
+- Nenhum navio aparece em mais de uma classe ({ns['N_NAVIOS_COMUNS']}): os navios desta análise são independentes dos da análise das LARGE.
+"""),
+        md("""
+## 1. Espectro LOFAR médio por subgrupo
+"""), code(MEDIO_DEST_CODE),
+        md("""
+## 2. Diferença faixa a faixa, por destino
+
+Mann-Whitney por faixa entre as erradas e as acertadas, com médias por navio e FDR, primeiro juntando todas as erradas e depois separando por destino:
+"""), code(TESTE_DEST_CODE),
+        md(f"""
+**Leitura.**
+- **Juntando todas as erradas**, {('nenhuma faixa é significativa' if pool['faixas com q < 0,05'] == 0 else 'só ' + str(int(pool['faixas com q < 0,05'])) + ' faixas são significativas (' + str(int(pool['abaixo de 1 kHz'])) + ' abaixo de 1 kHz)')}; {int(pool['navios acertada'])} navios acertados e {int(pool['navios errada'])} errados.
+{chr(10).join('- ' + contr_txt(s) + '.' for s in errs)}
+{chr(10).join('- **' + s + ':** ' + leitura_dest(s) + '.' for s in errs)}
+- Juntas, as direções se misturam e o teste conjunto acha pouco: as erradas precisam ser vistas por destino.
+"""),
+        md("""
+## 3. Teste fora da amostra: a banda das LARGE
+
+A banda de 31–86 Hz e a faixa de 100–150 Hz foram escolhidas na análise das LARGE, com outros navios. Aqui elas são só **medidas**, sem nenhuma escolha a partir dos dados desta classe. Para comparação, a mesma medida nas classes inteiras:
+"""), code(APRIORI_CODE),
+        md(f"""
+**Leitura.**
+- {classe} acertadas: banda 31–86 Hz com mediana {br(ra['banda 31–86 Hz (dB): mediana'], 1)} dB e {br(ra['% gravações com pico em 31–86 Hz'], 0)}% das gravações com o pico grave em 31–86 Hz.
+- {'; '.join(ap_txt(s) for s in errs)}.
+- Nas classes inteiras, a fração de gravações com o pico grave em 31–86 Hz é: {ref_txt}.
+- {(f"**A hipótese se confirma fora da amostra:** as {classe} previstas como LARGE têm a banda de 31–86 Hz no nível das LARGE ({br(AP.loc[f'{classe} errada→LARGE', 'banda 31–86 Hz (dB): mediana'], 1)} × {br(rL['banda 31–86 Hz (dB): mediana'], 1)} dB) e o pico grave na banda tão frequente quanto nas LARGE. Para o modelo, essa banda é uma pista de LARGE, e ela aparece também em navios {classe} (Seção 3.1)." if large_ok and rL is not None else 'A hipótese não se confirma nesta classe.')}
+"""),
+        md("""
+### 3.1 A banda como pista do modelo
+
+Para todas as gravações de navio: em que fração dos folds a CNN LOFAR prevê LARGE, conforme a gravação tenha ou não o pico grave em 31–86 Hz?
+"""), code(BANDA_PREV_CODE),
+        md(f"""
+**Leitura.** {banda_txt(BP, FLB)}
+"""),
+        md("""
+## 4. O mesmo navio, gravações acertadas e erradas
+"""), code(MISTO_DEST_CODE),
+        md(f"""
+**Leitura.**
+- {chr(10).join('- ' + t if i else t for i, t in enumerate(mix_txt))}
+- {mix_leitura}
+"""),
+        md("""
+## 5. Com que classe cada subgrupo se parece?
+
+Distância RMS (dB) entre espectros médios em 0–500 Hz:
+"""), code(SEM_DEST_CODE),
+        md(f"""
+**Leitura.** {sem_txt}. Sem contar a própria classe, as {classe} acertadas ficam mais perto de {viz} ({br(SEMD.loc[f'{classe} acertada', viz], 2)} dB) do que de {' e '.join(f'{c} ({br(SEMD.loc[f"{classe} acertada", c], 2)} dB)' for c in SEMD.columns if c not in (classe, viz))}: no espectro médio, {classe} e {viz} são parecidas, o que ajuda a explicar por que as duas classes se confundem.
+"""),
+        md(f"""
+## 6. As acertadas: padrão de frequência ou navios conhecidos?
+
+O que as {classe} acertadas têm em comum? Comparamos o espectro delas com o das outras classes, a posição do pico grave e a taxa de acerto conforme o número de gravações do navio. O split do artigo separa treino e teste **por gravação**, então gravações do mesmo navio podem estar nos dois lados.
+"""), code(ACERT_CODE),
+        md(f"""
+**Leitura.**
+- **Espectro:** {acv_txt}.{(' As ' + classe + ' acertadas são **indistinguíveis de ' + ' e '.join(iguais) + '** no LOFAR médio; o que as separa de ' + ' e '.join(difs) + ' é sobretudo não terem a banda de 31–86 Hz.') if iguais else ''}
+- **Pico grave:** {br(PAC.loc['31–86 Hz', f'{classe} acertada'], 0)}% das {classe} acertadas têm o pico em 31–86 Hz, contra {' e '.join(br(PAC.loc['31–86 Hz', c], 0) + '% das ' + c for c in ('SMALL', 'MEDIUM', 'LARGE') if c != classe)}; {br(PAC.loc['86–140 Hz', f'{classe} acertada'], 0)}% o têm em 86–140 Hz.
+- **Navios repetidos:** {tam_txt}. Nas LARGE, os navios gravados uma só vez são acertados em {br(tg(tl, '1'), 0)}% dos casos.
+- {n_acg} das {n_ac} {classe} acertadas ({br(100 * n_acg / max(n_ac, 1), 0)}%) vêm de {n_navg} navios com mais de 10 gravações. O navio com mais acertos é o {top_id} ({top1['Name']}, {top1['DETAILED TYPE']}, {br(top1['Length'], 0) if top1['Length'] == top1['Length'] else '?'} m): {int(top1['acertadas'])} acertadas de {int(top1['gravações do navio'])} gravações. Em cada fold, {int(FT['no teste'].min())} a {int(FT['no teste'].max())} gravações dele estão no teste e o resto no treino: **o modelo é testado num navio que já viu**.
+- {('**O acerto das ' + classe + ' depende mais de reconhecer navios repetidos do que de um padrão de frequência que generalize.** Em navios novos, a CNN erra mais do que acerta. Isso é coerente com o NB29: com split por navio, o recall de MEDIUM cai ~22 p.p.') if memoriza else 'A taxa de acerto não depende tanto do número de gravações do navio: o acerto não parece vir só de navios repetidos.'}
+"""),
+        md("""
+## 7. Comprimento, condições e subconjunto
+"""), code(META_DEST_CODE),
+        md(f"""
+**Leitura.**
+- Acertadas: comprimento mediano {br(rm['Length: mediana'], 0)} m, vento {br(rm['Wind: mediana'], 1)} m/s, estado do mar {br(rm['Sea state: mediana'], 0)}.
+- {chr(10).join('- ' + t if i else t for i, t in enumerate(meta_txt))}
+- As diferenças de comprimento são pequenas dentro de uma classe definida por uma faixa estreita de comprimento.{vento_txt}
+"""),
+        md("""
+## 8. Banda larga ou raias? (lofar1hz)
+
+Mesma decomposição do notebook das LARGE (Seção 12.2): no espectro médio com faixas de 0,98 Hz, a **componente larga** é a mediana móvel de ~15 Hz e as **raias** são máximos locais com pelo menos 3 dB acima dela, em 31–86 Hz.
+"""), code(L1HZ_DEST_CODE),
+        md(f"""
+**Leitura.**
+- {chr(10).join('- ' + t if i else t for i, t in enumerate(l1_txt))}
+- Como nas LARGE, o que muda é a **componente larga**; as raias estreitas não diferem entre os grupos.
+"""),
+        md(f"""
+## 9. Conclusões parciais
+
+1. **Os erros das {classe} vão para {len(errs)} destinos, com padrões diferentes.** Juntas, as erradas {('não diferem das acertadas em nenhuma faixa' if pool['faixas com q < 0,05'] == 0 else 'quase não diferem das acertadas')}; separadas por destino, aparecem padrões distintos.
+2. **{classe} previstas como LARGE:** {('têm a banda larga de 31–86 Hz das LARGE e menos conteúdo em 100–150 Hz. A banda foi definida nas LARGE, com outros navios, e se confirma aqui fora da amostra' if large_ok else 'não confirmam a banda das LARGE')}{(f"; no mesmo navio, a banda aparece nas gravações chamadas de LARGE ({int(MIXD['errada→LARGE']['errada > acertada'])} de {int(MIXD['errada→LARGE']['navios'])} navios)" if MIXD.get('errada→LARGE') else '')}. Com faixas de 1 Hz, de novo é banda larga, não raias.
+{chr(10).join('3' + chr(97 + i) + '. **' + classe + ' previstas como ' + s.split('→')[1] + ':** ' + leitura_dest(s) + '.' for i, s in enumerate([e for e in errs if e != 'errada→LARGE']))}
+4. **{classe} acertadas:** {('no LOFAR médio são indistinguíveis de ' + ' e '.join(iguais) + '; ' if iguais else 'no LOFAR médio diferem pouco de ' + ' e '.join(difs) + ' fora da banda de 31–86 Hz; ')}{(str(br(100 * n_acg / max(n_ac, 1), 0)) + '% delas vêm de ' + str(n_navg) + ' navios gravados mais de 10 vezes, que aparecem no treino e no teste em todos os folds. Em navios gravados uma só vez, a CNN acerta ' + br(tg(tc, '1'), 0) + '% (LARGE: ' + br(tg(tl, '1'), 0) + '%). O acerto vem mais de reconhecer navios conhecidos do que de um padrão de frequência; com split por navio, ele cairia.') if memoriza else ('o acerto não depende tanto de navios repetidos: a CNN acerta ' + br(tg(tc, '1'), 0) + '% das gravações de navios gravados uma só vez (LARGE: ' + br(tg(tl, '1'), 0) + '%) e ' + br(tg(tc, 'mais de 10'), 0) + '% das de navios gravados mais de 10 vezes. A classe é difícil mesmo para navios conhecidos.')}
+5. **Leitura conjunta com as LARGE: a banda é uma pista importante para o modelo, mas fraca de tamanho real.** A fração de gravações com o pico grave em 31–86 Hz é {pct_txt}. Ter a banda aumenta a chance de a gravação ser chamada de LARGE em qualquer classe ({'; '.join(k + ' de ' + br(BP.loc[k, BP.columns[0]], 0) + '% para ' + br(BP.loc[k, BP.columns[1]], 0) + '%' for k in BP.index)}), mas não é regra: a maioria das SMALL e MEDIUM com a banda não é chamada de LARGE. Como a banda separa mal as classes reais, parte dos erros vem dela: falta em parte das LARGE (que viram SMALL ou MEDIUM) e aparece em parte das {classe} (que viram LARGE). No mesmo navio, ela muda de uma gravação para outra, então parece depender mais da **condição da gravação** (regime de operação, distância, propagação; não registrados no IARA) do que do tamanho do navio.
+
+**Próximos passos:** {('repetir para SMALL; ' if classe == 'MEDIUM' else 'síntese das três classes; ')}investigar os erros sem assinatura no LOFAR ({', '.join(s for s in errs if s != 'errada→LARGE')}) com outras representações (MEL, DEMON) ou com as condições de gravação; avaliar a CNN com split por navio.
+"""),
+    ]
+    nb = {"cells": cells,
+          "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+                       "language_info": {"name": "python", "pygments_lexer": "ipython3"}},
+          "nbformat": 4, "nbformat_minor": 4}
+    with open(filename, "w", encoding="utf-8") as f:
+        json.dump(nb, f, indent=1, ensure_ascii=False)
+    print(f"Notebook gerado em '{filename}'")
+
+
 if __name__ == "__main__":
-    build(sys.argv[1].upper() if len(sys.argv) > 1 else "LARGE")
+    _c = sys.argv[1].upper() if len(sys.argv) > 1 else "LARGE"
+    build(_c) if _c == "LARGE" else build_destino(_c)
