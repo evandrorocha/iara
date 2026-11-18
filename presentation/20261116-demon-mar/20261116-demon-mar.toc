@@ -1,0 +1,5 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{O Que É o DEMON}{4}{0}{1}
+\beamer@sectionintoc {2}{Augmentation com Mar Agitado}{8}{0}{2}
+\beamer@sectionintoc {3}{Por Que Não Funciona}{13}{0}{3}
+\beamer@sectionintoc {4}{Conclusões}{15}{0}{4}

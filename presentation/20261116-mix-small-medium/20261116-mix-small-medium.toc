@@ -1,0 +1,6 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{O Experimento}{4}{0}{1}
+\beamer@sectionintoc {2}{Resultados}{7}{0}{2}
+\beamer@sectionintoc {3}{Onde o Modelo Erra}{11}{0}{3}
+\beamer@sectionintoc {4}{Por que \texttt {MIX\_SMALL\_MEDIUM} e LARGE se Separam}{14}{0}{4}
+\beamer@sectionintoc {5}{Conclusões}{23}{0}{5}

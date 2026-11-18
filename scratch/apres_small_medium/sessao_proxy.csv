@@ -1,0 +1,1707 @@
+File,sess,sessW
+1,A|2.7|2|No rain,2.7|2|No rain
+2,A|8.1|4|No rain,8.1|4|No rain
+3,A|4.6|3|No rain,4.6|3|No rain
+4,A| - | - | - , - | - | - 
+5,A|3.6|2|No rain,3.6|2|No rain
+6,A|5.8|3|No rain,5.8|3|No rain
+7,A|5.7|3|No rain,5.7|3|No rain
+8,A|4|2|No rain,4|2|No rain
+9,A|4.3|2|No rain,4.3|2|No rain
+10,A|5.6|3|No rain,5.6|3|No rain
+11,A|6.2|3|No rain,6.2|3|No rain
+12,A|2.9|2|No rain,2.9|2|No rain
+13,A|7.7|4|No rain,7.7|4|No rain
+14,A|10|5|No rain,10|5|No rain
+15,A|2|1|No rain,2|1|No rain
+16,A|4.9|3|No rain,4.9|3|No rain
+17,A|2|1|No rain,2|1|No rain
+18,A|3.9|2|No rain,3.9|2|No rain
+19,A|7.5|4|No rain,7.5|4|No rain
+20,A|5.2|3|No rain,5.2|3|No rain
+21,A|4.4|2|No rain,4.4|2|No rain
+22,A|4.6|3|No rain,4.6|3|No rain
+23,A|6.8|3|No rain,6.8|3|No rain
+24,A|8.1|4|No rain,8.1|4|No rain
+25,A|3.8|2|No rain,3.8|2|No rain
+26,A|2.6|2|No rain,2.6|2|No rain
+27,A|7.3|4|No rain,7.3|4|No rain
+28,A|3.5|2|Light,3.5|2|Light
+29,A|11.2|5|No rain,11.2|5|No rain
+30,A|5.5|3|No rain,5.5|3|No rain
+31,A|8.1|4|No rain,8.1|4|No rain
+32,A| - | - |No rain, - | - |No rain
+33,A|8.9|4|No rain,8.9|4|No rain
+34,A|4.3|2|No rain,4.3|2|No rain
+35,A|4.7|3|No rain,4.7|3|No rain
+36,A|9.2|4|Light,9.2|4|Light
+37,A|3.6|2|No rain,3.6|2|No rain
+38,A|5.1|3|No rain,5.1|3|No rain
+39,A| - | - |No rain, - | - |No rain
+40,A|6.8|3|No rain,6.8|3|No rain
+41,A| - | - |No rain, - | - |No rain
+42,A|17.2|6|No rain,17.2|6|No rain
+43,A|13.6|6|No rain,13.6|6|No rain
+44,A|3.5|2|No rain,3.5|2|No rain
+45,A|3.9|2|No rain,3.9|2|No rain
+46,A|7.2|4|No rain,7.2|4|No rain
+47,A|7.1|4|No rain,7.1|4|No rain
+48,A|5.5|3|No rain,5.5|3|No rain
+49,A|8.2|4|No rain,8.2|4|No rain
+50,A|4.7|3|Light,4.7|3|Light
+51,A|6.5|3|No rain,6.5|3|No rain
+52,A|5.4|3|No rain,5.4|3|No rain
+53,A|4|2|No rain,4|2|No rain
+54,A|4|2|No rain,4|2|No rain
+55,A|5.3|3|No rain,5.3|3|No rain
+56,A|4.7|3|No rain,4.7|3|No rain
+57,A|8.5|4|No rain,8.5|4|No rain
+58,A|5.4|3|No rain,5.4|3|No rain
+59,A| - | - | - , - | - | - 
+60,A| - | - | - , - | - | - 
+61,A|1.8|1|No rain,1.8|1|No rain
+62,A|2.5|1|No rain,2.5|1|No rain
+63,A|5.7|3|No rain,5.7|3|No rain
+64,A|2.3|1|No rain,2.3|1|No rain
+65,A|2.6|2|No rain,2.6|2|No rain
+66,A|2.9|2|No rain,2.9|2|No rain
+67,A|6|3|No rain,6|3|No rain
+68,A|5.7|3|No rain,5.7|3|No rain
+69,A|6.5|3|No rain,6.5|3|No rain
+70,A|5|3|No rain,5|3|No rain
+71,A|2.2|1|No rain,2.2|1|No rain
+72,A|3.8|2|No rain,3.8|2|No rain
+73,A|4|2|No rain,4|2|No rain
+74,A|3.5|2|No rain,3.5|2|No rain
+75,A|2.7|2|No rain,2.7|2|No rain
+76,A|0.4|1|No rain,0.4|1|No rain
+77,A|5.9|3|No rain,5.9|3|No rain
+78,A|6.5|3|No rain,6.5|3|No rain
+79,A|13.1|6|No rain,13.1|6|No rain
+80,A|3.9|2|No rain,3.9|2|No rain
+81,A|3|2|No rain,3|2|No rain
+82,A|6.6|3|Light,6.6|3|Light
+83,A|2.4|1|No rain,2.4|1|No rain
+84,A|2.3|1|No rain,2.3|1|No rain
+85,A|5.2|3|No rain,5.2|3|No rain
+86,A|2.1|1|No rain,2.1|1|No rain
+87,A|5.8|3|No rain,5.8|3|No rain
+88,A|2.6|2|No rain,2.6|2|No rain
+89,A|2.6|2|No rain,2.6|2|No rain
+90,A|7.1|4|No rain,7.1|4|No rain
+91,A|2.3|1|No rain,2.3|1|No rain
+92,A|4.4|2|No rain,4.4|2|No rain
+93,A|3.2|2|Light,3.2|2|Light
+94,A|2.2|1|No rain,2.2|1|No rain
+95,A|4.8|3|No rain,4.8|3|No rain
+96,A|3.1|2|No rain,3.1|2|No rain
+97,A|6.6|3|No rain,6.6|3|No rain
+98,A|4.5|3|No rain,4.5|3|No rain
+99,A|3.7|2|No rain,3.7|2|No rain
+100,A|5.1|3|No rain,5.1|3|No rain
+101,A|2.3|1|No rain,2.3|1|No rain
+102,A|5|3|No rain,5|3|No rain
+103,A|3.5|2|No rain,3.5|2|No rain
+104,A|5.5|3|No rain,5.5|3|No rain
+105,A|5.1|3|No rain,5.1|3|No rain
+106,A|6.8|3|No rain,6.8|3|No rain
+107,A|6.1|3|No rain,6.1|3|No rain
+108,A|3.4|2|No rain,3.4|2|No rain
+109,A|3.5|2|No rain,3.5|2|No rain
+110,A|1.8|1|No rain,1.8|1|No rain
+111,A|4.2|2|No rain,4.2|2|No rain
+112,A|3.1|2|No rain,3.1|2|No rain
+113,A|3.1|2|No rain,3.1|2|No rain
+114,A|10.5|5|No rain,10.5|5|No rain
+115,A|1.4|1|No rain,1.4|1|No rain
+116,A|8.7|4|No rain,8.7|4|No rain
+117,A|8.6|4|No rain,8.6|4|No rain
+118,A|12.7|6|Light,12.7|6|Light
+119,A|10.3|5|No rain,10.3|5|No rain
+120,A|2.6|2|No rain,2.6|2|No rain
+121,A|6.6|3|No rain,6.6|3|No rain
+122,A|3.9|2|No rain,3.9|2|No rain
+123,A|7.1|4|No rain,7.1|4|No rain
+124,A|3.1|2|No rain,3.1|2|No rain
+125,A|2.1|1|No rain,2.1|1|No rain
+126,A|0|1|No rain,0|1|No rain
+127,A|3.3|2|No rain,3.3|2|No rain
+128,A|3.8|2|No rain,3.8|2|No rain
+129,A|5.7|3|No rain,5.7|3|No rain
+130,A|2.4|1|Light,2.4|1|Light
+131,A|2.2|1|No rain,2.2|1|No rain
+132,A|5.4|3|No rain,5.4|3|No rain
+133,A|3|2|No rain,3|2|No rain
+134,A|2.8|2|No rain,2.8|2|No rain
+135,A|5.1|3|Heavy,5.1|3|Heavy
+136,A|4.3|2|No rain,4.3|2|No rain
+137,A|5.3|3|No rain,5.3|3|No rain
+138,A|9.8|4|No rain,9.8|4|No rain
+139,A|7.4|4|No rain,7.4|4|No rain
+140,A|5.8|3|No rain,5.8|3|No rain
+141,A|4.3|2|No rain,4.3|2|No rain
+142,A|4.3|2|No rain,4.3|2|No rain
+143,A|12.1|5|No rain,12.1|5|No rain
+144,A|4.5|3|No rain,4.5|3|No rain
+145,A|8.7|4|No rain,8.7|4|No rain
+146,A|9.6|4|No rain,9.6|4|No rain
+147,A|5.2|3|No rain,5.2|3|No rain
+148,A|5.9|3|No rain,5.9|3|No rain
+149,A|2.3|1|No rain,2.3|1|No rain
+150,A|8.7|4|No rain,8.7|4|No rain
+151,A|7.9|4|No rain,7.9|4|No rain
+152,A|5.6|3|No rain,5.6|3|No rain
+153,A|5.1|3|No rain,5.1|3|No rain
+154,A|2.5|1|No rain,2.5|1|No rain
+155,A|6.5|3|No rain,6.5|3|No rain
+156,A|3.2|2|No rain,3.2|2|No rain
+157,A|3.3|2|No rain,3.3|2|No rain
+158,A|5.3|3|No rain,5.3|3|No rain
+159,A|3.4|2|No rain,3.4|2|No rain
+160,A|11.3|5|No rain,11.3|5|No rain
+161,A|1.9|1|No rain,1.9|1|No rain
+162,A|2.3|1|No rain,2.3|1|No rain
+163,A|6.2|3|No rain,6.2|3|No rain
+164,A|3.6|2|No rain,3.6|2|No rain
+165,A|4.2|2|No rain,4.2|2|No rain
+166,A|6.6|3|No rain,6.6|3|No rain
+167,A|2.5|1|No rain,2.5|1|No rain
+168,A|3.6|2|Moderate,3.6|2|Moderate
+169,A|4|2|No rain,4|2|No rain
+170,A|2.2|1|No rain,2.2|1|No rain
+171,A|8.5|4|No rain,8.5|4|No rain
+172,A|2.3|1|No rain,2.3|1|No rain
+173,A|2.2|1|No rain,2.2|1|No rain
+174,A|3.2|2|No rain,3.2|2|No rain
+175,A|2.7|2|No rain,2.7|2|No rain
+176,A|1.2|1|No rain,1.2|1|No rain
+177,A|3.8|2|No rain,3.8|2|No rain
+178,A|2.8|2|No rain,2.8|2|No rain
+179,A|1.6|1|No rain,1.6|1|No rain
+180,A|1.6|1|No rain,1.6|1|No rain
+181,A|2.3|1|No rain,2.3|1|No rain
+182,A|2.6|2|Light,2.6|2|Light
+183,A|2.1|1|No rain,2.1|1|No rain
+184,A|2.8|2|No rain,2.8|2|No rain
+185,A|2.8|2|No rain,2.8|2|No rain
+186,A|1.8|1|No rain,1.8|1|No rain
+187,A|0.4|1|No rain,0.4|1|No rain
+188,A|3.6|2|No rain,3.6|2|No rain
+189,A|6.3|3|No rain,6.3|3|No rain
+190,A|4.3|2|No rain,4.3|2|No rain
+191,A|6.1|3|No rain,6.1|3|No rain
+192,A|4.7|3|No rain,4.7|3|No rain
+193,A|2.6|2|No rain,2.6|2|No rain
+194,A|6.2|3|No rain,6.2|3|No rain
+195,A|9.4|4|No rain,9.4|4|No rain
+196,A|5.8|3|No rain,5.8|3|No rain
+197,A|4.4|2|No rain,4.4|2|No rain
+198,A|4.1|2|No rain,4.1|2|No rain
+199,A|4.6|3|No rain,4.6|3|No rain
+200,A|1.9|1|No rain,1.9|1|No rain
+201,A|5.2|3|No rain,5.2|3|No rain
+202,A|4.2|2|No rain,4.2|2|No rain
+203,A|1.7|1|No rain,1.7|1|No rain
+204,A|2.1|1|No rain,2.1|1|No rain
+205,A|3.2|2|No rain,3.2|2|No rain
+206,A|9.4|4|No rain,9.4|4|No rain
+207,A|13.4|6|No rain,13.4|6|No rain
+208,A|1.9|1|No rain,1.9|1|No rain
+209,A|2|1|No rain,2|1|No rain
+210,A|2.4|1|No rain,2.4|1|No rain
+211,A|2.1|1|No rain,2.1|1|No rain
+212,A|5.1|3|No rain,5.1|3|No rain
+213,A|2.8|2|No rain,2.8|2|No rain
+214,A|4.2|2|No rain,4.2|2|No rain
+215,A|2.1|1|No rain,2.1|1|No rain
+216,A|2.8|2|No rain,2.8|2|No rain
+217,A|3.9|2|No rain,3.9|2|No rain
+218,A|3.9|2|No rain,3.9|2|No rain
+219,A|1.7|1|No rain,1.7|1|No rain
+220,A|2.5|1|No rain,2.5|1|No rain
+221,A|0|1|No rain,0|1|No rain
+222,A|0|1|No rain,0|1|No rain
+223,A|0|1|No rain,0|1|No rain
+224,A|1.3|1|No rain,1.3|1|No rain
+225,A|1.7|1|No rain,1.7|1|No rain
+226,A|2.2|1|No rain,2.2|1|No rain
+227,A|4.8|3|No rain,4.8|3|No rain
+228,A|7.8|4|Moderate,7.8|4|Moderate
+229,A|2.1|1|No rain,2.1|1|No rain
+230,A|4.7|3|No rain,4.7|3|No rain
+231,A|1.9|1|No rain,1.9|1|No rain
+232,A|6.4|3|No rain,6.4|3|No rain
+233,A|14.1|6|No rain,14.1|6|No rain
+234,A|3.3|2|No rain,3.3|2|No rain
+235,A|8.2|4|No rain,8.2|4|No rain
+236,A|4.3|2|No rain,4.3|2|No rain
+237,A|4.7|3|No rain,4.7|3|No rain
+238,A|8|4|No rain,8|4|No rain
+239,A|3.6|2|No rain,3.6|2|No rain
+240,A|7.8|4|Moderate,7.8|4|Moderate
+241,A|11.7|5|Light,11.7|5|Light
+242,A|2.1|1|No rain,2.1|1|No rain
+243,A|4.7|3|No rain,4.7|3|No rain
+244,A|1.9|1|No rain,1.9|1|No rain
+245,A|6.4|3|No rain,6.4|3|No rain
+246,A|14.1|6|No rain,14.1|6|No rain
+247,A|3.3|2|No rain,3.3|2|No rain
+248,A|8.2|4|No rain,8.2|4|No rain
+249,A|4.3|2|No rain,4.3|2|No rain
+250,A|4.7|3|No rain,4.7|3|No rain
+251,A|8|4|No rain,8|4|No rain
+252,A|3.6|2|No rain,3.6|2|No rain
+253,A|3.6|2|No rain,3.6|2|No rain
+254,A|8.3|4|No rain,8.3|4|No rain
+255,A|3.1|2|No rain,3.1|2|No rain
+256,A|3.1|2|No rain,3.1|2|No rain
+257,A|4.4|2|No rain,4.4|2|No rain
+258,A|2|1|No rain,2|1|No rain
+259,A|3.1|2|No rain,3.1|2|No rain
+260,A|5.3|3|No rain,5.3|3|No rain
+261,A|3.4|2|No rain,3.4|2|No rain
+262,A| - | - | - , - | - | - 
+263,A|0|1|No rain,0|1|No rain
+264,A|0.4|1|No rain,0.4|1|No rain
+265,A|0|1|No rain,0|1|No rain
+266,A|0.4|1|No rain,0.4|1|No rain
+267,A|3.6|2|No rain,3.6|2|No rain
+268,A|4.9|3|No rain,4.9|3|No rain
+269,A|2.7|2|No rain,2.7|2|No rain
+270,A|2.7|2|No rain,2.7|2|No rain
+271,A|2.7|2|No rain,2.7|2|No rain
+272,A|2.2|1|No rain,2.2|1|No rain
+273,A|2.4|1|No rain,2.4|1|No rain
+274,A|11.3|5|Light,11.3|5|Light
+275,A|4|2|No rain,4|2|No rain
+276,A|4.3|2|No rain,4.3|2|No rain
+277,A|3.1|2|No rain,3.1|2|No rain
+278,A|7.7|4|No rain,7.7|4|No rain
+279,A|2.6|2|No rain,2.6|2|No rain
+280,A|3.5|2|No rain,3.5|2|No rain
+281,A|5.6|3|No rain,5.6|3|No rain
+282,A|1.5|1|Moderate,1.5|1|Moderate
+283,A|1.5|1|Moderate,1.5|1|Moderate
+284,A|6.3|3|No rain,6.3|3|No rain
+285,A|3|2|No rain,3|2|No rain
+286,A|10.3|5|No rain,10.3|5|No rain
+287,A|10|5|No rain,10|5|No rain
+288,A|9|4|No rain,9|4|No rain
+289,A|5.1|3|No rain,5.1|3|No rain
+290,A|3.8|2|No rain,3.8|2|No rain
+291,A|1.8|1|No rain,1.8|1|No rain
+292,A|9.3|4|No rain,9.3|4|No rain
+293,A|2.3|1|No rain,2.3|1|No rain
+294,A|3|2|No rain,3|2|No rain
+295,A|3.6|2|No rain,3.6|2|No rain
+296,A|8.1|4|No rain,8.1|4|No rain
+297,A|3.2|2|No rain,3.2|2|No rain
+298,A|4.4|2|No rain,4.4|2|No rain
+299,A|1.4|1|No rain,1.4|1|No rain
+300,A|3.9|2|Light,3.9|2|Light
+301,A|5.1|3|No rain,5.1|3|No rain
+302,A|3.3|2|No rain,3.3|2|No rain
+303,A|4.3|2|No rain,4.3|2|No rain
+304,A|6.2|3|No rain,6.2|3|No rain
+305,A|4.9|3|No rain,4.9|3|No rain
+306,A|2.7|2|No rain,2.7|2|No rain
+307,A|2.7|2|No rain,2.7|2|No rain
+308,A|2.7|2|No rain,2.7|2|No rain
+309,A|2.2|1|No rain,2.2|1|No rain
+310,A|2.4|1|No rain,2.4|1|No rain
+311,A|11.3|5|Light,11.3|5|Light
+312,A|4|2|No rain,4|2|No rain
+313,A|4.3|2|No rain,4.3|2|No rain
+314,A|3.1|2|No rain,3.1|2|No rain
+315,A|7.7|4|No rain,7.7|4|No rain
+316,A|3.2|2|No rain,3.2|2|No rain
+317,A|9|4|No rain,9|4|No rain
+318,A|2.6|2|No rain,2.6|2|No rain
+319,A|3.5|2|No rain,3.5|2|No rain
+320,A|4.5|3|No rain,4.5|3|No rain
+321,A|5.6|3|No rain,5.6|3|No rain
+322,A|1.5|1|Moderate,1.5|1|Moderate
+323,A|6.3|3|No rain,6.3|3|No rain
+324,A|3|2|No rain,3|2|No rain
+325,A|10.3|5|No rain,10.3|5|No rain
+326,A|10|5|No rain,10|5|No rain
+327,A|9|4|No rain,9|4|No rain
+328,A|5.1|3|No rain,5.1|3|No rain
+329,A|3.8|2|No rain,3.8|2|No rain
+330,A|9.9|5|No rain,9.9|5|No rain
+331,A|9.3|4|No rain,9.3|4|No rain
+332,A|2.3|1|No rain,2.3|1|No rain
+333,A|3|2|No rain,3|2|No rain
+334,A|3.6|2|No rain,3.6|2|No rain
+335,A|8.1|4|No rain,8.1|4|No rain
+336,A|4.7|3|No rain,4.7|3|No rain
+337,A|3.2|2|No rain,3.2|2|No rain
+338,A|4.4|2|No rain,4.4|2|No rain
+339,A|5.6|3|No rain,5.6|3|No rain
+340,A|1.4|1|No rain,1.4|1|No rain
+341,A|3.9|2|Light,3.9|2|Light
+342,A|5.1|3|No rain,5.1|3|No rain
+343,A|3.3|2|No rain,3.3|2|No rain
+344,A|4.3|2|No rain,4.3|2|No rain
+345,A|6.2|3|No rain,6.2|3|No rain
+346,A|7.4|4|No rain,7.4|4|No rain
+347,A|3.5|2|No rain,3.5|2|No rain
+348,A|3.1|2|No rain,3.1|2|No rain
+349,A|2.4|1|No rain,2.4|1|No rain
+350,A|3.2|2|No rain,3.2|2|No rain
+351,A|8.3|4|No rain,8.3|4|No rain
+352,A|12.2|5|No rain,12.2|5|No rain
+353,A|4.5|3|No rain,4.5|3|No rain
+354,A|5.5|3|No rain,5.5|3|No rain
+355,A|4.1|2|No rain,4.1|2|No rain
+356,A|5.9|3|No rain,5.9|3|No rain
+357,A|2.9|2|No rain,2.9|2|No rain
+358,A|2.6|2|No rain,2.6|2|No rain
+359,A|2.8|2|No rain,2.8|2|No rain
+360,A|7.5|4|No rain,7.5|4|No rain
+361,A|4.1|2|No rain,4.1|2|No rain
+362,A|2.5|1|No rain,2.5|1|No rain
+363,A|2.1|1|No rain,2.1|1|No rain
+364,A|3.7|2|No rain,3.7|2|No rain
+365,A|3|2|No rain,3|2|No rain
+366,A|2.9|2|No rain,2.9|2|No rain
+367,A|4.6|3|No rain,4.6|3|No rain
+368,A|3.5|2|No rain,3.5|2|No rain
+369,A|1.5|1|No rain,1.5|1|No rain
+370,A|4.3|2|No rain,4.3|2|No rain
+371,A|3.6|2|No rain,3.6|2|No rain
+372,A|7.9|4|No rain,7.9|4|No rain
+373,A|4.1|2|No rain,4.1|2|No rain
+374,A|3.2|2|No rain,3.2|2|No rain
+375,A|4.4|2|No rain,4.4|2|No rain
+376,A|9.9|5|No rain,9.9|5|No rain
+377,A|4.5|3|No rain,4.5|3|No rain
+378,A|3.2|2|No rain,3.2|2|No rain
+379,A|2.7|2|No rain,2.7|2|No rain
+380,A|2|1|Light,2|1|Light
+381,A|4.8|3|No rain,4.8|3|No rain
+382,A|4.8|3|No rain,4.8|3|No rain
+383,A|1.7|1|No rain,1.7|1|No rain
+384,A|3.8|2|No rain,3.8|2|No rain
+385,A|11|5|No rain,11|5|No rain
+386,A|6.1|3|No rain,6.1|3|No rain
+387,A|4.4|2|No rain,4.4|2|No rain
+388,A|2.9|2|No rain,2.9|2|No rain
+389,A|1.8|1|No rain,1.8|1|No rain
+390,A|3.3|2|No rain,3.3|2|No rain
+391,A|5.9|3|No rain,5.9|3|No rain
+392,A|5.8|3|No rain,5.8|3|No rain
+393,A|2.6|2|No rain,2.6|2|No rain
+394,A|9.4|4|No rain,9.4|4|No rain
+395,A|17|6|No rain,17|6|No rain
+396,A|4.6|3|No rain,4.6|3|No rain
+397,A|10.3|5|No rain,10.3|5|No rain
+398,A|11.6|5|No rain,11.6|5|No rain
+399,A|7.9|4|No rain,7.9|4|No rain
+400,A|4|2|No rain,4|2|No rain
+401,A|11.5|5|No rain,11.5|5|No rain
+402,A|2.3|1|No rain,2.3|1|No rain
+403,A|4.7|3|No rain,4.7|3|No rain
+404,A|3|2|No rain,3|2|No rain
+405,A|3.6|2|No rain,3.6|2|No rain
+406,A|8|4|No rain,8|4|No rain
+407,A|3.9|2|No rain,3.9|2|No rain
+408,A|8.8|4|No rain,8.8|4|No rain
+409,A|5.1|3|No rain,5.1|3|No rain
+410,A|4.3|2|No rain,4.3|2|No rain
+411,A|5.3|3|No rain,5.3|3|No rain
+412,A|5.6|3|No rain,5.6|3|No rain
+413,A|4.1|2|No rain,4.1|2|No rain
+414,A|4|2|No rain,4|2|No rain
+415,A|3.3|2|No rain,3.3|2|No rain
+416,A|4.7|3|No rain,4.7|3|No rain
+417,A|6|3|No rain,6|3|No rain
+418,A|1.8|1|No rain,1.8|1|No rain
+419,A| - | - | - , - | - | - 
+420,A| - | - | - , - | - | - 
+421,A|4.9|3|No rain,4.9|3|No rain
+422,A|3.6|2|Light,3.6|2|Light
+423,A|7.1|4|No rain,7.1|4|No rain
+424,A|4.2|2|No rain,4.2|2|No rain
+425,A|4.1|2|No rain,4.1|2|No rain
+426,A|4.9|3|No rain,4.9|3|No rain
+427,A|1.4|1|No rain,1.4|1|No rain
+428,A|3|2|No rain,3|2|No rain
+429,A|4.8|3|No rain,4.8|3|No rain
+430,A|4.9|3|No rain,4.9|3|No rain
+431,A|4.6|3|No rain,4.6|3|No rain
+432,A|3.5|2|No rain,3.5|2|No rain
+433,A|3.4|2|No rain,3.4|2|No rain
+434,A|4.7|3|No rain,4.7|3|No rain
+435,A|2.9|2|No rain,2.9|2|No rain
+436,A|2.1|1|No rain,2.1|1|No rain
+437,A|4.5|3|No rain,4.5|3|No rain
+438,A|1.5|1|No rain,1.5|1|No rain
+439,A|4|2|No rain,4|2|No rain
+440,A|3.6|2|No rain,3.6|2|No rain
+441,A|7.6|4|No rain,7.6|4|No rain
+442,A|4.1|2|No rain,4.1|2|No rain
+443,A|12.8|6|No rain,12.8|6|No rain
+444,A|6.2|3|No rain,6.2|3|No rain
+445,A|8.7|4|No rain,8.7|4|No rain
+446,A|4.9|3|No rain,4.9|3|No rain
+447,A|5.9|3|No rain,5.9|3|No rain
+448,A|2|1|No rain,2|1|No rain
+449,A|7.1|4|No rain,7.1|4|No rain
+450,A|9.4|4|No rain,9.4|4|No rain
+451,A|3.9|2|No rain,3.9|2|No rain
+452,A|11.8|5|No rain,11.8|5|No rain
+453,A|18.8|6|No rain,18.8|6|No rain
+454,A|8.8|4|Light,8.8|4|Light
+455,A|5.1|3|No rain,5.1|3|No rain
+456,A|8.2|4|No rain,8.2|4|No rain
+457,B|5.4|3|No rain,5.4|3|No rain
+458,B|6.2|3|No rain,6.2|3|No rain
+459,B|3.1|2|No rain,3.1|2|No rain
+460,B|3|2|No rain,3|2|No rain
+461,B|5.7|3|No rain,5.7|3|No rain
+462,B|6|3|No rain,6|3|No rain
+463,B|9.2|4|No rain,9.2|4|No rain
+464,B|6.2|3|No rain,6.2|3|No rain
+465,B|3|2|No rain,3|2|No rain
+466,B|2.4|1|Light,2.4|1|Light
+467,B|4.9|3|No rain,4.9|3|No rain
+468,B|1.7|1|No rain,1.7|1|No rain
+469,B|3.8|2|No rain,3.8|2|No rain
+470,B|6.2|3|No rain,6.2|3|No rain
+471,B|5.9|3|No rain,5.9|3|No rain
+472,B|4.5|3|No rain,4.5|3|No rain
+473,B|4|2|No rain,4|2|No rain
+474,B|4.5|3|No rain,4.5|3|No rain
+475,B|4|2|No rain,4|2|No rain
+476,B|3.6|2|No rain,3.6|2|No rain
+477,B|6|3|No rain,6|3|No rain
+478,B|3.2|2|No rain,3.2|2|No rain
+479,B|7.6|4|No rain,7.6|4|No rain
+480,B|4.6|3|No rain,4.6|3|No rain
+481,B|1.6|1|No rain,1.6|1|No rain
+482,B|4.4|2|No rain,4.4|2|No rain
+483,B|2.5|1|Moderate,2.5|1|Moderate
+484,B|10.4|5|No rain,10.4|5|No rain
+485,B|8.2|4|No rain,8.2|4|No rain
+486,B|3.9|2|No rain,3.9|2|No rain
+487,B|3.1|2|No rain,3.1|2|No rain
+488,B|3|2|No rain,3|2|No rain
+489,B|4.8|3|No rain,4.8|3|No rain
+490,B|2.9|2|No rain,2.9|2|No rain
+491,B|9.5|4|No rain,9.5|4|No rain
+492,B|7.8|4|No rain,7.8|4|No rain
+493,B|5.4|3|No rain,5.4|3|No rain
+494,B|3.6|2|No rain,3.6|2|No rain
+495,B|2.8|2|Light,2.8|2|Light
+496,B|4.2|2|No rain,4.2|2|No rain
+497,B|3.8|2|No rain,3.8|2|No rain
+498,B|6.7|3|No rain,6.7|3|No rain
+499,B|13.4|6|No rain,13.4|6|No rain
+500,B|1.9|1|No rain,1.9|1|No rain
+501,B|4|2|No rain,4|2|No rain
+502,B|5.6|3|No rain,5.6|3|No rain
+503,B|14.1|6|No rain,14.1|6|No rain
+504,B|3.8|2|No rain,3.8|2|No rain
+505,B|1.7|1|No rain,1.7|1|No rain
+506,B|3.6|2|No rain,3.6|2|No rain
+507,B|4.9|3|No rain,4.9|3|No rain
+508,B|7.1|4|No rain,7.1|4|No rain
+509,B|12.2|5|No rain,12.2|5|No rain
+510,B|6.6|3|No rain,6.6|3|No rain
+511,B|7.7|4|No rain,7.7|4|No rain
+512,B|5.3|3|No rain,5.3|3|No rain
+513,B|6.6|3|Light,6.6|3|Light
+514,B|1.8|1|No rain,1.8|1|No rain
+515,B|6.7|3|No rain,6.7|3|No rain
+516,B|3.5|2|Moderate,3.5|2|Moderate
+517,B|12|5|Light,12|5|Light
+518,B|3.9|2|No rain,3.9|2|No rain
+519,B|12|5|No rain,12|5|No rain
+520,B|10.5|5|No rain,10.5|5|No rain
+521,B|2.4|1|No rain,2.4|1|No rain
+522,B|9.8|4|No rain,9.8|4|No rain
+523,B|3.5|2|No rain,3.5|2|No rain
+524,B|6.5|3|No rain,6.5|3|No rain
+525,B|6.6|3|Light,6.6|3|Light
+526,B|1.2|1|No rain,1.2|1|No rain
+527,B|4.8|3|No rain,4.8|3|No rain
+528,B|3|2|No rain,3|2|No rain
+529,B|5.8|3|No rain,5.8|3|No rain
+530,B|1.9|1|No rain,1.9|1|No rain
+531,B|9.2|4|No rain,9.2|4|No rain
+532,B|3.6|2|No rain,3.6|2|No rain
+533,B|4.1|2|No rain,4.1|2|No rain
+534,B|6.4|3|No rain,6.4|3|No rain
+535,B|5.5|3|No rain,5.5|3|No rain
+536,B|2.9|2|No rain,2.9|2|No rain
+537,B|14.5|6|Heavy,14.5|6|Heavy
+538,B|13|6|No rain,13|6|No rain
+539,B|10|5|No rain,10|5|No rain
+540,B|5.4|3|No rain,5.4|3|No rain
+541,B|10.6|5|No rain,10.6|5|No rain
+542,B|4.9|3|No rain,4.9|3|No rain
+543,B|6.6|3|Light,6.6|3|Light
+544,B|1.2|1|No rain,1.2|1|No rain
+545,B|4.8|3|No rain,4.8|3|No rain
+546,B|3|2|No rain,3|2|No rain
+547,B|5.8|3|No rain,5.8|3|No rain
+548,B|1.9|1|No rain,1.9|1|No rain
+549,B|9.2|4|No rain,9.2|4|No rain
+550,B|3.6|2|No rain,3.6|2|No rain
+551,B|4.1|2|No rain,4.1|2|No rain
+552,B|6.4|3|No rain,6.4|3|No rain
+553,B|5.5|3|No rain,5.5|3|No rain
+554,B|2.9|2|No rain,2.9|2|No rain
+555,B|14.5|6|Heavy,14.5|6|Heavy
+556,B|10|5|No rain,10|5|No rain
+557,B|5.4|3|No rain,5.4|3|No rain
+558,B|10.6|5|No rain,10.6|5|No rain
+559,B|3.1|2|No rain,3.1|2|No rain
+560,B|4|2|No rain,4|2|No rain
+561,B|6.3|3|No rain,6.3|3|No rain
+562,B|3.1|2|No rain,3.1|2|No rain
+563,B|7|4|No rain,7|4|No rain
+564,B|6.3|3|Light,6.3|3|Light
+565,B|2.6|2|No rain,2.6|2|No rain
+566,B|2.8|2|No rain,2.8|2|No rain
+567,B|6.4|3|No rain,6.4|3|No rain
+568,B|7.3|4|No rain,7.3|4|No rain
+569,B|7.6|4|No rain,7.6|4|No rain
+570,B|3.7|2|Light,3.7|2|Light
+571,B|5.9|3|No rain,5.9|3|No rain
+572,B|8.5|4|No rain,8.5|4|No rain
+573,B|3.4|2|No rain,3.4|2|No rain
+574,B|3.8|2|No rain,3.8|2|No rain
+575,B|4.8|3|No rain,4.8|3|No rain
+576,B|7.6|4|No rain,7.6|4|No rain
+577,B|6.4|3|No rain,6.4|3|No rain
+578,B|6.6|3|Light,6.6|3|Light
+579,B|4|2|No rain,4|2|No rain
+580,B|4|2|No rain,4|2|No rain
+581,B|1.3|1|No rain,1.3|1|No rain
+582,B|3.3|2|No rain,3.3|2|No rain
+583,B|7.3|4|No rain,7.3|4|No rain
+584,B|7.6|4|No rain,7.6|4|No rain
+585,B|3.7|2|Light,3.7|2|Light
+586,B|5.9|3|No rain,5.9|3|No rain
+587,B|8.5|4|No rain,8.5|4|No rain
+588,B|2.8|2|No rain,2.8|2|No rain
+589,B|3.8|2|No rain,3.8|2|No rain
+590,B|4.8|3|No rain,4.8|3|No rain
+591,B|7.6|4|No rain,7.6|4|No rain
+592,B|6.4|3|No rain,6.4|3|No rain
+593,B|6.6|3|Light,6.6|3|Light
+594,B|4|2|No rain,4|2|No rain
+595,B|1.3|1|No rain,1.3|1|No rain
+596,B|3.3|2|No rain,3.3|2|No rain
+597,B|1.5|1|No rain,1.5|1|No rain
+598,B|5.3|3|No rain,5.3|3|No rain
+599,B|6.7|3|No rain,6.7|3|No rain
+600,B|7.5|4|No rain,7.5|4|No rain
+601,B|2.5|1|No rain,2.5|1|No rain
+602,B|13.4|6|No rain,13.4|6|No rain
+603,B|8.5|4|No rain,8.5|4|No rain
+604,B|2.2|1|No rain,2.2|1|No rain
+605,B|6.5|3|No rain,6.5|3|No rain
+606,B|6.1|3|No rain,6.1|3|No rain
+607,B|3.2|2|No rain,3.2|2|No rain
+608,B|2|1|No rain,2|1|No rain
+609,B|3.7|2|No rain,3.7|2|No rain
+610,B|2.5|1|No rain,2.5|1|No rain
+611,B|3.3|2|No rain,3.3|2|No rain
+612,B|4.5|3|No rain,4.5|3|No rain
+613,B|9.1|4|No rain,9.1|4|No rain
+614,B|2.3|1|No rain,2.3|1|No rain
+615,B|2.4|1|No rain,2.4|1|No rain
+616,B|6.3|3|No rain,6.3|3|No rain
+617,B|3.2|2|No rain,3.2|2|No rain
+618,B|4.4|2|No rain,4.4|2|No rain
+619,B|4.7|3|No rain,4.7|3|No rain
+620,B|15|6|No rain,15|6|No rain
+621,B|1.8|1|No rain,1.8|1|No rain
+622,B|4.9|3|No rain,4.9|3|No rain
+623,B|15.4|6|No rain,15.4|6|No rain
+624,B|3.2|2|No rain,3.2|2|No rain
+625,B|7.5|4|No rain,7.5|4|No rain
+626,B|3.8|2|No rain,3.8|2|No rain
+627,B|14.1|6|No rain,14.1|6|No rain
+628,B|6.6|3|No rain,6.6|3|No rain
+629,B|6.9|3|Moderate,6.9|3|Moderate
+630,B|5.1|3|No rain,5.1|3|No rain
+631,B|4.5|3|No rain,4.5|3|No rain
+632,B|9.8|4|No rain,9.8|4|No rain
+633,B|10.1|5|No rain,10.1|5|No rain
+634,B|7.5|4|No rain,7.5|4|No rain
+635,B| - | - |No rain, - | - |No rain
+636,B|2.4|1|No rain,2.4|1|No rain
+637,B|7|4|No rain,7|4|No rain
+638,B|8.2|4|No rain,8.2|4|No rain
+639,B|9|4|No rain,9|4|No rain
+640,B|10|5|Light,10|5|Light
+641,B|3.4|2|No rain,3.4|2|No rain
+642,B|2.8|2|No rain,2.8|2|No rain
+643,B|3.8|2|No rain,3.8|2|No rain
+644,B|7.4|4|Light,7.4|4|Light
+645,B|9.5|4|No rain,9.5|4|No rain
+646,B|12.5|5|No rain,12.5|5|No rain
+647,B|14.5|6|Light,14.5|6|Light
+648,B|3.8|2|No rain,3.8|2|No rain
+649,B|7.2|4|No rain,7.2|4|No rain
+650,B|5.5|3|No rain,5.5|3|No rain
+651,B|2.9|2|No rain,2.9|2|No rain
+652,B|3|2|Light,3|2|Light
+653,B|5.2|3|No rain,5.2|3|No rain
+654,B|4|2|No rain,4|2|No rain
+655,B|5.4|3|No rain,5.4|3|No rain
+656,C|3.3|2|No rain,3.3|2|No rain
+657,C|4.8|3|No rain,4.8|3|No rain
+658,C|0.4|1|No rain,0.4|1|No rain
+659,C|10.7|5|No rain,10.7|5|No rain
+660,C|6.8|3|No rain,6.8|3|No rain
+661,C| - | - | - , - | - | - 
+662,C|2.5|1|No rain,2.5|1|No rain
+663,C|3.8|2|No rain,3.8|2|No rain
+664,C| - | - | - , - | - | - 
+665,C|3.5|2|No rain,3.5|2|No rain
+666,C|1.7|1|No rain,1.7|1|No rain
+667,C|0|1|No rain,0|1|No rain
+668,C|2.7|2|No rain,2.7|2|No rain
+669,C|1.3|1|Light,1.3|1|Light
+670,C|3.1|2|No rain,3.1|2|No rain
+671,C|2.6|2|No rain,2.6|2|No rain
+672,C|3|2|No rain,3|2|No rain
+673,C|3.1|2|No rain,3.1|2|No rain
+674,C|5.9|3|No rain,5.9|3|No rain
+675,C|8.8|4|No rain,8.8|4|No rain
+676,C|7.3|4|No rain,7.3|4|No rain
+677,C|6.8|3|No rain,6.8|3|No rain
+678,C|2.2|1|No rain,2.2|1|No rain
+679,C|5.3|3|No rain,5.3|3|No rain
+680,C|2.9|2|No rain,2.9|2|No rain
+681,C|5.8|3|No rain,5.8|3|No rain
+682,C|6.2|3|No rain,6.2|3|No rain
+683,C|3.8|2|No rain,3.8|2|No rain
+684,C|1.7|1|No rain,1.7|1|No rain
+685,C|2|1|No rain,2|1|No rain
+686,C|10.9|5|No rain,10.9|5|No rain
+687,C|2.5|1|Light,2.5|1|Light
+688,C|2.5|1|Light,2.5|1|Light
+689,C|6|3|No rain,6|3|No rain
+690,C|3.4|2|No rain,3.4|2|No rain
+691,C|1.7|1|No rain,1.7|1|No rain
+692,C|10.4|5|No rain,10.4|5|No rain
+693,C|3.7|2|No rain,3.7|2|No rain
+694,C|2.3|1|No rain,2.3|1|No rain
+695,C|2.1|1|Light,2.1|1|Light
+696,C|2.5|1|No rain,2.5|1|No rain
+697,C|2.3|1|No rain,2.3|1|No rain
+698,C|13|6|Light,13|6|Light
+699,C|2.4|1|Light,2.4|1|Light
+700,C|3.7|2|No rain,3.7|2|No rain
+701,C|3.7|2|No rain,3.7|2|No rain
+702,C|2.7|2|Light,2.7|2|Light
+703,C|7.3|4|No rain,7.3|4|No rain
+704,C|7.8|4|No rain,7.8|4|No rain
+705,C|3.2|2|No rain,3.2|2|No rain
+706,C|12.4|5|No rain,12.4|5|No rain
+707,C|2.3|1|No rain,2.3|1|No rain
+708,C|4.3|2|No rain,4.3|2|No rain
+709,C|9|4|No rain,9|4|No rain
+710,C|8.3|4|No rain,8.3|4|No rain
+711,C|4.4|2|No rain,4.4|2|No rain
+712,C|5.4|3|No rain,5.4|3|No rain
+713,C|1.8|1|No rain,1.8|1|No rain
+714,C|13.3|6|Light,13.3|6|Light
+715,C|5.6|3|No rain,5.6|3|No rain
+716,C|2.2|1|No rain,2.2|1|No rain
+717,C|4.2|2|No rain,4.2|2|No rain
+718,C|6.8|3|No rain,6.8|3|No rain
+719,C|6.1|3|No rain,6.1|3|No rain
+720,C|3.4|2|No rain,3.4|2|No rain
+721,C|3.3|2|No rain,3.3|2|No rain
+722,C|5.6|3|No rain,5.6|3|No rain
+723,C|6.4|3|No rain,6.4|3|No rain
+724,C|1.3|1|No rain,1.3|1|No rain
+725,C|1.3|1|No rain,1.3|1|No rain
+726,C|2.6|2|No rain,2.6|2|No rain
+727,C|3.6|2|No rain,3.6|2|No rain
+728,C|2.5|1|No rain,2.5|1|No rain
+729,C|0|1|No rain,0|1|No rain
+730,C|5.1|3|No rain,5.1|3|No rain
+731,C|4.1|2|No rain,4.1|2|No rain
+732,C|2.1|1|No rain,2.1|1|No rain
+733,C|1.6|1|No rain,1.6|1|No rain
+734,C|5.1|3|No rain,5.1|3|No rain
+735,C|1.3|1|No rain,1.3|1|No rain
+736,C|2.8|2|No rain,2.8|2|No rain
+737,C|2|1|No rain,2|1|No rain
+738,C|4.8|3|No rain,4.8|3|No rain
+739,C|3.4|2|No rain,3.4|2|No rain
+740,C|3.7|2|No rain,3.7|2|No rain
+741,C|9.4|4|No rain,9.4|4|No rain
+742,C|10.1|5|No rain,10.1|5|No rain
+743,C|4.4|2|No rain,4.4|2|No rain
+744,C|1.7|1|No rain,1.7|1|No rain
+745,C|5.4|3|No rain,5.4|3|No rain
+746,C|4.4|2|No rain,4.4|2|No rain
+747,C|6.2|3|No rain,6.2|3|No rain
+748,C|5.6|3|No rain,5.6|3|No rain
+749,C|13.5|6|No rain,13.5|6|No rain
+750,C|5.6|3|No rain,5.6|3|No rain
+751,C|4.7|3|No rain,4.7|3|No rain
+752,C|2.8|2|No rain,2.8|2|No rain
+753,C|5.8|3|Light,5.8|3|Light
+754,C|5.1|3|No rain,5.1|3|No rain
+755,C|5.8|3|No rain,5.8|3|No rain
+756,C|9|4|No rain,9|4|No rain
+757,C|2.8|2|No rain,2.8|2|No rain
+758,C|20.8|7|No rain,20.8|7|No rain
+759,C|3.7|2|No rain,3.7|2|No rain
+760,C|1.8|1|No rain,1.8|1|No rain
+761,C|5.2|3|No rain,5.2|3|No rain
+762,C|2.5|1|No rain,2.5|1|No rain
+763,C|3.4|2|No rain,3.4|2|No rain
+764,C|2.8|2|No rain,2.8|2|No rain
+765,C|1.6|1|No rain,1.6|1|No rain
+766,C|2.4|1|No rain,2.4|1|No rain
+767,C|2.9|2|No rain,2.9|2|No rain
+768,C|2.4|1|No rain,2.4|1|No rain
+769,C|3|2|No rain,3|2|No rain
+770,C|5.5|3|No rain,5.5|3|No rain
+771,C|5.6|3|Moderate,5.6|3|Moderate
+772,C|1.9|1|No rain,1.9|1|No rain
+773,C|3.3|2|No rain,3.3|2|No rain
+774,C|0|1|No rain,0|1|No rain
+775,C|0|1|No rain,0|1|No rain
+776,C|0|1|No rain,0|1|No rain
+777,C|2|1|No rain,2|1|No rain
+778,C|1.1|1|No rain,1.1|1|No rain
+779,C|7.4|4|No rain,7.4|4|No rain
+780,C|5|3|No rain,5|3|No rain
+781,C|6.4|3|No rain,6.4|3|No rain
+782,C|8.9|4|No rain,8.9|4|No rain
+783,C|9.6|4|No rain,9.6|4|No rain
+784,C|4.1|2|No rain,4.1|2|No rain
+785,C|4.5|3|Moderate,4.5|3|Moderate
+786,C|5.8|3|No rain,5.8|3|No rain
+787,C|7.4|4|No rain,7.4|4|No rain
+788,C|4.9|3|Moderate,4.9|3|Moderate
+789,C|4.1|2|No rain,4.1|2|No rain
+790,C|6.4|3|No rain,6.4|3|No rain
+791,C|8.9|4|No rain,8.9|4|No rain
+792,C|9.6|4|No rain,9.6|4|No rain
+793,C|4.1|2|No rain,4.1|2|No rain
+794,C|4.5|3|Moderate,4.5|3|Moderate
+795,C|5.8|3|No rain,5.8|3|No rain
+796,C|3.7|2|No rain,3.7|2|No rain
+797,C|2|1|No rain,2|1|No rain
+798,C|7.7|4|No rain,7.7|4|No rain
+799,C|3.8|2|No rain,3.8|2|No rain
+800,C| - | - | - , - | - | - 
+801,C|1.8|1|No rain,1.8|1|No rain
+802,C|2.2|1|No rain,2.2|1|No rain
+803,C|2.2|1|No rain,2.2|1|No rain
+804,C|3.1|2|No rain,3.1|2|No rain
+805,C|0.4|1|No rain,0.4|1|No rain
+806,C|0|1|No rain,0|1|No rain
+807,C|0|1|No rain,0|1|No rain
+808,C|3.5|2|No rain,3.5|2|No rain
+809,C|7.7|4|No rain,7.7|4|No rain
+810,C|12.1|5|No rain,12.1|5|No rain
+811,C|10.3|5|No rain,10.3|5|No rain
+812,C|3.2|2|No rain,3.2|2|No rain
+813,C|3.6|2|No rain,3.6|2|No rain
+814,C|10.8|5|Moderate,10.8|5|Moderate
+815,C|2.9|2|Moderate,2.9|2|Moderate
+816,C|2|1|Moderate,2|1|Moderate
+817,C|7.5|4|No rain,7.5|4|No rain
+818,C|2.5|1|No rain,2.5|1|No rain
+819,C|5.3|3|No rain,5.3|3|No rain
+820,C|10.7|5|No rain,10.7|5|No rain
+821,C|8.7|4|No rain,8.7|4|No rain
+822,C|3|2|No rain,3|2|No rain
+823,C|2.3|1|No rain,2.3|1|No rain
+824,C|6.4|3|No rain,6.4|3|No rain
+825,C|2.8|2|No rain,2.8|2|No rain
+826,C|4.4|2|No rain,4.4|2|No rain
+827,C|2.7|2|No rain,2.7|2|No rain
+828,C|5|3|No rain,5|3|No rain
+829,C|3.5|2|No rain,3.5|2|No rain
+830,C|2.3|1|No rain,2.3|1|No rain
+831,C|7.7|4|No rain,7.7|4|No rain
+832,C|12.1|5|No rain,12.1|5|No rain
+833,C|10.3|5|No rain,10.3|5|No rain
+834,C|3.2|2|No rain,3.2|2|No rain
+835,C|3.6|2|No rain,3.6|2|No rain
+836,C|10.8|5|Moderate,10.8|5|Moderate
+837,C|14.5|6|Light,14.5|6|Light
+838,C|2.9|2|Moderate,2.9|2|Moderate
+839,C|2|1|Moderate,2|1|Moderate
+840,C|7.5|4|No rain,7.5|4|No rain
+841,C|2.5|1|No rain,2.5|1|No rain
+842,C|5.3|3|No rain,5.3|3|No rain
+843,C|8.7|4|No rain,8.7|4|No rain
+844,C|3|2|No rain,3|2|No rain
+845,C|2.3|1|No rain,2.3|1|No rain
+846,C|2.3|1|No rain,2.3|1|No rain
+847,C|6.4|3|No rain,6.4|3|No rain
+848,C|2.8|2|No rain,2.8|2|No rain
+849,C|6.1|3|No rain,6.1|3|No rain
+850,C|3.3|2|No rain,3.3|2|No rain
+851,C|2.7|2|No rain,2.7|2|No rain
+852,C|5|3|No rain,5|3|No rain
+853,C|3.9|2|No rain,3.9|2|No rain
+854,C|3.6|2|No rain,3.6|2|No rain
+855,C|8.4|4|No rain,8.4|4|No rain
+856,C|7.8|4|No rain,7.8|4|No rain
+857,C|11.9|5|No rain,11.9|5|No rain
+858,C|8.5|4|Moderate,8.5|4|Moderate
+859,C|8.5|4|Light,8.5|4|Light
+860,C|4.8|3|No rain,4.8|3|No rain
+861,C|5.5|3|No rain,5.5|3|No rain
+862,C|3|2|No rain,3|2|No rain
+863,C|6|3|No rain,6|3|No rain
+864,C|2.6|2|No rain,2.6|2|No rain
+865,C|3.6|2|No rain,3.6|2|No rain
+866,C|1.5|1|No rain,1.5|1|No rain
+867,C|3.8|2|No rain,3.8|2|No rain
+868,C|6.2|3|No rain,6.2|3|No rain
+869,C|4.8|3|No rain,4.8|3|No rain
+870,C|3.5|2|No rain,3.5|2|No rain
+871,C|3.2|2|No rain,3.2|2|No rain
+872,C|4.7|3|No rain,4.7|3|No rain
+873,C|1.8|1|No rain,1.8|1|No rain
+874,C|6.9|3|No rain,6.9|3|No rain
+875,C|3.9|2|No rain,3.9|2|No rain
+876,C|3.2|2|No rain,3.2|2|No rain
+877,C|3.6|2|No rain,3.6|2|No rain
+878,C|4.4|2|No rain,4.4|2|No rain
+879,C|4.1|2|No rain,4.1|2|No rain
+880,C|6|3|No rain,6|3|No rain
+881,C|4.7|3|No rain,4.7|3|No rain
+882,C|3.6|2|No rain,3.6|2|No rain
+883,C|2.1|1|No rain,2.1|1|No rain
+884,C|4|2|No rain,4|2|No rain
+885,C|3.1|2|No rain,3.1|2|No rain
+886,C|5.3|3|No rain,5.3|3|No rain
+887,C|18.6|6|No rain,18.6|6|No rain
+888,C|5.3|3|No rain,5.3|3|No rain
+889,C|2.7|2|No rain,2.7|2|No rain
+890,C|5|3|No rain,5|3|No rain
+891,C|4.8|3|No rain,4.8|3|No rain
+892,C|6.2|3|No rain,6.2|3|No rain
+893,C|4.6|3|No rain,4.6|3|No rain
+894,C|5.2|3|No rain,5.2|3|No rain
+895,C|5.6|3|No rain,5.6|3|No rain
+896,C|6.8|3|No rain,6.8|3|No rain
+897,C|6|3|Light,6|3|Light
+898,C|5.8|3|No rain,5.8|3|No rain
+899,C| - | - | - , - | - | - 
+900,C|2.2|1|No rain,2.2|1|No rain
+901,C| - | - | - , - | - | - 
+902,C| - | - | - , - | - | - 
+903,C| - | - | - , - | - | - 
+904,C| - | - | - , - | - | - 
+905,C|12.9|6|No rain,12.9|6|No rain
+906,C|4.3|2|No rain,4.3|2|No rain
+907,C|9.6|4|No rain,9.6|4|No rain
+908,C|3.8|2|No rain,3.8|2|No rain
+909,C|7.4|4|No rain,7.4|4|No rain
+910,C|8.7|4|No rain,8.7|4|No rain
+911,C|2.8|2|No rain,2.8|2|No rain
+912,C|4.9|3|No rain,4.9|3|No rain
+913,C|2.7|2|No rain,2.7|2|No rain
+914,C|3.2|2|No rain,3.2|2|No rain
+915,C|2|1|No rain,2|1|No rain
+916,C|2.6|2|No rain,2.6|2|No rain
+917,C|3.6|2|No rain,3.6|2|No rain
+918,C|2.3|1|No rain,2.3|1|No rain
+919,C|4.3|2|No rain,4.3|2|No rain
+920,C|4.8|3|No rain,4.8|3|No rain
+921,C|3.2|2|No rain,3.2|2|No rain
+922,C| - | - | - , - | - | - 
+923,C| - | - | - , - | - | - 
+924,C| - | - | - , - | - | - 
+925,C|8.9|4|No rain,8.9|4|No rain
+926,C|8.1|4|No rain,8.1|4|No rain
+927,C|6.4|3|No rain,6.4|3|No rain
+928,C|7.4|4|No rain,7.4|4|No rain
+929,C|7.6|4|No rain,7.6|4|No rain
+930,C|8.1|4|No rain,8.1|4|No rain
+931,C|4.8|3|No rain,4.8|3|No rain
+932,C|5.3|3|No rain,5.3|3|No rain
+933,C|4.5|3|No rain,4.5|3|No rain
+934,C|1.7|1|No rain,1.7|1|No rain
+935,C|2|1|No rain,2|1|No rain
+936,C|1.8|1|No rain,1.8|1|No rain
+937,C|3|2|No rain,3|2|No rain
+938,C|7.5|4|No rain,7.5|4|No rain
+939,C|1.9|1|No rain,1.9|1|No rain
+940,C|3|2|No rain,3|2|No rain
+941,C|2.2|1|No rain,2.2|1|No rain
+942,C|8.8|4|No rain,8.8|4|No rain
+943,C|8.6|4|No rain,8.6|4|No rain
+944,C|2.4|1|No rain,2.4|1|No rain
+945,C|4.3|2|No rain,4.3|2|No rain
+946,C|18.5|6|Heavy,18.5|6|Heavy
+947,C|8.1|4|No rain,8.1|4|No rain
+948,C|9|4|No rain,9|4|No rain
+949,C|13.6|6|No rain,13.6|6|No rain
+950,C|6.3|3|No rain,6.3|3|No rain
+951,C|4.8|3|No rain,4.8|3|No rain
+952,C|2.6|2|No rain,2.6|2|No rain
+953,C|2.9|2|No rain,2.9|2|No rain
+954,C|12.5|5|No rain,12.5|5|No rain
+955,C|6.9|3|No rain,6.9|3|No rain
+956,C|5.4|3|No rain,5.4|3|No rain
+957,C|4.2|2|No rain,4.2|2|No rain
+958,C|6.3|3|No rain,6.3|3|No rain
+959,C|6.4|3|No rain,6.4|3|No rain
+960,C|2.9|2|No rain,2.9|2|No rain
+961,C|4.9|3|No rain,4.9|3|No rain
+962,C|7.3|4|No rain,7.3|4|No rain
+963,C|3.8|2|No rain,3.8|2|No rain
+964,C|3.6|2|No rain,3.6|2|No rain
+965,C|2.1|1|No rain,2.1|1|No rain
+966,C|3.5|2|No rain,3.5|2|No rain
+967,C|5.7|3|No rain,5.7|3|No rain
+968,C|2.6|2|No rain,2.6|2|No rain
+969,C|3.1|2|No rain,3.1|2|No rain
+970,C|5.8|3|No rain,5.8|3|No rain
+971,C|2.2|1|No rain,2.2|1|No rain
+972,C|2.2|1|No rain,2.2|1|No rain
+973,C|6.1|3|Moderate,6.1|3|Moderate
+974,C|1.7|1|No rain,1.7|1|No rain
+975,C|4.4|2|No rain,4.4|2|No rain
+976,C|12|5|No rain,12|5|No rain
+977,C|5.6|3|No rain,5.6|3|No rain
+978,C|3.5|2|No rain,3.5|2|No rain
+979,C|7.4|4|Moderate,7.4|4|Moderate
+980,C|8|4|No rain,8|4|No rain
+981,C|2.7|2|No rain,2.7|2|No rain
+982,C|2.3|1|No rain,2.3|1|No rain
+983,C| - | - |No rain, - | - |No rain
+984,C|5.1|3|No rain,5.1|3|No rain
+985,C|6.8|3|No rain,6.8|3|No rain
+986,C|15.3|6|No rain,15.3|6|No rain
+987,C| - | - |No rain, - | - |No rain
+988,C|9.2|4|No rain,9.2|4|No rain
+989,C|5.1|3|No rain,5.1|3|No rain
+990,C|9.4|4|No rain,9.4|4|No rain
+991,C|4.3|2|No rain,4.3|2|No rain
+992,C|9.1|4|No rain,9.1|4|No rain
+993,C|3|2|No rain,3|2|No rain
+994,C|2.9|2|No rain,2.9|2|No rain
+995,C|3.4|2|No rain,3.4|2|No rain
+996,C|3.5|2|No rain,3.5|2|No rain
+997,D|2.7|2|No rain,2.7|2|No rain
+998,D|5.7|3|No rain,5.7|3|No rain
+999,D|6|3|No rain,6|3|No rain
+1000,D|3|2|No rain,3|2|No rain
+1001,D|7|4|No rain,7|4|No rain
+1002,D|8.1|4|No rain,8.1|4|No rain
+1003,D|9.2|4|No rain,9.2|4|No rain
+1004,D|4.6|3|No rain,4.6|3|No rain
+1005,D|11.8|5|No rain,11.8|5|No rain
+1006,D|10.4|5|No rain,10.4|5|No rain
+1007,D|3.2|2|No rain,3.2|2|No rain
+1008,D|3.9|2|No rain,3.9|2|No rain
+1009,D|1.5|1|No rain,1.5|1|No rain
+1010,D|6.7|3|No rain,6.7|3|No rain
+1011,D|5.1|3|No rain,5.1|3|No rain
+1012,D|4.4|2|No rain,4.4|2|No rain
+1013,D|12.2|5|No rain,12.2|5|No rain
+1014,D|3.5|2|No rain,3.5|2|No rain
+1015,D|8.5|4|No rain,8.5|4|No rain
+1016,D|8.7|4|No rain,8.7|4|No rain
+1017,D|8.6|4|No rain,8.6|4|No rain
+1018,D|3.4|2|No rain,3.4|2|No rain
+1019,D|5.8|3|No rain,5.8|3|No rain
+1020,D|3.9|2|No rain,3.9|2|No rain
+1021,D|2.6|2|No rain,2.6|2|No rain
+1022,D|4|2|No rain,4|2|No rain
+1023,D|1.6|1|No rain,1.6|1|No rain
+1024,D|6.4|3|No rain,6.4|3|No rain
+1025,D|3|2|No rain,3|2|No rain
+1026,D|3.6|2|No rain,3.6|2|No rain
+1027,D|1.8|1|No rain,1.8|1|No rain
+1028,D|4.5|3|No rain,4.5|3|No rain
+1029,D|3.8|2|No rain,3.8|2|No rain
+1030,D|7.2|4|No rain,7.2|4|No rain
+1031,D|5.3|3|No rain,5.3|3|No rain
+1032,D|2.4|1|No rain,2.4|1|No rain
+1033,D|2.1|1|No rain,2.1|1|No rain
+1034,D|2|1|No rain,2|1|No rain
+1035,D|8|4|No rain,8|4|No rain
+1036,D|1.8|1|No rain,1.8|1|No rain
+1037,D|3.3|2|No rain,3.3|2|No rain
+1038,D|3.1|2|No rain,3.1|2|No rain
+1039,D|13.7|6|Moderate,13.7|6|Moderate
+1040,D|2.1|1|No rain,2.1|1|No rain
+1041,D|1.6|1|No rain,1.6|1|No rain
+1042,D|2.1|1|No rain,2.1|1|No rain
+1043,D|3.1|2|No rain,3.1|2|No rain
+1044,D|13.7|6|Moderate,13.7|6|Moderate
+1045,D|2.1|1|No rain,2.1|1|No rain
+1046,D|1.6|1|No rain,1.6|1|No rain
+1047,D|2.1|1|No rain,2.1|1|No rain
+1048,D|3.5|2|No rain,3.5|2|No rain
+1049,D|3.1|2|No rain,3.1|2|No rain
+1050,D|3.6|2|No rain,3.6|2|No rain
+1051,D|1.5|1|No rain,1.5|1|No rain
+1052,D|7|4|No rain,7|4|No rain
+1053,D|4.8|3|No rain,4.8|3|No rain
+1054,D|10.3|5|No rain,10.3|5|No rain
+1055,D|4.6|3|No rain,4.6|3|No rain
+1056,D|2.1|1|No rain,2.1|1|No rain
+1057,D|15.6|6|Light,15.6|6|Light
+1058,D|5.9|3|No rain,5.9|3|No rain
+1059,D|7.4|4|No rain,7.4|4|No rain
+1060,D|4.9|3|No rain,4.9|3|No rain
+1061,D|3.1|2|No rain,3.1|2|No rain
+1062,D|4.3|2|No rain,4.3|2|No rain
+1063,D|4.9|3|No rain,4.9|3|No rain
+1064,D|7.2|4|Moderate,7.2|4|Moderate
+1065,D|15.2|6|No rain,15.2|6|No rain
+1066,D|15.1|6|No rain,15.1|6|No rain
+1067,D|3.6|2|No rain,3.6|2|No rain
+1068,D|3|2|No rain,3|2|No rain
+1069,D|1.8|1|No rain,1.8|1|No rain
+1070,D|1.8|1|No rain,1.8|1|No rain
+1071,D|3|2|No rain,3|2|No rain
+1072,D|5.7|3|No rain,5.7|3|No rain
+1073,D|3.9|2|No rain,3.9|2|No rain
+1074,D|3.1|2|No rain,3.1|2|No rain
+1075,D|8.1|4|No rain,8.1|4|No rain
+1076,D|7.1|4|No rain,7.1|4|No rain
+1077,D|4.9|3|No rain,4.9|3|No rain
+1078,D|6.5|3|No rain,6.5|3|No rain
+1079,D|5.4|3|No rain,5.4|3|No rain
+1080,D|2.1|1|Light,2.1|1|Light
+1081,D|3|2|Light,3|2|Light
+1082,D|7.5|4|No rain,7.5|4|No rain
+1083,D|3.2|2|No rain,3.2|2|No rain
+1084,D|4.1|2|No rain,4.1|2|No rain
+1085,D|4.1|2|No rain,4.1|2|No rain
+1086,D|4.6|3|No rain,4.6|3|No rain
+1087,D|3.6|2|No rain,3.6|2|No rain
+1088,D|2.6|2|No rain,2.6|2|No rain
+1089,D|13.2|6|No rain,13.2|6|No rain
+1090,D|4.5|3|No rain,4.5|3|No rain
+1091,D|4.5|3|No rain,4.5|3|No rain
+1092,D|7.4|4|No rain,7.4|4|No rain
+1093,D|8.6|4|No rain,8.6|4|No rain
+1094,D|6.9|3|No rain,6.9|3|No rain
+1095,D|5.4|3|No rain,5.4|3|No rain
+1096,D|5|3|No rain,5|3|No rain
+1097,D|5.2|3|No rain,5.2|3|No rain
+1098,D|4.8|3|No rain,4.8|3|No rain
+1099,D|3.4|2|No rain,3.4|2|No rain
+1100,D|3.5|2|No rain,3.5|2|No rain
+1101,D|5.7|3|No rain,5.7|3|No rain
+1102,D|8.6|4|No rain,8.6|4|No rain
+1103,D|5.6|3|No rain,5.6|3|No rain
+1104,D|4.7|3|No rain,4.7|3|No rain
+1105,D|3.4|2|No rain,3.4|2|No rain
+1106,D|5.5|3|No rain,5.5|3|No rain
+1107,D|5.2|3|No rain,5.2|3|No rain
+1108,D|3.3|2|No rain,3.3|2|No rain
+1109,D|4.4|2|No rain,4.4|2|No rain
+1110,D|8.2|4|No rain,8.2|4|No rain
+1111,D|3|2|No rain,3|2|No rain
+1112,D|6.1|3|No rain,6.1|3|No rain
+1113,D|1.6|1|No rain,1.6|1|No rain
+1114,D|2.2|1|No rain,2.2|1|No rain
+1115,D|2.2|1|No rain,2.2|1|No rain
+1116,D|1.9|1|No rain,1.9|1|No rain
+1117,D|0|1|No rain,0|1|No rain
+1118,D|2.7|2|No rain,2.7|2|No rain
+1119,D|4.5|3|No rain,4.5|3|No rain
+1120,D|1.7|1|Moderate,1.7|1|Moderate
+1121,D|4|2|No rain,4|2|No rain
+1122,D|3.1|2|No rain,3.1|2|No rain
+1123,D|6.2|3|No rain,6.2|3|No rain
+1124,D|2.1|1|No rain,2.1|1|No rain
+1125,D|1.9|1|No rain,1.9|1|No rain
+1126,D|1.7|1|No rain,1.7|1|No rain
+1127,D|2.1|1|No rain,2.1|1|No rain
+1128,D|7.8|4|No rain,7.8|4|No rain
+1129,D|5.3|3|No rain,5.3|3|No rain
+1130,D|8.7|4|No rain,8.7|4|No rain
+1131,D|8.3|4|Light,8.3|4|Light
+1132,D|11.4|5|No rain,11.4|5|No rain
+1133,D|5.3|3|No rain,5.3|3|No rain
+1134,D|7.5|4|No rain,7.5|4|No rain
+1135,D|8.2|4|No rain,8.2|4|No rain
+1136,D|2|1|No rain,2|1|No rain
+1137,D|3.4|2|No rain,3.4|2|No rain
+1138,D|5.9|3|No rain,5.9|3|No rain
+1139,D|8.2|4|No rain,8.2|4|No rain
+1140,D|4.8|3|No rain,4.8|3|No rain
+1141,D|6.8|3|No rain,6.8|3|No rain
+1142,D|6|3|No rain,6|3|No rain
+1143,D|4.3|2|No rain,4.3|2|No rain
+1144,D|8.3|4|No rain,8.3|4|No rain
+1145,D|5.4|3|No rain,5.4|3|No rain
+1146,D|5|3|No rain,5|3|No rain
+1147,D|5.1|3|No rain,5.1|3|No rain
+1148,D|3.2|2|No rain,3.2|2|No rain
+1149,D|5.3|3|No rain,5.3|3|No rain
+1150,D|6.4|3|No rain,6.4|3|No rain
+1151,D|7.2|4|No rain,7.2|4|No rain
+1152,D|9.6|4|No rain,9.6|4|No rain
+1153,D|4.8|3|No rain,4.8|3|No rain
+1154,D|4.9|3|No rain,4.9|3|No rain
+1155,D|2.8|2|No rain,2.8|2|No rain
+1156,D|3.6|2|No rain,3.6|2|No rain
+1157,D|1.8|1|No rain,1.8|1|No rain
+1158,D|4.5|3|No rain,4.5|3|No rain
+1159,D|0|1|No rain,0|1|No rain
+1160,D|0|1|No rain,0|1|No rain
+1161,D|0|1|No rain,0|1|No rain
+1162,D|5.9|3|No rain,5.9|3|No rain
+1163,D|2|1|No rain,2|1|No rain
+1164,D|3.7|2|No rain,3.7|2|No rain
+1165,D|2.9|2|Light,2.9|2|Light
+1166,D|1.9|1|No rain,1.9|1|No rain
+1167,D|6.2|3|No rain,6.2|3|No rain
+1168,D|7.4|4|No rain,7.4|4|No rain
+1169,D|2.5|1|No rain,2.5|1|No rain
+1170,D|8.3|4|Light,8.3|4|Light
+1171,D|2.8|2|No rain,2.8|2|No rain
+1172,D|4.8|3|No rain,4.8|3|No rain
+1173,D|2.3|1|No rain,2.3|1|No rain
+1174,D|3.6|2|No rain,3.6|2|No rain
+1175,D|2.8|2|No rain,2.8|2|No rain
+1176,D|4.1|2|No rain,4.1|2|No rain
+1177,D|4.1|2|No rain,4.1|2|No rain
+1178,D|9.1|4|No rain,9.1|4|No rain
+1179,D|8.5|4|No rain,8.5|4|No rain
+1180,D|8.4|4|No rain,8.4|4|No rain
+1181,D|7.8|4|No rain,7.8|4|No rain
+1182,D|1.9|1|No rain,1.9|1|No rain
+1183,D|4.9|3|No rain,4.9|3|No rain
+1184,D|8.4|4|No rain,8.4|4|No rain
+1185,D|2|1|No rain,2|1|No rain
+1186,D|3.9|2|No rain,3.9|2|No rain
+1187,D|9.5|4|No rain,9.5|4|No rain
+1188,D|6.9|3|No rain,6.9|3|No rain
+1189,D|3.1|2|No rain,3.1|2|No rain
+1190,D|5.8|3|No rain,5.8|3|No rain
+1191,D|7.4|4|No rain,7.4|4|No rain
+1192,D|2.5|1|No rain,2.5|1|No rain
+1193,D|8.3|4|Light,8.3|4|Light
+1194,D|2.8|2|No rain,2.8|2|No rain
+1195,D|4.8|3|No rain,4.8|3|No rain
+1196,D|2.3|1|No rain,2.3|1|No rain
+1197,D|2.8|2|No rain,2.8|2|No rain
+1198,D|5|3|No rain,5|3|No rain
+1199,D|4.1|2|No rain,4.1|2|No rain
+1200,D|9.1|4|No rain,9.1|4|No rain
+1201,D|3.7|2|No rain,3.7|2|No rain
+1202,D|8.5|4|No rain,8.5|4|No rain
+1203,D|8.4|4|No rain,8.4|4|No rain
+1204,D|4.9|3|No rain,4.9|3|No rain
+1205,D|3.9|2|No rain,3.9|2|No rain
+1206,D|9.5|4|No rain,9.5|4|No rain
+1207,D|6.9|3|No rain,6.9|3|No rain
+1208,D|3.1|2|No rain,3.1|2|No rain
+1209,D|5.8|3|No rain,5.8|3|No rain
+1210,D|3.9|2|No rain,3.9|2|No rain
+1211,D|8.5|4|No rain,8.5|4|No rain
+1212,D|6.3|3|No rain,6.3|3|No rain
+1213,D|3.2|2|No rain,3.2|2|No rain
+1214,D|4|2|No rain,4|2|No rain
+1215,D|6.2|3|No rain,6.2|3|No rain
+1216,D|5.6|3|No rain,5.6|3|No rain
+1217,D|3.4|2|No rain,3.4|2|No rain
+1218,D|3.2|2|No rain,3.2|2|No rain
+1219,D|4|2|No rain,4|2|No rain
+1220,D|3.9|2|No rain,3.9|2|No rain
+1221,D| - | - | - , - | - | - 
+1222,D| - | - | - , - | - | - 
+1223,D| - | - | - , - | - | - 
+1224,D| - | - | - , - | - | - 
+1225,D| - | - | - , - | - | - 
+1226,D|2.2|1|No rain,2.2|1|No rain
+1227,D|2.2|1|No rain,2.2|1|No rain
+1228,D|0.9|1|No rain,0.9|1|No rain
+1229,D|0|1|No rain,0|1|No rain
+1230,D|0.9|1|No rain,0.9|1|No rain
+1231,D|4.5|3|No rain,4.5|3|No rain
+1232,D|5.6|3|No rain,5.6|3|No rain
+1233,D|7.6|4|No rain,7.6|4|No rain
+1234,D|2.6|2|No rain,2.6|2|No rain
+1235,D|2.7|2|No rain,2.7|2|No rain
+1236,D|2.7|2|No rain,2.7|2|No rain
+1237,D|5.9|3|No rain,5.9|3|No rain
+1238,D|2.3|1|No rain,2.3|1|No rain
+1239,D|4.8|3|No rain,4.8|3|No rain
+1240,D|2.9|2|No rain,2.9|2|No rain
+1241,D|2.3|1|Light,2.3|1|Light
+1242,D|11|5|No rain,11|5|No rain
+1243,D|9.9|5|No rain,9.9|5|No rain
+1244,D|5|3|No rain,5|3|No rain
+1245,D|5.8|3|No rain,5.8|3|No rain
+1246,D|6.1|3|No rain,6.1|3|No rain
+1247,D|11.5|5|No rain,11.5|5|No rain
+1248,D|5.9|3|No rain,5.9|3|No rain
+1249,D|6.3|3|Light,6.3|3|Light
+1250,D|4.1|2|No rain,4.1|2|No rain
+1251,D|3.2|2|No rain,3.2|2|No rain
+1252,D|3.3|2|No rain,3.3|2|No rain
+1253,D|2.6|2|No rain,2.6|2|No rain
+1254,D|2.3|1|No rain,2.3|1|No rain
+1255,D|2.3|1|No rain,2.3|1|No rain
+1256,D|3.6|2|No rain,3.6|2|No rain
+1257,D|2.5|1|No rain,2.5|1|No rain
+1258,D|3.9|2|No rain,3.9|2|No rain
+1259,D|4.8|3|No rain,4.8|3|No rain
+1260,D|5.6|3|No rain,5.6|3|No rain
+1261,D|7.6|4|No rain,7.6|4|No rain
+1262,D|2.6|2|No rain,2.6|2|No rain
+1263,D|2.7|2|No rain,2.7|2|No rain
+1264,D|2.7|2|No rain,2.7|2|No rain
+1265,D|5.9|3|No rain,5.9|3|No rain
+1266,D|5.7|3|No rain,5.7|3|No rain
+1267,D|2.3|1|No rain,2.3|1|No rain
+1268,D|4.8|3|No rain,4.8|3|No rain
+1269,D|4.9|3|No rain,4.9|3|No rain
+1270,D|4.9|3|No rain,4.9|3|No rain
+1271,D|4.9|3|No rain,4.9|3|No rain
+1272,D|5.8|3|No rain,5.8|3|No rain
+1273,D|9|4|No rain,9|4|No rain
+1274,D|6.6|3|No rain,6.6|3|No rain
+1275,D|2.9|2|No rain,2.9|2|No rain
+1276,D|2.5|1|No rain,2.5|1|No rain
+1277,D|2.3|1|Light,2.3|1|Light
+1278,D|15.1|6|Moderate,15.1|6|Moderate
+1279,D|4|2|No rain,4|2|No rain
+1280,D|2.2|1|Moderate,2.2|1|Moderate
+1281,D|4.6|3|No rain,4.6|3|No rain
+1282,D|11|5|No rain,11|5|No rain
+1283,D|4.1|2|No rain,4.1|2|No rain
+1284,D|3.6|2|No rain,3.6|2|No rain
+1285,D|3.9|2|No rain,3.9|2|No rain
+1286,D|9.9|5|No rain,9.9|5|No rain
+1287,D|5|3|No rain,5|3|No rain
+1288,D|5.4|3|No rain,5.4|3|No rain
+1289,D|5.8|3|No rain,5.8|3|No rain
+1290,D|6.1|3|No rain,6.1|3|No rain
+1291,D|3.5|2|No rain,3.5|2|No rain
+1292,D|11.5|5|No rain,11.5|5|No rain
+1293,D|10.2|5|No rain,10.2|5|No rain
+1294,D|6.3|3|Light,6.3|3|Light
+1295,D|4.7|3|No rain,4.7|3|No rain
+1296,D|3.2|2|No rain,3.2|2|No rain
+1297,D|3.3|2|No rain,3.3|2|No rain
+1298,D|2.6|2|No rain,2.6|2|No rain
+1299,D|2.3|1|No rain,2.3|1|No rain
+1300,D|2.3|1|No rain,2.3|1|No rain
+1301,D|3.6|2|No rain,3.6|2|No rain
+1302,D|2.5|1|No rain,2.5|1|No rain
+1303,D|3.9|2|No rain,3.9|2|No rain
+1304,D|4.8|3|No rain,4.8|3|No rain
+1305,D|5.2|3|Light,5.2|3|Light
+1306,D|1.9|1|No rain,1.9|1|No rain
+1307,D|6.7|3|No rain,6.7|3|No rain
+1308,D|3.8|2|No rain,3.8|2|No rain
+1309,D|6.9|3|No rain,6.9|3|No rain
+1310,D|7.6|4|No rain,7.6|4|No rain
+1311,D|3.4|2|No rain,3.4|2|No rain
+1312,D|11.3|5|No rain,11.3|5|No rain
+1313,D|11.9|5|No rain,11.9|5|No rain
+1314,D|5.6|3|No rain,5.6|3|No rain
+1315,D|5|3|No rain,5|3|No rain
+1316,D|7.1|4|No rain,7.1|4|No rain
+1317,D|2|1|No rain,2|1|No rain
+1318,D|2.6|2|No rain,2.6|2|No rain
+1319,D|4.5|3|No rain,4.5|3|No rain
+1320,D|4.8|3|No rain,4.8|3|No rain
+1321,D|4.9|3|No rain,4.9|3|No rain
+1322,D|3.2|2|No rain,3.2|2|No rain
+1323,D|5.1|3|No rain,5.1|3|No rain
+1324,D|5|3|No rain,5|3|No rain
+1325,D|3.7|2|No rain,3.7|2|No rain
+1326,D|2.7|2|No rain,2.7|2|No rain
+1327,D|12.1|5|Moderate,12.1|5|Moderate
+1328,D|9.1|4|No rain,9.1|4|No rain
+1329,D|4.4|2|No rain,4.4|2|No rain
+1330,D|5.1|3|No rain,5.1|3|No rain
+1331,D|2.8|2|No rain,2.8|2|No rain
+1332,D|4.7|3|No rain,4.7|3|No rain
+1333,D|3|2|No rain,3|2|No rain
+1334,D|4.2|2|No rain,4.2|2|No rain
+1335,D|4.9|3|No rain,4.9|3|No rain
+1336,D|5.4|3|No rain,5.4|3|No rain
+1337,D|4.8|3|No rain,4.8|3|No rain
+1338,D|4.8|3|No rain,4.8|3|No rain
+1339,D|3.1|2|No rain,3.1|2|No rain
+1340,D|4.6|3|No rain,4.6|3|No rain
+1341,D|5.4|3|No rain,5.4|3|No rain
+1342,D|3.1|2|No rain,3.1|2|No rain
+1343,D|5.2|3|No rain,5.2|3|No rain
+1344,D|7.4|4|No rain,7.4|4|No rain
+1345,D|8.8|4|No rain,8.8|4|No rain
+1346,D|5|3|No rain,5|3|No rain
+1347,D|3.1|2|No rain,3.1|2|No rain
+1348,D|6.5|3|No rain,6.5|3|No rain
+1349,D|3.4|2|No rain,3.4|2|No rain
+1350,D|5.2|3|No rain,5.2|3|No rain
+1351,D|7.3|4|No rain,7.3|4|No rain
+1352,D|4.2|2|No rain,4.2|2|No rain
+1353,D|4.2|2|No rain,4.2|2|No rain
+1354,D|5.1|3|No rain,5.1|3|No rain
+1355,D|3.1|2|No rain,3.1|2|No rain
+1356,D|7.7|4|No rain,7.7|4|No rain
+1357,D|7.7|4|No rain,7.7|4|No rain
+1358,D|7.8|4|No rain,7.8|4|No rain
+1359,D|14.1|6|No rain,14.1|6|No rain
+1360,D|11.4|5|No rain,11.4|5|No rain
+1361,D|3.9|2|No rain,3.9|2|No rain
+1362,D|9.3|4|No rain,9.3|4|No rain
+1363,D|6|3|No rain,6|3|No rain
+1364,D|4.2|2|No rain,4.2|2|No rain
+1365,D|6.2|3|Light,6.2|3|Light
+1366,D|6.3|3|No rain,6.3|3|No rain
+1367,D|7.1|4|No rain,7.1|4|No rain
+1368,D|4.4|2|No rain,4.4|2|No rain
+1369,D|4.9|3|No rain,4.9|3|No rain
+1370,D|7|4|No rain,7|4|No rain
+1371,D|5.5|3|No rain,5.5|3|No rain
+1372,D|2.8|2|No rain,2.8|2|No rain
+1373,D|4.5|3|No rain,4.5|3|No rain
+1374,D|4.1|2|No rain,4.1|2|No rain
+1375,D|2.6|2|No rain,2.6|2|No rain
+1376,D|2.9|2|No rain,2.9|2|No rain
+1377,D|6.5|3|No rain,6.5|3|No rain
+1378,D|11.9|5|No rain,11.9|5|No rain
+1379,D|6.4|3|No rain,6.4|3|No rain
+1380,D|2.7|2|Light,2.7|2|Light
+1381,D|5.3|3|No rain,5.3|3|No rain
+1382,D|5.3|3|No rain,5.3|3|No rain
+1383,D|4.5|3|No rain,4.5|3|No rain
+1384,D|2.7|2|No rain,2.7|2|No rain
+1385,D|3.2|2|No rain,3.2|2|No rain
+1386,D|5.6|3|No rain,5.6|3|No rain
+1387,D| - | - | - , - | - | - 
+1388,D|3.7|2|No rain,3.7|2|No rain
+1389,D|1.9|1|No rain,1.9|1|No rain
+1390,D|3|2|No rain,3|2|No rain
+1391,D|3|2|No rain,3|2|No rain
+1392,D|3.9|2|No rain,3.9|2|No rain
+1393,D|5.7|3|No rain,5.7|3|No rain
+1394,D| - | - | - , - | - | - 
+1395,D| - | - | - , - | - | - 
+1396,D|1.5|1|No rain,1.5|1|No rain
+1397,D|10.5|5|No rain,10.5|5|No rain
+1398,D|4.2|2|No rain,4.2|2|No rain
+1399,D|8.9|4|No rain,8.9|4|No rain
+1400,D|4.3|2|No rain,4.3|2|No rain
+1401,D|4.6|3|No rain,4.6|3|No rain
+1402,D|12.5|5|No rain,12.5|5|No rain
+1403,D|3|2|No rain,3|2|No rain
+1404,D|5|3|No rain,5|3|No rain
+1405,D|7|4|No rain,7|4|No rain
+1406,D|8|4|No rain,8|4|No rain
+1407,D|15.5|6|No rain,15.5|6|No rain
+1408,D|2.9|2|No rain,2.9|2|No rain
+1409,D|9.2|4|No rain,9.2|4|No rain
+1410,D|2.3|1|No rain,2.3|1|No rain
+1411,D|3|2|No rain,3|2|No rain
+1412,D|11|5|No rain,11|5|No rain
+1413,D|3.8|2|Light,3.8|2|Light
+1414,D|3.8|2|No rain,3.8|2|No rain
+1415,D|3.9|2|No rain,3.9|2|No rain
+1416,D|2.2|1|No rain,2.2|1|No rain
+1417,D|2.3|1|No rain,2.3|1|No rain
+1418,D|3.6|2|No rain,3.6|2|No rain
+1419,D|5.3|3|Light,5.3|3|Light
+1420,D|4.6|3|No rain,4.6|3|No rain
+1421,D|7|4|No rain,7|4|No rain
+1422,D|2.7|2|No rain,2.7|2|No rain
+1423,D|5.8|3|No rain,5.8|3|No rain
+1424,D|2.5|1|No rain,2.5|1|No rain
+1425,D|3.2|2|No rain,3.2|2|No rain
+1426,D|6.1|3|No rain,6.1|3|No rain
+1427,D|4.2|2|No rain,4.2|2|No rain
+1428,D|9.6|4|No rain,9.6|4|No rain
+1429,D|4.4|2|No rain,4.4|2|No rain
+1430,D|3.7|2|No rain,3.7|2|No rain
+1431,D|4.4|2|No rain,4.4|2|No rain
+1432,D|6.4|3|No rain,6.4|3|No rain
+1433,D|13|6|No rain,13|6|No rain
+1434,D|1.2|1|No rain,1.2|1|No rain
+1435,D|2.6|2|No rain,2.6|2|No rain
+1436,D|6.1|3|No rain,6.1|3|No rain
+1437,D|4.4|2|No rain,4.4|2|No rain
+1438,D|10.1|5|No rain,10.1|5|No rain
+1439,D| - | - |Moderate, - | - |Moderate
+1440,D|7|4|No rain,7|4|No rain
+1441,D|7|4|No rain,7|4|No rain
+1442,D|2.7|2|No rain,2.7|2|No rain
+1443,D|3.5|2|No rain,3.5|2|No rain
+1444,D|9|4|Light,9|4|Light
+1445,D|2|1|No rain,2|1|No rain
+1446,E|2.1|1|No rain,2.1|1|No rain
+1447,E|5.9|3|No rain,5.9|3|No rain
+1448,E|3.3|2|No rain,3.3|2|No rain
+1449,E|4.1|2|No rain,4.1|2|No rain
+1450,E|4|2|No rain,4|2|No rain
+1451,E|4.4|2|No rain,4.4|2|No rain
+1452,E|5.5|3|No rain,5.5|3|No rain
+1453,E|9.2|4|No rain,9.2|4|No rain
+1454,E|2.8|2|No rain,2.8|2|No rain
+1455,E|3|2|No rain,3|2|No rain
+1456,E|2.9|2|No rain,2.9|2|No rain
+1457,E|2.9|2|No rain,2.9|2|No rain
+1458,E|3.3|2|No rain,3.3|2|No rain
+1459,E|7.3|4|No rain,7.3|4|No rain
+1460,E|7.4|4|No rain,7.4|4|No rain
+1461,E|2.1|1|No rain,2.1|1|No rain
+1462,E|7.9|4|No rain,7.9|4|No rain
+1463,E|5.5|3|No rain,5.5|3|No rain
+1464,E|3.2|2|No rain,3.2|2|No rain
+1465,E|3.6|2|No rain,3.6|2|No rain
+1466,E|1.7|1|No rain,1.7|1|No rain
+1467,E|2|1|No rain,2|1|No rain
+1468,E|3.5|2|No rain,3.5|2|No rain
+1469,E|8.5|4|No rain,8.5|4|No rain
+1470,E|8.2|4|No rain,8.2|4|No rain
+1471,E|7.8|4|No rain,7.8|4|No rain
+1472,E|6.7|3|No rain,6.7|3|No rain
+1473,E|6.3|3|No rain,6.3|3|No rain
+1474,E|10.2|5|No rain,10.2|5|No rain
+1475,E|13.6|6|No rain,13.6|6|No rain
+1476,E|20|7|No rain,20|7|No rain
+1477,E|1.6|1|No rain,1.6|1|No rain
+1478,E|2.5|1|No rain,2.5|1|No rain
+1479,E|3.6|2|No rain,3.6|2|No rain
+1480,E|7.3|4|No rain,7.3|4|No rain
+1481,E|15.1|6|No rain,15.1|6|No rain
+1482,E|16.4|6|No rain,16.4|6|No rain
+1483,E|10.1|5|No rain,10.1|5|No rain
+1484,E|4.9|3|No rain,4.9|3|No rain
+1485,E|15.7|6|No rain,15.7|6|No rain
+1486,E|13.5|6|No rain,13.5|6|No rain
+1487,E|11.3|5|No rain,11.3|5|No rain
+1488,E|5.1|3|No rain,5.1|3|No rain
+1489,E|4.6|3|No rain,4.6|3|No rain
+1490,E|7.8|4|No rain,7.8|4|No rain
+1491,E|7|4|No rain,7|4|No rain
+1492,E|5.5|3|No rain,5.5|3|No rain
+1493,E|4.9|3|No rain,4.9|3|No rain
+1494,E|4.6|3|No rain,4.6|3|No rain
+1495,E|4.2|2|No rain,4.2|2|No rain
+1496,E|10.1|5|No rain,10.1|5|No rain
+1497,E|7.1|4|No rain,7.1|4|No rain
+1498,E|4.8|3|No rain,4.8|3|No rain
+1499,E|4.7|3|No rain,4.7|3|No rain
+1500,E|1.8|1|No rain,1.8|1|No rain
+1501,E|5.7|3|No rain,5.7|3|No rain
+1502,E|4.4|2|No rain,4.4|2|No rain
+1503,E|2.9|2|No rain,2.9|2|No rain
+1504,E|2.8|2|No rain,2.8|2|No rain
+1505,E|1.3|1|No rain,1.3|1|No rain
+1506,E|4.6|3|No rain,4.6|3|No rain
+1507,E|1.4|1|No rain,1.4|1|No rain
+1508,E|2.5|1|No rain,2.5|1|No rain
+1509,E|10.1|5|No rain,10.1|5|No rain
+1510,E|8.4|4|No rain,8.4|4|No rain
+1511,E|6.1|3|No rain,6.1|3|No rain
+1512,E|10.6|5|No rain,10.6|5|No rain
+1513,E|4.8|3|No rain,4.8|3|No rain
+1514,E|2.1|1|No rain,2.1|1|No rain
+1515,E|2.1|1|No rain,2.1|1|No rain
+1516,E|9.2|4|No rain,9.2|4|No rain
+1517,E|13.1|6|No rain,13.1|6|No rain
+1518,E|8.2|4|No rain,8.2|4|No rain
+1519,E|4.7|3|No rain,4.7|3|No rain
+1520,E|11.3|5|No rain,11.3|5|No rain
+1521,E|3.4|2|No rain,3.4|2|No rain
+1522,E|5.5|3|No rain,5.5|3|No rain
+1523,E|10.2|5|No rain,10.2|5|No rain
+1524,E|1.5|1|No rain,1.5|1|No rain
+1525,E|11.1|5|No rain,11.1|5|No rain
+1526,E|1.4|1|No rain,1.4|1|No rain
+1527,E|12.9|6|No rain,12.9|6|No rain
+1528,E|14.3|6|No rain,14.3|6|No rain
+1529,E|13.2|6|No rain,13.2|6|No rain
+1530,E|13.6|6|No rain,13.6|6|No rain
+1531,E|19.3|6|No rain,19.3|6|No rain
+1532,E|11.8|5|No rain,11.8|5|No rain
+1533,E|11.7|5|No rain,11.7|5|No rain
+1534,E|10.2|5|No rain,10.2|5|No rain
+1535,E|10.1|5|No rain,10.1|5|No rain
+1536,E|2.4|1|No rain,2.4|1|No rain
+1537,E|12.3|5|No rain,12.3|5|No rain
+1538,E|15.5|6|No rain,15.5|6|No rain
+1539,E|11.2|5|No rain,11.2|5|No rain
+1540,E|16.7|6|No rain,16.7|6|No rain
+1541,E|10.8|5|No rain,10.8|5|No rain
+1542,E|4.4|2|No rain,4.4|2|No rain
+1543,E|6.3|3|No rain,6.3|3|No rain
+1544,E|14.6|6|No rain,14.6|6|No rain
+1545,E|17.8|6|No rain,17.8|6|No rain
+1546,E|2.3|1|No rain,2.3|1|No rain
+1547,E|4.6|3|No rain,4.6|3|No rain
+1548,E|3|2|No rain,3|2|No rain
+1549,E|3|2|No rain,3|2|No rain
+1550,E|7.7|4|No rain,7.7|4|No rain
+1551,E|4|2|No rain,4|2|No rain
+1552,E|8.7|4|No rain,8.7|4|No rain
+1553,E|2.2|1|No rain,2.2|1|No rain
+1554,E|7.5|4|No rain,7.5|4|No rain
+1555,E|7.2|4|No rain,7.2|4|No rain
+1556,E|7.4|4|No rain,7.4|4|No rain
+1557,E|11.5|5|No rain,11.5|5|No rain
+1558,E|15.2|6|No rain,15.2|6|No rain
+1559,E|15.9|6|No rain,15.9|6|No rain
+1560,E|1.4|1|No rain,1.4|1|No rain
+1561,E|6.7|3|No rain,6.7|3|No rain
+1562,E|3.7|2|No rain,3.7|2|No rain
+1563,E|2.2|1|No rain,2.2|1|No rain
+1564,E|8.3|4|No rain,8.3|4|No rain
+1565,E|2|1|No rain,2|1|No rain
+1566,E|9.6|4|No rain,9.6|4|No rain
+1567,E|10|5|No rain,10|5|No rain
+1568,E|10.5|5|No rain,10.5|5|No rain
+1569,E|12.7|6|No rain,12.7|6|No rain
+1570,E|11.9|5|No rain,11.9|5|No rain
+1571,E|11.9|5|No rain,11.9|5|No rain
+1572,E|2.3|1|No rain,2.3|1|No rain
+1573,E|5.3|3|No rain,5.3|3|No rain
+1574,E|12.4|5|No rain,12.4|5|No rain
+1575,E|16.9|6|No rain,16.9|6|No rain
+1576,E|10.1|5|No rain,10.1|5|No rain
+1577,E|3.4|2|No rain,3.4|2|No rain
+1578,E|2.5|1|No rain,2.5|1|No rain
+1579,E|8.3|4|No rain,8.3|4|No rain
+1580,E|13.5|6|No rain,13.5|6|No rain
+1581,E|15.8|6|No rain,15.8|6|No rain
+1582,E|13.4|6|No rain,13.4|6|No rain
+1583,E|7.9|4|No rain,7.9|4|No rain
+1584,E|8.8|4|No rain,8.8|4|No rain
+1585,E|5.7|3|No rain,5.7|3|No rain
+1586,E|2.4|1|No rain,2.4|1|No rain
+1587,E|6.7|3|No rain,6.7|3|No rain
+1588,E|3.9|2|No rain,3.9|2|No rain
+1589,E|14.4|6|No rain,14.4|6|No rain
+1590,E|10.7|5|No rain,10.7|5|No rain
+1591,E|2.2|1|No rain,2.2|1|No rain
+1592,E|9.4|4|No rain,9.4|4|No rain
+1593,E|12.4|5|No rain,12.4|5|No rain
+1594,E|15.5|6|No rain,15.5|6|No rain
+1595,E|15.9|6|No rain,15.9|6|No rain
+1596,E|2.9|2|Light,2.9|2|Light
+1597,E|9.1|4|Light,9.1|4|Light
+1598,E|6|3|Moderate,6|3|Moderate
+1599,E|7|4|Light,7|4|Light
+1600,E|3.9|2|Light,3.9|2|Light
+1601,E|15.5|6|Light,15.5|6|Light
+1602,E|5.2|3|Light,5.2|3|Light
+1603,E|5.8|3|Light,5.8|3|Light
+1604,E|4.9|3|Light,4.9|3|Light
+1605,E|3.1|2|Light,3.1|2|Light
+1606,E|3.4|2|Light,3.4|2|Light
+1607,E|6|3|Light,6|3|Light
+1608,E|4.2|2|Moderate,4.2|2|Moderate
+1609,E|9.2|4|Heavy,9.2|4|Heavy
+1610,E|5.4|3|Heavy,5.4|3|Heavy
+1611,E|5|3|Light,5|3|Light
+1612,E|9.5|4|Light,9.5|4|Light
+1613,E|17.1|6|Light,17.1|6|Light
+1614,E|10.1|5|Light,10.1|5|Light
+1615,E|11|5|Light,11|5|Light
+1616,E|9.8|4|Light,9.8|4|Light
+1617,E|3.8|2|Light,3.8|2|Light
+1618,E|3.9|2|Light,3.9|2|Light
+1619,E|14.5|6|Moderate,14.5|6|Moderate
+1620,E|4|2|Light,4|2|Light
+1621,E|4.1|2|Moderate,4.1|2|Moderate
+1622,E|8.6|4|Light,8.6|4|Light
+1623,E|8.3|4|Moderate,8.3|4|Moderate
+1624,E|6.4|3|Moderate,6.4|3|Moderate
+1625,E|9.1|4|Light,9.1|4|Light
+1626,E|11.7|5|Light,11.7|5|Light
+1627,E|18.5|6|Heavy,18.5|6|Heavy
+1628,E|9|4|Moderate,9|4|Moderate
+1629,E|6.9|3|Light,6.9|3|Light
+1630,E|6.2|3|Light,6.2|3|Light
+1631,E|4|2|Light,4|2|Light
+1632,E|8.4|4|Light,8.4|4|Light
+1633,E|1.9|1|Light,1.9|1|Light
+1634,E|16.9|6|Very Heavy,16.9|6|Very Heavy
+1635,E|9.4|4|Moderate,9.4|4|Moderate
+1636,E|11.4|5|Light,11.4|5|Light
+1637,E|8|4|Light,8|4|Light
+1638,E|8.5|4|Heavy,8.5|4|Heavy
+1639,E|14.6|6|Moderate,14.6|6|Moderate
+1640,E|5.3|3|Light,5.3|3|Light
+1641,E|6.6|3|Moderate,6.6|3|Moderate
+1642,E|7|4|Moderate,7|4|Moderate
+1643,E|6|3|Light,6|3|Light
+1644,E|7.3|4|Heavy,7.3|4|Heavy
+1645,E|14.5|6|Very Heavy,14.5|6|Very Heavy
+1646,E|8.8|4|Heavy,8.8|4|Heavy
+1647,E|3.9|2|Moderate,3.9|2|Moderate
+1648,E|6.4|3|Very Heavy,6.4|3|Very Heavy
+1649,E|2.8|2|Light,2.8|2|Light
+1650,E|9.4|4|Light,9.4|4|Light
+1651,E|9|4|Light,9|4|Light
+1652,E|18.8|6|Light,18.8|6|Light
+1653,E|3.6|2|Moderate,3.6|2|Moderate
+1654,E|5.2|3|Light,5.2|3|Light
+1655,E|10.9|5|Light,10.9|5|Light
+1656,E|6.8|3|Light,6.8|3|Light
+1657,E|8|4|Light,8|4|Light
+1658,E|9.4|4|Light,9.4|4|Light
+1659,E|3.4|2|Light,3.4|2|Light
+1660,E|8.5|4|Light,8.5|4|Light
+1661,E|7.4|4|Light,7.4|4|Light
+1662,E|8.7|4|Light,8.7|4|Light
+1663,E|4.5|3|Heavy,4.5|3|Heavy
+1664,E|15.9|6|Light,15.9|6|Light
+1665,E|1.6|1|Light,1.6|1|Light
+1666,E|10.6|5|Moderate,10.6|5|Moderate
+1667,E|3|2|Moderate,3|2|Moderate
+1668,E|2.7|2|Light,2.7|2|Light
+1669,E|2.6|2|Light,2.6|2|Light
+1670,E|9.4|4|Light,9.4|4|Light
+1671,E|12.8|6|Light,12.8|6|Light
+1672,E|11|5|Moderate,11|5|Moderate
+1673,E|3.2|2|Moderate,3.2|2|Moderate
+1674,E|4.7|3|Moderate,4.7|3|Moderate
+1675,E|6.4|3|Moderate,6.4|3|Moderate
+1676,E|6.3|3|Light,6.3|3|Light
+1677,E|12.2|5|Moderate,12.2|5|Moderate
+1678,E|14.3|6|Moderate,14.3|6|Moderate
+1679,E|6.3|3|Light,6.3|3|Light
+1680,E|10.1|5|Moderate,10.1|5|Moderate
+1681,E|5.4|3|Light,5.4|3|Light
+1682,E|7.9|4|Light,7.9|4|Light
+1683,E|7.9|4|Moderate,7.9|4|Moderate
+1684,E|12.5|5|Light,12.5|5|Light
+1685,E|2.6|2|Light,2.6|2|Light
+1686,E|5.6|3|Moderate,5.6|3|Moderate
+1687,E|6.3|3|Light,6.3|3|Light
+1688,E|5.6|3|Light,5.6|3|Light
+1689,E|3.2|2|Light,3.2|2|Light
+1690,E|7.2|4|Light,7.2|4|Light
+1691,E|3.8|2|Heavy,3.8|2|Heavy
+1692,E|5|3|Moderate,5|3|Moderate
+1693,E|4.2|2|Light,4.2|2|Light
+1694,E|4.5|3|Light,4.5|3|Light
+1695,E|7|4|Light,7|4|Light
+1696,E|11.7|5|Light,11.7|5|Light
+1697,E|4.1|2|Light,4.1|2|Light
+1698,E|2.4|1|Light,2.4|1|Light
+1699,E|6.6|3|Moderate,6.6|3|Moderate
+1700,E|6.9|3|Light,6.9|3|Light
+1701,E|5|3|Light,5|3|Light
+1702,E|4.2|2|Heavy,4.2|2|Heavy
+1703,E|14.9|6|Moderate,14.9|6|Moderate
+1704,E|7.2|4|Light,7.2|4|Light
+1705,E|3.2|2|Moderate,3.2|2|Moderate
+1706,E|1.8|1|No rain,1.8|1|No rain

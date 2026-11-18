@@ -1,0 +1,13 @@
+label,SMALL<50,MEDIUM50-100,LARGE>100,sem_length,All
+cargo,6,10,2507,0,2523
+dredger,2,1,3,0,6
+fishing,227,9,2,0,238
+other,104,17,38,10,169
+passengership,32,12,65,0,109
+pilotvessel,2,0,0,0,2
+pleasurecraft,393,12,1,0,406
+rescue,17,6,0,0,23
+sailing,210,1,1,0,212
+tanker,1,0,232,0,233
+tug,286,1,10,0,297
+All,1280,69,2859,10,4218

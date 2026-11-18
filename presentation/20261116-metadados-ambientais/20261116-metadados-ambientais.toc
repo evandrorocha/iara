@@ -1,0 +1,6 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{Que Metadados Existem}{4}{0}{1}
+\beamer@sectionintoc {2}{Condições de Gravação}{6}{0}{2}
+\beamer@sectionintoc {3}{Augmentation com Mar Agitado}{10}{0}{3}
+\beamer@sectionintoc {4}{Como Usar os Metadados}{16}{0}{4}
+\beamer@sectionintoc {5}{Conclusões}{18}{0}{5}

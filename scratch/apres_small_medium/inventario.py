@@ -1,0 +1,25 @@
+import numpy as np, pandas as pd, sys
+sys.path.insert(0, "scratch")
+from eval_ship_split_5x2cv import metadata
+m = metadata()
+m["Classe"] = m.Target.map({0:"SMALL",1:"MEDIUM",2:"LARGE",3:"BACKGROUND"})
+m["Length"] = pd.to_numeric(m.Length, errors="coerce")
+m["CPA"] = m.Dataset.isin(["A","C"])
+for c in ["SMALL","MEDIUM","LARGE"]:
+    d = m[m.Classe==c]
+    n = d.groupby("Ship ID").size().sort_values(ascending=False)
+    p = n/n.sum()
+    print(f"\n=== {c}: {len(d)} gravações, {len(n)} navios, ef={1/(p**2).sum():.1f}, horas={d['Recording time'].sum()/3600:.1f}")
+    print(" grav/navio: 1:", (n==1).sum(), " 2-3:", n.between(2,3).sum(), " 4-10:", n.between(4,10).sum(), " >10:", (n>10).sum())
+    print(" % grav em navios >10:", round(n[n>10].sum()/len(d)*100,1), " top1/top3/top7:", [round(n.iloc[:k].sum()/len(d)*100,1) for k in (1,3,7)])
+    top = d.groupby("Ship ID").agg(n=("Name","size"), nome=("Name","first"), tipo=("DETAILED TYPE","first"), L=("Length","first")).sort_values("n",ascending=False).head(8)
+    print(top.to_string())
+    print(" subconjunto:", d.Dataset.value_counts().sort_index().to_dict(), " %CPA:", round(d.CPA.mean()*100,1))
+    t = d.groupby("DETAILED TYPE").agg(grav=("Name","size"), navios=("Ship ID","nunique")).sort_values("grav",ascending=False)
+    print(t.head(10).to_string())
+    print(" comprimento navios: ", d.groupby("Ship ID").Length.first().describe().round(1).to_dict())
+    print(" vento med", pd.to_numeric(d.Wind,errors="coerce").median(), " mar med", pd.to_numeric(d["Sea state"],errors="coerce").median(), " dur med", pd.to_numeric(d["Recording time"],errors="coerce").median())
+ships = m[m.Target<3].groupby("Ship ID").agg(L=("Length","first"), c=("Classe","first"))
+print("\nnavios perto da fronteira 50 m (40-60):", ships[ships.L.between(40,60)].c.value_counts().to_dict())
+print("navios perto da fronteira 100 m (90-110):", ships[ships.L.between(90,110)].c.value_counts().to_dict())
+print("BACKGROUND:", (m.Target==3).sum())

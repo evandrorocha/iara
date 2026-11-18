@@ -1,0 +1,9 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{O Dataset IARA}{4}{0}{1}
+\beamer@sectionintoc {2}{As Extrações}{10}{0}{2}
+\beamer@sectionintoc {3}{Como os Modelos Tratam o SMALL}{16}{0}{3}
+\beamer@sectionintoc {4}{O Que o LOFAR Mostra}{19}{0}{4}
+\beamer@sectionintoc {5}{O Que o DEMON Mostra}{26}{0}{5}
+\beamer@sectionintoc {6}{O Que o MEL e o HHT Mostram}{30}{0}{6}
+\beamer@sectionintoc {7}{O Que Já Testamos para o SMALL}{34}{0}{7}
+\beamer@sectionintoc {8}{Conclusões e Próximos Passos}{39}{0}{8}

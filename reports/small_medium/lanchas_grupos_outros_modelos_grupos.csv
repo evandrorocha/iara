@@ -1,0 +1,322 @@
+File,MLP LOFAR,RF LOFAR,SVM LOFAR,BiGRU LOFAR,MLP MEL,RF MEL,SVM MEL,MLP HHT,RF HHT,SVM HHT,CNN MEL (artigo)
+2,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → MEDIUM
+5,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,acertada,acertada,errada → LARGE
+6,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,errada → BACKGROUND
+7,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+17,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,errada → MEDIUM
+18,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+19,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+20,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+21,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+22,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+23,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+24,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,acertada
+25,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+29,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+30,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+31,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+32,errada → LARGE,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+33,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada
+34,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+49,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+50,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+51,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND
+52,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+53,acertada,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+54,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+55,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+56,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → LARGE,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND
+58,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+75,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada
+100,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+115,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → MEDIUM,acertada
+142,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+146,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE
+154,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,acertada
+155,errada → MEDIUM,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+157,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+160,errada → MEDIUM,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → MEDIUM
+196,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+197,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,errada → MEDIUM
+228,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,errada → MEDIUM
+230,acertada,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+236,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+238,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+240,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,acertada
+243,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+249,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+251,acertada,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+252,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+282,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+297,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+304,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+322,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+337,acertada,errada → LARGE,acertada,acertada,errada → LARGE,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+345,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM
+346,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+347,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+354,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,acertada
+355,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+357,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,acertada
+375,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+380,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+384,acertada,acertada,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM
+386,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+393,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM
+400,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND
+409,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+415,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+417,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE
+418,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+421,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+422,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+428,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+430,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada
+439,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+441,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+450,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+451,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+457,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+458,errada → LARGE,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+460,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada
+461,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+465,errada → MEDIUM,acertada,errada → LARGE,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+477,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE
+479,errada → MEDIUM,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+480,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+482,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+490,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → LARGE,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+493,acertada,acertada,errada → MEDIUM,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,errada → BACKGROUND,errada → MEDIUM,errada → BACKGROUND,acertada
+501,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+503,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada
+504,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+507,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+510,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → BACKGROUND
+515,errada → LARGE,errada → LARGE,acertada,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+516,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada
+520,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+522,errada → LARGE,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+523,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+524,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,acertada
+527,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,acertada,errada → LARGE,acertada,errada → BACKGROUND,errada → LARGE,errada → MEDIUM,acertada
+529,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+531,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+532,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada
+533,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada
+535,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+536,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+538,acertada,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+540,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+542,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+545,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → LARGE,errada → MEDIUM,acertada
+547,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+549,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+550,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+551,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+553,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+554,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,errada → MEDIUM
+557,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+560,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+562,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+563,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+564,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+565,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada
+566,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+575,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+579,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+590,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+599,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+601,acertada,errada → LARGE,acertada,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+603,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → LARGE,acertada,errada → LARGE,errada → MEDIUM,acertada
+604,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+607,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+610,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+612,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+613,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM
+614,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+618,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+627,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+629,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+630,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+632,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada
+633,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+634,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+635,acertada,acertada,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+637,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+640,errada → BACKGROUND,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+643,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND
+646,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → BACKGROUND,acertada
+647,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE
+648,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+652,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+653,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+654,errada → LARGE,errada → LARGE,acertada,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+660,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+691,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE
+699,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+704,errada → MEDIUM,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE
+708,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+709,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+715,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+716,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+718,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE
+739,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+740,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+748,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+750,acertada,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → LARGE,acertada,errada → LARGE,errada → MEDIUM
+751,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+755,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+783,acertada,errada → LARGE,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada
+786,acertada,errada → LARGE,errada → MEDIUM,acertada,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+788,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+792,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+795,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+797,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+802,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+803,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+810,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM
+813,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → LARGE,errada → LARGE,acertada
+814,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+832,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+835,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+836,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+853,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+859,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → MEDIUM
+864,acertada,errada → LARGE,acertada,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+874,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+875,acertada,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,acertada,acertada,errada → BACKGROUND,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND
+877,acertada,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+881,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+899,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+900,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+905,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+906,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+907,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada
+909,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+914,acertada,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+923,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+924,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+926,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+927,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+944,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+945,acertada,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+946,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+956,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+958,acertada,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+964,acertada,acertada,errada → LARGE,errada → BACKGROUND,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND
+967,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+969,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada
+970,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → MEDIUM
+971,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada
+976,acertada,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+977,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+980,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+991,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → BACKGROUND
+992,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+993,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,acertada
+994,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+995,acertada,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → LARGE
+997,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,acertada,acertada
+1003,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → MEDIUM
+1005,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada,errada → LARGE,acertada
+1011,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1024,errada → LARGE,errada → LARGE,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE
+1034,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → MEDIUM
+1049,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+1058,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada
+1064,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+1066,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,errada → MEDIUM
+1081,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1089,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+1097,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE
+1098,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1103,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE
+1125,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → LARGE
+1127,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+1132,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+1144,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1149,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+1153,acertada,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1155,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+1160,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada
+1161,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1168,acertada,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada
+1171,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada
+1176,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → LARGE,errada → MEDIUM,errada → LARGE
+1178,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1179,acertada,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,errada → LARGE,acertada,acertada,errada → MEDIUM,acertada
+1181,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,errada → BACKGROUND,errada → MEDIUM,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+1182,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,errada → MEDIUM,errada → BACKGROUND,acertada
+1183,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+1185,acertada,acertada,errada → MEDIUM,acertada,errada → LARGE,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+1188,errada → LARGE,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,errada → LARGE,acertada,errada → LARGE,acertada
+1191,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+1194,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada
+1198,acertada,errada → LARGE,acertada,acertada,errada → MEDIUM,errada → LARGE,acertada,errada → BACKGROUND,errada → LARGE,errada → MEDIUM,acertada
+1200,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1202,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+1204,acertada,errada → LARGE,acertada,acertada,acertada,errada → LARGE,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+1207,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → MEDIUM,acertada,acertada,errada → LARGE,acertada,errada → MEDIUM,acertada
+1212,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE
+1221,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM
+1226,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1227,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+1235,acertada,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → MEDIUM,errada → LARGE,acertada,errada → LARGE,errada → MEDIUM
+1239,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1240,errada → MEDIUM,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,acertada,errada → MEDIUM
+1251,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1256,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1263,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → LARGE,acertada,errada → LARGE,acertada
+1268,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1270,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1271,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1272,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → BACKGROUND,errada → MEDIUM
+1273,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+1275,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM
+1296,acertada,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1301,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1305,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+1320,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1321,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1323,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1325,acertada,errada → MEDIUM,errada → MEDIUM,acertada,errada → LARGE,acertada,acertada,errada → MEDIUM,acertada,errada → MEDIUM,errada → MEDIUM
+1327,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND
+1332,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM
+1347,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → BACKGROUND,acertada,errada → MEDIUM,errada → MEDIUM
+1350,acertada,acertada,acertada,errada → MEDIUM,errada → LARGE,acertada,errada → MEDIUM,acertada,errada → LARGE,acertada,acertada
+1351,errada → LARGE,errada → LARGE,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1356,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM,errada → MEDIUM
+1361,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE
+1368,acertada,acertada,acertada,errada → MEDIUM,errada → MEDIUM,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1370,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1375,acertada,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1377,errada → MEDIUM,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → MEDIUM
+1379,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1380,acertada,acertada,errada → MEDIUM,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1381,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → MEDIUM,acertada
+1382,acertada,acertada,errada → BACKGROUND,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,acertada
+1383,acertada,errada → LARGE,acertada,errada → LARGE,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1384,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada
+1385,acertada,errada → LARGE,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1386,acertada,acertada,errada → BACKGROUND,acertada,acertada,errada → LARGE,errada → LARGE,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada
+1388,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → LARGE,errada → LARGE,errada → MEDIUM,acertada,errada → MEDIUM,acertada
+1396,acertada,acertada,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,errada → BACKGROUND
+1398,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+1399,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1405,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1410,acertada,errada → LARGE,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,errada → LARGE,errada → LARGE,acertada,errada → LARGE,errada → LARGE,errada → BACKGROUND
+1420,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1421,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1422,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada
+1423,acertada,acertada,errada → LARGE,acertada,acertada,errada → LARGE,acertada,acertada,acertada,errada → LARGE,acertada
+1424,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → MEDIUM,acertada
+1425,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+1426,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE,errada → LARGE
+1428,acertada,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → LARGE,errada → LARGE,acertada
+1429,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND
+1430,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND,acertada,errada → LARGE,acertada
+1431,acertada,acertada,errada → LARGE,errada → LARGE,acertada,acertada,acertada,acertada,acertada,errada → LARGE,errada → BACKGROUND
+1432,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,acertada,errada → BACKGROUND
+1443,errada → BACKGROUND,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → LARGE,errada → BACKGROUND,errada → BACKGROUND,acertada,errada → MEDIUM,errada → BACKGROUND
+1444,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND,errada → BACKGROUND
+1445,acertada,acertada,errada → LARGE,acertada,errada → BACKGROUND,acertada,acertada,errada → BACKGROUND,acertada,errada → BACKGROUND,errada → BACKGROUND

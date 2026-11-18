@@ -1,0 +1,7 @@
+\babel@toc {brazil}{}\relax 
+\beamer@sectionintoc {1}{Método e Dados}{4}{0}{1}
+\beamer@sectionintoc {2}{LARGE: a Banda de 31--86 Hz}{10}{0}{2}
+\beamer@sectionintoc {3}{MEDIUM e SMALL: Erros por Destino}{18}{0}{3}
+\beamer@sectionintoc {4}{DEMON: Picos de Modulação}{24}{0}{4}
+\beamer@sectionintoc {5}{Offshore Supply Ships $\times $ Rebocadores}{27}{0}{5}
+\beamer@sectionintoc {6}{Conclusões}{34}{0}{6}
