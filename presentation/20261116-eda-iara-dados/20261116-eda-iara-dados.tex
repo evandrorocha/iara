@@ -29,6 +29,7 @@
 
 \definecolor{peeblue}{RGB}{1,123,165}
 \definecolor{darkblue}{RGB}{0,65,115}
+\definecolor{goldencolor}{RGB}{190,140,0}
 \definecolor{greenwin}{RGB}{0,130,50}
 
 \setbeamercolor*{palette primary}{fg=black,bg=peeblue!80}
@@ -111,17 +112,18 @@
 %===========================================
 \begin{frame}{Resumo}
     \footnotesize
-    \begin{block}{\small Pergunta: o que falta para os modelos aprenderem SMALL e MEDIUM?}
+    \begin{block}{\small Pergunta: o que os dados do IARA explicam sobre o acerto dos modelos?}
         \scriptsize
         \begin{enumerate}
-            \setlength{\itemsep}{2pt}
-            \item \textbf{Faltam navios distintos.} SMALL e MEDIUM têm $\sim$85 navios cada, mas equivalem a \textbf{$\sim$12 navios} igualmente gravados (LARGE: 214).
-            \item \textbf{MEDIUM não generaliza:} em navios nunca vistos, o recall cai de 66\% para 28--35\% (acaso: 25\%). O acerto do artigo vem de reconhecer navios repetidos.
-            \item \textbf{Mais navios ajudam e a curva não estabiliza:} +11 a +14 pontos de recall a cada vez que o nº de navios dobra. Com o mesmo nº de navios, SMALL acerta como LARGE.
-            \item \textbf{Mais gravações do mesmo navio não ajudam:} o modelo decora o navio, mas não aprende a classe.
-            \item \textbf{Lanchas de prático:} 45\% das gravações erradas mesmo com a lancha no treino; nelas, menos linhas e bandas se destacam do fundo acima de 250 Hz, e as tomadas por LARGE têm o grave de 31--86 Hz forte.
-            \item \textbf{A confusão SMALL $\times$ MEDIUM não está na fronteira de 50 m:} um MEDIUM de 90 m vira SMALL tanto quanto um de 70 m.
-            \item \textbf{Data augmentation não resolve:} 7 variantes, inclusive mistura com mar real, em 4 modelos (MLP, RF, SVM, BiGRU). Nenhum ganho.
+            \setlength{\itemsep}{1pt}
+            \item \textbf{Provavelmente faltam navios distintos em SMALL e MEDIUM:} $\sim$85 navios cada, mas equivalem a \textbf{$\sim$12 navios} igualmente gravados (LARGE: 214).
+            \item \textbf{MEDIUM não generaliza:} em navios nunca vistos, o recall cai de 66\% para 28--35\% (acaso: 25\%). O acerto do artigo parece vir, em boa parte, de reconhecer navios repetidos.
+            \item \textbf{LARGE e BACKGROUND generalizam:} em navios novos, o LARGE fica em 66--68\%; o BACKGROUND acerta 70--81\% de gravações nunca vistas. O acerto do LARGE acompanha mais energia em $\sim$50 Hz; as LARGE erradas soam como SMALL no LOFAR, no MEL e no DEMON.
+            \item \textbf{As condições pesam:} os LARGE foram gravados com o mar mais calmo, e o mar agitado tira $\sim$10 pontos do acerto de LARGE.
+            \item \textbf{Mais navios tendem a ajudar; mais gravações do mesmo navio, aparentemente não:} +11 a +14 pontos de recall a cada vez que o nº de navios dobra, sem estabilizar.
+            \item \textbf{Lanchas de prático:} 45\% das gravações erradas mesmo com a lancha no treino. As tomadas por LARGE têm o grave de 31--86 Hz forte, em 6 modelos diferentes.
+            \item \textbf{A confusão SMALL $\times$ MEDIUM não parece estar na fronteira de 50 m}, e pode acompanhar o tipo de navio.
+            \item \textbf{Data augmentation não trouxe ganho:} 7 variantes, inclusive mistura com mar real, em 4 modelos.
         \end{enumerate}
     \end{block}
 \end{frame}
@@ -177,7 +179,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        SMALL é a classe mais fraca em todos os modelos. Levar SMALL a 60\% e MEDIUM a 75\% daria $\sim$6 pontos de SP, mais do que qualquer troca de arquitetura até agora. Mas o MEDIUM de 64\% é, em boa parte, ilusório (seção 4).
+        SMALL é a classe mais fraca em todos os modelos. Levar SMALL a 60\% e MEDIUM a 75\% daria $\sim$6 pontos de SP, mais do que qualquer troca de arquitetura até agora. Mas o MEDIUM de 64\% provavelmente está superestimado (seção 4).
     \end{alertblock}
 \end{frame}
 
@@ -303,7 +305,7 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        As 15 lanchas são \textbf{15 embarcações de um único tipo}, quase todas de 11--13 m; a numeração (PILOT 01--20) sugere a mesma operadora. \textbf{5 lanchas (PILOT 08, 09, 10, 11, 14) têm 279 gravações, 59\% de SMALL.} O modelo aprende SMALL quase só com elas. Rebocadores e pesqueiros trazem 56 navios, mas só 120 gravações.
+        As 15 lanchas são \textbf{15 embarcações de um único tipo}, quase todas de 11--13 m; a numeração (PILOT 01--20) sugere a mesma operadora. \textbf{5 lanchas (PILOT 08, 09, 10, 11, 14) têm 279 gravações, 59\% de SMALL.} É provável que o modelo aprenda SMALL sobretudo com elas. Rebocadores e pesqueiros trazem 56 navios, mas só 120 gravações.
     \end{alertblock}
 \end{frame}
 
@@ -358,7 +360,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{MEDIUM = 2 dragas irmãs + navios de apoio offshore.} As HANG BO têm 146 gravações; os 46 OSS, só 3 cada. \textbf{LARGE é o oposto}: 5 tipos com 30 a 161 navios cada e $\sim$1 gravação por navio. LARGE não tem menos tipos; tem \textbf{muitos navios diferentes dentro de cada tipo}, e é isso que SMALL e MEDIUM não têm.
+        \textbf{MEDIUM = 2 dragas irmãs + navios de apoio offshore.} As HANG BO têm 146 gravações; os 46 OSS, só 3 cada. \textbf{LARGE é o oposto}: 5 tipos com 30 a 161 navios cada e $\sim$1 gravação por navio. LARGE não tem menos tipos; tem \textbf{muitos navios diferentes dentro de cada tipo}, e provavelmente é isso que falta a SMALL e MEDIUM.
     \end{alertblock}
 \end{frame}
 
@@ -463,7 +465,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        SMALL e MEDIUM têm a mesma distribuição de distância e de CPA, e o acerto quase não muda entre subconjuntos (B, sem CPA e perto, é o pior). \textbf{Distância e geometria da passagem não explicam} a confusão SMALL/MEDIUM. Em LARGE, ao contrário, o CPA pesava muito (82\% das acertadas $\times$ 33\% das erradas).
+        SMALL e MEDIUM têm a mesma distribuição de distância e de CPA, e o acerto quase não muda entre subconjuntos (B, sem CPA e perto, é o pior). \textbf{Distância e geometria da passagem não parecem explicar} a confusão SMALL/MEDIUM. Em LARGE, ao contrário, o CPA pesava muito (82\% das acertadas $\times$ 33\% das erradas).
     \end{alertblock}
 \end{frame}
 
@@ -566,9 +568,7 @@
                     \item \textbf{EMD:} cada janela vira até \textbf{8 modos} (IMFs), 30 iterações de peneiramento.
                     \item \textbf{Hilbert:} a energia instantânea (amplitude$^2$) de cada modo é somada na faixa da sua frequência instantânea.
                     \item \textbf{HHT 1D:} \textbf{256 faixas de 3,9 Hz}, dividido pelo pico da janela.
-                    \item \textbf{HHT 2D:} \textbf{32 passos de 80 ms $\times$ 128 faixas de 7,9 Hz}, log(1+x), dividido pelo pico da janela.
-                    \item \textbf{Intermitência:} coeficiente de variação de cada faixa nos 28 passos centrais do 2D.
-                \end{enumerate}
+                    \item \textbf{HHT 2D:} \textbf{32 passos de 80 ms $\times$ 128 faixas de 7,9 Hz}, log(1+x), dividido pelo pico da janela.                \end{enumerate}
             \end{block}
         \end{column}
     \end{columns}
@@ -606,7 +606,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{Não, para MEDIUM}: em navios nunca vistos o recall fica entre 28\% e 35\%, perto do acaso. O SP cai 11 pontos. \textbf{SMALL generaliza pouco, mas generaliza}: perde só 4--10 pontos e fica em $\sim$47--50\%. O SP do artigo mede, em boa parte, reconhecimento de navios repetidos.
+        \textbf{Não, para MEDIUM}: em navios nunca vistos o recall fica entre 28\% e 35\%, perto do acaso. O SP cai 11 pontos. \textbf{SMALL generaliza pouco, mas generaliza}: perde só 4--10 pontos e fica em $\sim$47--50\%. O SP do artigo provavelmente mede, em boa parte, reconhecimento de navios repetidos.
     \end{alertblock}
 \end{frame}
 
@@ -645,7 +645,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        O acerto em MEDIUM vem mais de \textbf{reconhecer navios já vistos} do que de um padrão de frequência. Em LARGE, a curva é plana: lá a banda generaliza para navios novos. Em SMALL, o acerto é baixo mesmo para navios conhecidos.
+        O acerto em MEDIUM parece vir mais de \textbf{reconhecer navios já vistos} do que de um padrão de frequência. Em LARGE, a curva é plana: lá o acerto se mantém em navios novos. Em SMALL, o acerto é baixo mesmo para navios conhecidos.
     \end{alertblock}
 \end{frame}
 
@@ -696,7 +696,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        Em navios novos, MEDIUM fica entre 23\% e 41\% (acaso com 4 classes: 25\%). Os modelos aprendem \textbf{identidade do navio ou da série} (``este é um HANG BO''), não \textbf{classe de tamanho}. Não é falta de capacidade do modelo: é o dado.
+        Em navios novos, MEDIUM fica entre 23\% e 41\% (acaso com 4 classes: 25\%). Tudo indica que os modelos aprendem a \textbf{identidade do navio ou da série} (``este é um HANG BO''), e não a \textbf{classe de tamanho}. Como acontece nos 7 modelos, o problema parece estar mais no dado do que na capacidade do modelo.
     \end{alertblock}
 \end{frame}
 
@@ -726,7 +726,7 @@
                 \begin{itemize}
                     \setlength{\itemsep}{2pt}
                     \item \textbf{LARGE:} 417 navios, a maioria com uma só gravação. No split do artigo, só 29\% dos LARGE de teste já tinham o navio no treino: para LARGE, o split do artigo já era quase ``por navio''.
-                    \item \textbf{BACKGROUND:} não tem navio; cada gravação é o seu próprio grupo nos dois splits. A diferença ($\pm$2 pontos) vem só de treinos diferentes.
+                    \item \textbf{BACKGROUND:} não tem navio; cada gravação é o seu próprio grupo nos dois splits. A diferença ($\pm$2 pontos) deve vir de treinos diferentes.
                 \end{itemize}
             \end{block}
         \end{column}
@@ -734,7 +734,92 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{Sim, LARGE e BACKGROUND generalizam}: em navios nunca vistos, o LARGE perde só 2--5 pontos e fica em 66--68\%; o BACKGROUND fica igual (70--81\%). Com muitos navios diferentes no treino, o modelo aprende a \textbf{classe} (no LARGE, o grave forte de 31--86 Hz), não o navio. É o que falta a SMALL e MEDIUM ($\sim$12 navios efetivos cada).
+        \textbf{Sim, LARGE e BACKGROUND generalizam}: em navios nunca vistos, o LARGE perde só 2--5 pontos e fica em 66--68\%; o BACKGROUND acerta 70--81\% de gravações nunca vistas. O que mais acompanha o acerto do LARGE é \textbf{mais energia em $\sim$50 Hz que as outras classes} (próximos slides). Mas não é exclusivo: SMALL e MEDIUM também têm energia ali, em geral menos, e as gravações deles que chegam ao nível do LARGE tendem a ser confundidas com LARGE.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{LARGE Acertadas: Corcova Grave (Média de 346 Gravações)}
+    \begin{columns}[c]
+        \begin{column}{0.56\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{lofar_large_espectro_zoom.png}\\
+            {\tiny Espectro LOFAR médio, 0--500 Hz. Tracejadas: SMALL (azul), MEDIUM (roxo), BACKGROUND (cinza).\\
+            \textbf{Faixa colorida = intervalo de confiança de 95\% da média}, em cada frequência: média $\pm$ 1,96 $\times$ desvio padrão $\div \sqrt{n}$. Mostra a incerteza da \textbf{média}, não a variação entre gravações (próximo slide); é estreita porque $n$ é grande.\par}
+        \end{column}
+        \begin{column}{0.42\textwidth}
+            \begin{block}{\small Os grupos (CNN LOFAR)}
+                \tiny
+                Cada gravação foi testada $\sim$5 vezes (folds diferentes).\\[2pt]
+                \setlength{\tabcolsep}{2pt}
+                \begin{tabular}{@{}l>{\raggedright\arraybackslash}p{2.6cm}r@{}}
+                \toprule
+                Grupo & O que aconteceu nos $\sim$5 testes & Grav. \\
+                \midrule
+                \textcolor{greenwin}{\textbf{Verde:}} acertadas & disse LARGE em todos & 346 \\
+                \textcolor{goldencolor}{\textbf{Amarelo:}} oscilam & às vezes disse LARGE, às vezes não (ex.: 3 de 5) & 109 \\
+                \textcolor{red}{\textbf{Vermelho:}} erradas & nunca disse LARGE & 117 \\
+                \bottomrule
+                \end{tabular}
+            \end{block}
+        \end{column}
+    \end{columns}
+    \vspace{0.05cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        \begin{itemize}
+            \setlength{\itemsep}{1pt}
+            \item \textbf{Acertadas:} um pico alto em $\sim$55 Hz, 10,7 dB acima do fundo. \textbf{Erradas:} quase sem pico (4,9 dB). \textbf{Oscilam:} no meio, e o modelo fica em dúvida.
+            \item Em 47 Hz, comparando uma acertada com uma errada, a acertada tem mais energia em \textbf{89\% dos pares}.
+            \item \textbf{As LARGE erradas parecem SMALL}: a curva vermelha fica quase em cima da azul tracejada.
+            \item Vale \textbf{dentro de cada subconjunto} A--D: não é só efeito de distância ou de CPA.
+        \end{itemize}
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{LARGE: Uma Linha por Gravação}
+    \centering
+    \includegraphics[width=0.80\textwidth]{large_uma_linha.png}
+
+    {\tiny Mesmos grupos do slide anterior (CNN LOFAR do artigo; acertada = acerta em todos os testes, errada = erra em todos; as 109 que oscilam ficam de fora). Cada linha fina é uma gravação; a grossa é a média. Faixa cinza = 31--86 Hz.\par}
+    \vspace{0.05cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        \textbf{Acertadas:} \textbf{89\%} têm o grave de 31--86 Hz acima do SMALL típico (mediana 8,4 dB), mas variam muito, de $\sim$2 a 20 dB. \textbf{Erradas:} a média fica quase em cima da do SMALL (mediana 4,2 dB); ainda assim, 40\% têm grave acima do SMALL típico. A média do slide anterior resume bem a tendência, mas \textbf{não é uma regra}: há LARGE acertadas sem corcova e erradas com ela.
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{LARGE no MEL: Uma Linha por Gravação}
+    \centering
+    \includegraphics[width=0.66\textwidth]{large_uma_linha_mel.png}
+
+    {\tiny Mesmos grupos do slide anterior (CNN LOFAR). MEL sem normalização (dB relativo ao ponto mais forte da gravação; sem TPSW). \textbf{Grave $-$ agudo} = média de 31--86 Hz menos média de 1--6 kHz: quanto o grave domina o agudo. SMALL típico = mediana das gravações SMALL (18,1 dB).\par}
+    \vspace{0.02cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        \begin{itemize}
+            \setlength{\itemsep}{1pt}
+            \item \textbf{Acertadas:} um pouco mais de grave e \textbf{bem menos agudo} que as erradas. Em \textbf{87\% dos pares}, a acertada tem o grave mais dominante; 91\% ficam acima do SMALL típico.
+            \item \textbf{Erradas:} a média fica quase em cima da do SMALL, como no LOFAR. Só 39\% ficam acima do SMALL típico.
+            \item O MEL é uma medida que a CNN LOFAR nunca viu e \textbf{reforça o LOFAR}: a LARGE errada tende a soar como SMALL.
+        \end{itemize}
+    \end{alertblock}
+\end{frame}
+
+\begin{frame}{LARGE no DEMON: Uma Linha por Gravação}
+    \centering
+    \includegraphics[width=0.70\textwidth]{large_uma_linha_demon.png}
+
+    {\tiny Mesmos grupos dos slides anteriores (CNN LOFAR). DEMON da banda de 1--2 kHz, em dB acima do fundo: a hélice gera \textbf{picos (``linhas'')} no ritmo do eixo e das pás.\\
+    \textbf{Força da linha mais forte} = altura do \textbf{pico mais alto} de cada linha fina, entre 1 e 25 Hz. Pico alto = ritmo da hélice bem marcado. Boxplot: linha preta = mediana; caixa = metade central das gravações; pontilhado azul = SMALL típico (7,1 dB).\par}
+    \vspace{0.02cm}
+    \begin{alertblock}{Leitura}
+        \scriptsize
+        \begin{itemize}
+            \setlength{\itemsep}{1pt}
+            \item \textbf{Nas linhas, os dois grupos parecem iguais}: cada navio tem o ritmo numa frequência diferente, e as médias ficam planas.
+            \item \textbf{No boxplot aparece a diferença}: as acertadas têm a linha mais forte (11,1 dB típico, contra 7,2 dB); as erradas ficam iguais ao SMALL.
+            \item \textbf{É uma diferença moderada}: a acertada tem a linha mais forte em 73\% dos pares (no LOFAR e no MEL, 87--89\%), e as caixas se sobrepõem.
+        \end{itemize}
     \end{alertblock}
 \end{frame}
 
@@ -787,7 +872,7 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        O MEDIUM ``bom'' do artigo era o Motor Hopper (89\%), que só se reconhece porque o irmão está no treino. Para navios novos, \textbf{MEDIUM vira SMALL}: o modelo não aprendeu nada que separe um supply de 80 m de um rebocador de 30 m. Em SMALL, o acerto é parecido nos três tipos: há algum padrão comum, fraco.
+        O MEDIUM ``bom'' do artigo era o Motor Hopper (89\%), que é reconhecido quase só quando o irmão está no treino. Para navios novos, \textbf{MEDIUM vira SMALL}: o modelo não parece ter aprendido algo que separe um supply de 80 m de um rebocador de 30 m. Em SMALL, o acerto é parecido nos três tipos: pode haver algum padrão comum, fraco.
     \end{alertblock}
 \end{frame}
 
@@ -899,7 +984,7 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{O mar agitado tira $\sim$10 pontos do acerto de LARGE, com ou sem CPA}; o pior caso (sem CPA e agitado) acerta só 45\%. O ruído do mar sobe e o grave do navio se destaca menos do fundo. Vento e estado do mar vêm de estação próxima, não do local.
+        \textbf{O mar agitado tira $\sim$10 pontos do acerto de LARGE, com ou sem CPA}; o pior caso (sem CPA e agitado) acerta só 45\%. Provavelmente o ruído do mar sobe e o grave do navio se destaca menos do fundo. Vento e estado do mar vêm de estação próxima, não do local.
     \end{alertblock}
 \end{frame}
 
@@ -944,7 +1029,7 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        Nenhuma curva estabilizou: cada vez que o nº de navios dobra, o recall sobe $\sim$14 pontos (SMALL) e $\sim$11 (MEDIUM). \textbf{Com o mesmo nº de navios, SMALL acerta como LARGE} (49\% com 44 navios $\times$ 48\% com 52). LARGE não é ``mais fácil'': tem mais navios.
+        Nenhuma curva estabilizou: cada vez que o nº de navios dobra, o recall sobe $\sim$14 pontos (SMALL) e $\sim$11 (MEDIUM). \textbf{Com o mesmo nº de navios, SMALL acerta como LARGE} (49\% com 44 navios $\times$ 48\% com 52). LARGE não parece ser ``mais fácil''; o que provavelmente ajuda é ter mais navios.
     \end{alertblock}
 \end{frame}
 
@@ -994,7 +1079,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{MEDIUM: o modelo decora o navio.} Com o navio no treino, 77--89\%; nunca visto, $\sim$32\%, com 1 ou com 80 gravações. \textbf{SMALL: nem conhecendo a lancha o acerto sobe} (lanchas de prático com 24--87 gravações ficam em 33--60\%). Falta diversidade de navios, não de gravações.
+        \textbf{MEDIUM: o modelo parece decorar o navio.} Com o navio no treino, 77--89\%; nunca visto, $\sim$32\%, com 1 ou com 80 gravações. \textbf{SMALL: nem conhecendo a lancha o acerto sobe} (lanchas de prático com 24--87 gravações ficam em 33--60\%). Tudo indica que falta diversidade de navios, mais do que de gravações.
     \end{alertblock}
 \end{frame}
 
@@ -1077,20 +1162,31 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{Erradas $\to$ LARGE têm linhas um pouco mais fortes} que as acertadas (mediana 8,3 $\times$ 5,5--7,1 dB; AUC 0,61, p = 0,008), na direção dos LARGE (9,8 dB). Erradas $\to$ MEDIUM não diferem (AUC 0,54). \textbf{Mas o efeito é fraco e não aparece dentro da mesma lancha} (AUC 0,54, p = 0,19), e a frequência da linha não separa os grupos. A linha forte do DEMON anda um pouco junto com o grave do LOFAR (Spearman 0,21): o DEMON não traz uma pista nova sobre esses erros.
+        \textbf{Erradas $\to$ LARGE têm linhas um pouco mais fortes} que as acertadas (mediana 8,3 $\times$ 5,5--7,1 dB; AUC 0,61, p = 0,008), na direção dos LARGE (9,8 dB). Erradas $\to$ MEDIUM não diferem (AUC 0,54). \textbf{Mas o efeito é fraco e não aparece dentro da mesma lancha} (AUC 0,54, p = 0,19), e a frequência da linha não separa os grupos. A linha forte do DEMON anda um pouco junto com o grave do LOFAR (Spearman 0,21): o DEMON parece não trazer uma pista nova sobre esses erros.
     \end{alertblock}
 \end{frame}
 
 \begin{frame}{As Mesmas Lanchas no MEL: Médias por Grupo}
-    \centering
-    \includegraphics[width=0.62\textwidth]{mel_lancha_espectro.png}
-
-    {\tiny Mesmos grupos (acertos/erros da MLP \textbf{LOFAR}). MEL do pipeline \textbf{sem normalização}: 256 bandas mel até 8 kHz, dB relativo ao máximo da própria gravação, \textbf{sem TPSW}. Eixo logarítmico, 20 Hz--6 kHz (acima de $\sim$6,4 kHz o filtro da decimação corta).\par}
-    \vspace{0.05cm}
-    \begin{alertblock}{Leitura}
-        \scriptsize
-        Sem o TPSW, o grave (31--86 Hz) das erradas $\to$ LARGE fica no mesmo nível das acertadas (AUC 0,53). O que muda é o resto: \textbf{a energia cai mais rápido acima de 100 Hz}, e em 1--6 kHz fica $\sim$8 dB abaixo das acertadas (AUC 0,28, p $<$ 0,001), no nível da média LARGE. Erradas $\to$ MEDIUM são iguais às acertadas. O ``bico'' em $\sim$500 Hz aparece em todos os grupos, inclusive LARGE: não é próprio da lancha.
-    \end{alertblock}
+    \begin{columns}[T]
+        \begin{column}{0.50\textwidth}
+            \centering
+            \includegraphics[width=\textwidth]{mel_lancha_espectro.png}\\[2pt]
+            {\tiny Mesmos grupos (acertos/erros da MLP \textbf{LOFAR}). MEL do pipeline \textbf{sem normalização}: 256 bandas mel até 8 kHz, \textbf{sem TPSW}; eixo logarítmico, 20 Hz--6 kHz.\\
+            \textbf{Eixo negativo:} dB relativo ao ponto mais forte da gravação (0 dB = máximo). \textbf{A queda com a frequência} é natural do ruído de navio; o MEL a mostra porque não usa TPSW.\par}
+        \end{column}
+        \begin{column}{0.48\textwidth}
+            \begin{alertblock}{Leitura}
+                \scriptsize
+                \begin{itemize}
+                    \setlength{\itemsep}{2pt}
+                    \item \textbf{No grave (faixa cinza), as curvas quase se juntam:} as erradas $\to$ LARGE (verde) e as acertadas (azul) têm praticamente o mesmo nível.
+                    \item \textbf{A diferença está do grave para cima:} a verde cai mais rápido a partir de 100 Hz. Em 1--6 kHz, fica $\sim$8 dB abaixo da azul, no nível da média LARGE (verde pontilhada). Em \textbf{72\% dos pares}, a errada tem menos agudo que a acertada.
+                    \item \textbf{Erradas $\to$ MEDIUM (laranja)} ficam quase em cima das acertadas: o MEL não mostra por que elas erram.
+                    \item O ``bico'' em $\sim$500 Hz aparece em todas as curvas, inclusive LARGE: não é próprio da lancha.
+                \end{itemize}
+            \end{alertblock}
+        \end{column}
+    \end{columns}
 \end{frame}
 
 \begin{frame}{Lanchas Erradas no MEL: Uma Linha por Gravação}
@@ -1110,7 +1206,7 @@
     \includegraphics[width=0.62\textwidth]{lanchas_lofar_demon_rfmel.png}
 
     \vspace{-0.05cm}
-    {\tiny \textbf{8 lanchas diferentes, um painel para cada}; cada ponto é \textbf{uma gravação daquela lancha}. Cor = o que a \textbf{RF MEL} fez com a gravação (o modelo com mais acerto de SMALL; \textbf{não usa o LOFAR}). \textbf{Eixo x:} LOFAR em 31--86 Hz, o ``grave'' típico dos LARGE. \textbf{Eixo y:} frequência da linha mais forte do DEMON (slide 37).\par}
+    {\tiny \textbf{8 lanchas diferentes, um painel para cada}; cada ponto é \textbf{uma gravação daquela lancha}. Cor = o que a \textbf{RF MEL} fez com a gravação (o modelo com mais acerto de SMALL; \textbf{não usa o LOFAR}). \textbf{Eixo x:} LOFAR em 31--86 Hz, o ``grave'' típico dos LARGE. \textbf{Eixo y:} frequência da linha mais forte do DEMON (slide 41).\par}
     \begin{alertblock}{Leitura}
         \scriptsize
         Em quase todas as lanchas, os pontos verdes (tomadas por LARGE) ficam \textbf{à direita}: grave forte no LOFAR, que a RF MEL nunca viu. Na vertical (DEMON), as cores se misturam mais; os verdes só tendem a ficar um pouco mais embaixo ($\sim$5 Hz).
@@ -1135,13 +1231,13 @@
     \footnotesize
     \begin{columns}[T]
         \begin{column}{0.49\textwidth}
-            \begin{block}{\small O que dá para concluir}
+            \begin{block}{\small O que os dados indicam}
                 \scriptsize
                 \begin{enumerate}
                     \setlength{\itemsep}{2pt}
-                    \item \textbf{O erro depende da gravação, não do modelo:} na mesma lancha, as gravações chamadas de LARGE são as de grave forte. Vale para 6 modelos e 3 entradas.
-                    \item \textbf{Os modelos aprenderam ``grave forte = LARGE''}, a assinatura real dos LARGE (NB35), mas ela não é exclusiva: as lanchas erradas chegam a 7,4--9,8 dB, como um LARGE típico.
-                    \item \textbf{Trocar de modelo ou de representação não conserta}: todos erram igual. O augmentation também não.
+                    \item \textbf{O erro parece depender da gravação, não do modelo:} na mesma lancha, as gravações chamadas de LARGE são as de grave forte. Vale para 6 modelos e 3 entradas.
+                    \item \textbf{Os modelos parecem associar ``grave forte'' a LARGE}, a assinatura dos LARGE (NB35), mas ela não é exclusiva: as lanchas erradas chegam a 7,4--9,8 dB, como um LARGE típico.
+                    \item \textbf{Trocar de modelo ou de representação provavelmente não conserta}: todos erram de forma parecida. O augmentation também não ajudou.
                 \end{enumerate}
             \end{block}
         \end{column}
@@ -1295,7 +1391,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        A melhor (mixnavio, +0,26) está dentro da variação entre treinos. A única significativa é uma \textbf{piora}: navio+stretch+mask leva MEDIUM a 62\% e derruba SMALL a 14\%; o modelo só passou a responder ``MEDIUM'' na dúvida. \textbf{Peso por navio derruba SMALL}: é o padrão das lanchas de prático que sustenta o recall SMALL.
+        A melhor (mixnavio, +0,26) está dentro da variação entre treinos. A única significativa é uma \textbf{piora}: navio+stretch+mask leva MEDIUM a 62\% e derruba SMALL a 14\%; o modelo parece ter passado a responder ``MEDIUM'' na dúvida. \textbf{Peso por navio derruba SMALL}: o padrão das lanchas de prático parece sustentar o recall SMALL.
     \end{alertblock}
 \end{frame}
 
@@ -1317,7 +1413,7 @@
     \vspace{0.05cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        \textbf{Nenhum modelo melhora.} O maior ganho é +0,4 (BiGRU + stretch), do tamanho do controle dup. No SVM, as variantes só trocam SMALL por MEDIUM. A única diferença significativa é a piora do RF com bg: com mar real nas gravações de navio, ele confunde mar sem navio com navio. \textbf{CNN do artigo não foi rodada} ($\sim$60 h por variante).
+        \textbf{Nenhum modelo melhora.} O maior ganho é +0,4 (BiGRU + stretch), do tamanho do controle dup. No SVM, as variantes só trocam SMALL por MEDIUM. A única diferença significativa é a piora do RF com bg: com mar real nas gravações de navio, ele provavelmente passa a confundir mar sem navio com navio. \textbf{CNN do artigo não foi rodada} ($\sim$60 h por variante).
     \end{alertblock}
 \end{frame}
 
@@ -1353,7 +1449,7 @@
     \vspace{0.1cm}
     \begin{alertblock}{Leitura}
         \scriptsize
-        O ambiente da gravação \textbf{mexe na decisão} do modelo, mas misturar mar real (bg) \textbf{não reduz o efeito}. Então não é ruído de fundo somado: deve ser algo da própria gravação (distância, velocidade, cadeia de gravação), que o IARA não registra.
+        O ambiente da gravação \textbf{mexe na decisão} do modelo, mas misturar mar real (bg) \textbf{não reduz o efeito}. Então provavelmente não é ruído de fundo somado: pode ser algo da própria gravação (distância, velocidade, cadeia de gravação), que o IARA não registra.
     \end{alertblock}
 \end{frame}
 
@@ -1373,49 +1469,47 @@
         \scriptsize
         \begin{enumerate}
             \setlength{\itemsep}{2pt}
-            \item \textbf{O gargalo é o número de navios distintos}, sobretudo em MEDIUM: $\sim$12 navios efetivos por classe, curva subindo sem estabilizar.
-            \item \textbf{O SP do artigo superestima MEDIUM}: 66\% vem de reconhecer navios repetidos (HANG BO); em navios novos, 28--35\%.
-            \item \textbf{SMALL tem um problema a mais}: nas gravações de lancha que o modelo erra, menos linhas e bandas se destacam do fundo acima de 250 Hz; as tomadas por LARGE têm o grave de 31--86 Hz no nível de um LARGE.
-            \item \textbf{SMALL $\times$ MEDIUM não é física de fronteira}: a confusão não se concentra perto de 50 m e parece acompanhar o \textbf{tipo} de navio, não o tamanho.
-            \item \textbf{Augmentation não substitui navios}: nenhuma das 7 variantes ajudou, em 4 modelos.
+            \item \textbf{Há uma tendência de o gargalo ser o número de navios distintos}: $\sim$12 navios efetivos por classe, curva subindo sem estabilizar.
+            \item \textbf{O SP do artigo provavelmente superestima MEDIUM}: boa parte dos 66\% parece vir de navios repetidos (HANG BO); em navios novos, 28--35\%.
+            \item \textbf{LARGE e BACKGROUND generalizam}: o LARGE quase não perde em navios novos, e o BACKGROUND acerta 70--81\% de gravações nunca vistas. O acerto do LARGE acompanha o grave em $\sim$50 Hz, que não é exclusivo dele.
+            \item \textbf{SMALL tem um problema a mais}: as lanchas tomadas por LARGE têm grave de LARGE, em 6 modelos; o erro parece vir da gravação.
+            \item \textbf{SMALL $\times$ MEDIUM não parece ser física de fronteira}: a confusão não se concentra perto de 50 m e pode acompanhar o \textbf{tipo} de navio, não o tamanho.
+            \item \textbf{Augmentation não compensou a falta de navios} (7 variantes, 4 modelos).
         \end{enumerate}
     \end{block}
     \begin{alertblock}{\small Ressalvas}
         \scriptsize
-        A curva mistura ``menos navios'' com ``menos gravações''. A origem dos graves nas lanchas e da sensibilidade ao ambiente não é identificável sem metadados que o IARA não publica (data, hidrofone, velocidade).
+        Os LARGE foram gravados com o mar mais calmo (viés da base). A origem dos graves nas lanchas exige metadados que o IARA não publica (velocidade, distância, hidrofone).
     \end{alertblock}
 \end{frame}
 
-\begin{frame}{Próximos Passos Possíveis}
+\begin{frame}{Próximos Passos}
     \footnotesize
-    \begin{columns}[t]
-        \column{0.49\textwidth}
-        \begin{block}{\small Mais navios}
-            \scriptsize
-            \begin{itemize}
-                \setlength{\itemsep}{2pt}
-                \item Outras bases públicas (ShipsEar, DeepShip) para pré-treino ou treino conjunto.
-                \item Novas campanhas de gravação com mais navios SMALL e MEDIUM.
-            \end{itemize}
-        \end{block}
-        \begin{block}{\small Lanchas de prático}
-            \scriptsize
-            \begin{itemize}
-                \setlength{\itemsep}{2pt}
-                \item Dar mais peso às faixas acima de 250 Hz.
-                \item Identificar e tratar à parte as gravações com graves dominantes.
-            \end{itemize}
-        \end{block}
-        \column{0.49\textwidth}
-        \begin{block}{\small Avaliação e tarefa}
-            \scriptsize
-            \begin{itemize}
-                \setlength{\itemsep}{2pt}
-                \item Relatar também com split por navio.
-                \item Reformular: SMALL+MEDIUM juntos, regressão do comprimento ou classes por tipo.
-                \item CNN do artigo com split por navio ($\sim$60 h): quanto ela cai?
-            \end{itemize}
-        \end{block}
+    \begin{columns}[T]
+        \begin{column}{0.49\textwidth}
+            \begin{block}{\small Fora do IARA: tamanho dentro do mesmo tipo}
+                \scriptsize
+                \textbf{UniqueShip} (Ocean Networks Canada, 2026): 4.218 navios, $\sim$3.500 h, comprimento pelo AIS em cada trecho, folds por navio.
+                \begin{itemize}
+                    \setlength{\itemsep}{1pt}
+                    \item 1.280 navios $<$ 50 m, só 69 entre 50 e 100 m, 2.859 $\geq$ 100 m: \textbf{não serve para SMALL $\times$ MEDIUM}.
+                    \item Mas tem \textbf{286 rebocadores de 10 a 50 m}, 227 pesqueiros e 393 barcos de recreio.
+                    \item Pergunta: \textbf{dentro dos rebocadores, o LOFAR prevê o comprimento?} Se sim, há pista acústica de tamanho; se não, o que se aprende é o tipo.
+                    \item Também serve para repetir fora do IARA a busca por uma pista de barco pequeno.
+                \end{itemize}
+            \end{block}
+        \end{column}
+        \begin{column}{0.49\textwidth}
+            \begin{block}{\small No IARA}
+                \scriptsize
+                \begin{itemize}
+                    \setlength{\itemsep}{1pt}
+                    \item \textbf{Analisar melhor o HHT}: olhar gravação a gravação, por tipo e dentro de cada navio, como fizemos com LOFAR, MEL e DEMON.
+                    \item Solicitar ao PMPAS-BS \textbf{gravações mais recentes}: ver se hoje há mais diversidade de navios, sobretudo SMALL e MEDIUM de outros tipos (rebocadores e pesqueiros maiores, barcos de apoio menores), o que permitiria separar tipo de tamanho.
+                    \item Solicitar também distância, observatório e calibração: permitiriam usar o nível de fonte, a medida física mais direta de porte.
+                \end{itemize}
+            \end{block}
+        \end{column}
     \end{columns}
 \end{frame}
 

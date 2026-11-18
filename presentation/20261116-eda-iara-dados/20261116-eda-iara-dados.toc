@@ -3,8 +3,8 @@
 \beamer@sectionintoc {2}{Inventário de SMALL e MEDIUM}{6}{0}{2}
 \beamer@sectionintoc {3}{As Extrações}{14}{0}{3}
 \beamer@sectionintoc {4}{Os Modelos Generalizam?}{18}{0}{4}
-\beamer@sectionintoc {5}{Condições de Gravação}{25}{0}{5}
-\beamer@sectionintoc {6}{O Que Falta: Navios ou Gravações?}{29}{0}{6}
-\beamer@sectionintoc {7}{Lanchas de Prático e Fronteira de 50 m}{32}{0}{7}
-\beamer@sectionintoc {8}{Data Augmentation}{45}{0}{8}
-\beamer@sectionintoc {9}{Conclusões e Próximos Passos}{50}{0}{9}
+\beamer@sectionintoc {5}{Condições de Gravação}{29}{0}{5}
+\beamer@sectionintoc {6}{O Que Falta: Navios ou Gravações?}{33}{0}{6}
+\beamer@sectionintoc {7}{Lanchas de Prático e Fronteira de 50 m}{36}{0}{7}
+\beamer@sectionintoc {8}{Data Augmentation}{49}{0}{8}
+\beamer@sectionintoc {9}{Conclusões e Próximos Passos}{54}{0}{9}

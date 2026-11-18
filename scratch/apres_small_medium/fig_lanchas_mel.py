@@ -10,7 +10,7 @@ Figuras (presentation/20261116-eda-iara-dados/figuras/):
   mel_lanchas_erradas.png  uma linha por gravação errada, por classe prevista (como lanchas_erradas.png)
 Rodar na raiz, no container iara-dev:  python scratch/apres_small_medium/fig_lanchas_mel.py"""
 import sys
-import numpy as np, pandas as pd, matplotlib
+import numpy as np, pandas as pd, matplotlib, matplotlib.ticker
 matplotlib.use("Agg"); import matplotlib.pyplot as plt  # noqa: E402
 import librosa  # noqa: E402
 from scipy import stats as st  # noqa: E402
@@ -49,7 +49,10 @@ for g in ["errada → LARGE", "errada → MEDIUM"]:
 
 def eixo(ax):
     ax.axvspan(31, 86, color="#888", alpha=.1)
-    ax.set_xscale("log"); ax.set_xlim(20, 6000); ax.set_xlabel("frequência (Hz)"); ax.grid(alpha=.25, lw=.6)
+    ax.set_xscale("log"); ax.set_xlim(20, 6000); ax.set_xlabel("frequência (Hz, escala logarítmica)"); ax.grid(alpha=.25, lw=.6)
+    tk = [20, 50, 100, 200, 500, 1000, 2000, 5000]   # números comuns em vez de 10^2, 10^3
+    ax.set_xticks(tk); ax.set_xticklabels([f"{t:,}".replace(",", ".") for t in tk])
+    ax.xaxis.set_minor_formatter(matplotlib.ticker.NullFormatter())
 
 
 # 1. médias por grupo
